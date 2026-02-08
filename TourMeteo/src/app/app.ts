@@ -2,17 +2,17 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { MeteoService, MeteoVille } from './meteo.service';
+import { WeatherService, WeatherCity } from './weather.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [CommonModule, HttpClientModule],
   templateUrl: './app.html',
-  providers: [MeteoService]
+  providers: [WeatherService]
 })
 export class App {
-  meteo: MeteoVille[] = [];
+  meteo: WeatherCity[] = [];
   showTemp = true;
   showWind = true;
   showSummary = true;
@@ -40,7 +40,7 @@ export class App {
 
   loading = false;
 
-  constructor(private meteoService: MeteoService, private cdr: ChangeDetectorRef) {}
+  constructor(private weatherService: WeatherService, private cdr: ChangeDetectorRef) {}
 
   search(cities: string, date: string) {
     this.meteo = [];
@@ -53,7 +53,7 @@ export class App {
       return;
     }
     for (const city of cityList) {
-      this.meteoService.getMeteo(city, date).subscribe({
+      this.weatherService.getWeather(city, date).subscribe({
         next: data => {
           // Format hours to only keep HH (no minutes)
           data.hourly = data.hourly.map(h => ({

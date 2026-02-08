@@ -2,20 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, switchMap } from 'rxjs';
 
-export interface WeatherData {
+export interface WeatherCity {
   city: string;
-  date: string;
-  hourly: Array<{
-    hour: string;
-    temperature: number;
-    wind: number;
-    summary: string;
-  }>;
+  hourly: Array<{ hour: string; temperature: number; wind: number; summary: string }>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class WeatherService {
-  private meteoApiUrl = 'https://api.open-meteo.com/v1/forecast';
+  private weatherApiUrl = 'https://api.open-meteo.com/v1/forecast';
   private geocodeApiUrl = 'https://nominatim.openstreetmap.org/search';
 
   constructor(private http: HttpClient) {}
@@ -31,15 +25,14 @@ export class WeatherService {
     );
   }
 
-  getWeather(city: string, date: string): Observable<WeatherData> {
+  getWeather(city: string, date: string): Observable<WeatherCity> {
     return this.getLatLon(city).pipe(
       switchMap(({ lat, lon }) =>
         this.http.get<any>(
-          `${this.meteoApiUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,weathercode&start_date=${date}&end_date=${date}`
+          `${this.weatherApiUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,weathercode&start_date=${date}&end_date=${date}`
         ).pipe(
           map(response => ({
             city,
-            date,
             hourly: response.hourly.time.map((hour: string, i: number) => ({
               hour,
               temperature: response.hourly.temperature_2m[i],
