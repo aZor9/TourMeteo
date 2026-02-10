@@ -2,6 +2,7 @@ import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterOutlet } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { WeatherService, WeatherCity } from '../../service/weather.service';
 import { SearchTabComponent } from '../SearchTab/search-tab.component';
 import { WeatherSheetComponent } from '../WeatherSheet/weather-sheet.component';
@@ -47,37 +48,30 @@ export class App {
     this.showTemp = showTemp;
     this.showWind = showWind;
     this.showSummary = showSummary;
-    this.meteo = [];
     this.selectedDate = date;
     this.loading = true;
     const cityList = cities.split(',').map(c => c.trim()).filter(c => !!c);
-    let count = 0;
     if (cityList.length === 0) {
       this.loading = false;
       return;
     }
-    for (const city of cityList) {
-      this.weatherService.getWeather(city, date).subscribe({
-        next: data => {
+    const requests = cityList.map(city => this.weatherService.getWeather(city, date));
+    forkJoin(requests).subscribe({
+      next: results => {
+        this.meteo = results.map(data => {
           data.hourly = data.hourly.map(h => ({
             ...h,
             hour: h.hour.split('T')[1]?.slice(0,2) || h.hour
           }));
-          this.meteo.push(data);
-          count++;
-          if (count === cityList.length) {
-            this.loading = false;
-            this.cdr.detectChanges();
-          }
-        },
-        error: () => {
-          count++;
-          if (count === cityList.length) {
-            this.loading = false;
-            this.cdr.detectChanges();
-          }
-        }
-      });
-    }
+          return data;
+        });
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 }

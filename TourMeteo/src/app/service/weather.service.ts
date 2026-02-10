@@ -5,7 +5,7 @@ import { CityService } from './city.service';
 
 export interface WeatherCity {
   city: string;
-  hourly: Array<{ hour: string; temperature: number; wind: number; summary: string }>;
+  hourly: Array<{ hour: string; temperature: number; wind: number; summary: string; isDay: boolean }>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -19,7 +19,7 @@ export class WeatherService {
       switchMap(({ lat, lon }) =>
         this.http
           .get<any>(
-            `${this.weatherApiUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,weathercode&start_date=${date}&end_date=${date}`
+            `${this.weatherApiUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,weathercode,is_day&start_date=${date}&end_date=${date}`
           )
           .pipe(
             map(response => ({
@@ -28,7 +28,8 @@ export class WeatherService {
                 hour,
                 temperature: response.hourly.temperature_2m[i],
                 wind: response.hourly.wind_speed_10m[i],
-                summary: response.hourly.weathercode[i]
+                summary: response.hourly.weathercode[i],
+                isDay: !!response.hourly.is_day && response.hourly.is_day[i] === 1
               }))
             }))
           )
