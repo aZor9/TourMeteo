@@ -1,1 +1,65 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global theme tokens inspired by Design sympa.html (Tailwind utilities are available via CDN)
+	 Keep this file light: define CSS variables and a few helper classes used by components.
+*/
+
+:root {
+	--color-primary: #137fec;
+	--bg-light: #f6f7f8;
+	--bg-dark: #101922;
+	--muted: #6b7280; /* slate-500 */
+}
+
+html, body {
+	height: 100%;
+}
+
+body {
+	background-color: var(--bg-light);
+	font-family: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Header / Navbar helpers */
+.site-header {
+	background: rgba(255,255,255,0.6);
+	backdrop-filter: blur(6px);
+	border-bottom: 1px solid rgba(15,23,42,0.04);
+}
+
+.navbar-title {
+	color: var(--color-primary);
+	font-weight: 700;
+	font-size: 1.05rem;
+}
+
+.navbar-link {
+	color: #374151; /* slate-700 */
+}
+.navbar-link:hover { color: var(--color-primary); }
+
+/* Card styles used for weather tiles */
+.card {
+	background: white;
+	border-radius: 0.75rem;
+	border: 1px solid rgba(15,23,42,0.06);
+	box-shadow: 0 4px 12px rgba(19,127,236,0.04);
+}
+
+.weather-card-sunny { background: linear-gradient(180deg, rgba(255,170,0,0.08), rgba(255,255,255,0)); }
+.weather-card-rain  { background: linear-gradient(180deg, rgba(19,127,236,0.06), rgba(255,255,255,0)); }
+.weather-card-cloudy{ background: linear-gradient(180deg, rgba(146,173,201,0.06), rgba(255,255,255,0)); }
+
+/* Primary button helper to keep look coherent */
+.btn-primary {
+	background: var(--color-primary);
+	color: white;
+	padding: 0.5rem 1rem;
+	border-radius: 0.5rem;
+	font-weight: 600;
+}
+.btn-primary:hover { opacity: .95; }
+
+/* Small helper for muted text */
+.muted { color: var(--muted); }
+

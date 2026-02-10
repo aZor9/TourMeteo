@@ -6,8 +6,7 @@ import { FormsModule } from '@angular/forms';
   selector: 'app-search-tab',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './search-tab.component.html',
-  styleUrls: ['./search-tab.component.scss']
+  templateUrl: './search-tab.component.html'
 })
 export class SearchTabComponent {
   cities = '';

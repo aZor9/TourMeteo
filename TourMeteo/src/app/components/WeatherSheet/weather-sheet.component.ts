@@ -6,8 +6,7 @@ import { WeatherCity } from '../../service/weather.service';
   selector: 'app-weather-sheet',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './weather-sheet.component.html',
-  styleUrls: ['./weather-sheet.component.scss']
+  templateUrl: './weather-sheet.component.html'
 })
 export class WeatherSheetComponent {
   @Input() meteo: WeatherCity[] = [];

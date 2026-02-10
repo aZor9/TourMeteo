@@ -1,6 +1,25 @@
-<section class="about">
-  <h1>{{ title }}</h1>
-  <p>TourMeteo — une simple application de météo et découverte.</p>
-  <p>Version: 1.0.0</p>
-  <p>Réalisé avec Angular.</p>
+<section class="bg-white rounded-xl border border-slate-200 p-6 shadow">
+  <header class="mb-4">
+    <h1 class="text-2xl font-bold text-slate-900">{{ title }}</h1>
+    <p class="text-slate-500 mt-1">TourMeteo — une application de comparaison météo entre plusieurs villes, heure par heure</p>
+  </header>
+
+  <div class="mb-4">
+    <p class="text-slate-500">Version: 1.0.0 — Réalisé avec Angular et Tailwind.</p>
+    <p class="text-slate-500 mt-1">Lien du répertoire GitHub : <a href="https://github.com/aZor9/TourMeteo" class="text-primary hover:underline">https://github.com/aZor9/TourMeteo</a></p>
+  </div>
+
+  <div class="mb-4">
+    <h2 class="font-semibold text-slate-800">APIs utilisées</h2>
+    <ul class="mt-2 list-disc pl-5 text-slate-700">
+      <li><strong>Géocodage :</strong> Nominatim (OpenStreetMap) — recherche d'emplacements</li>
+      <li><strong>Météo :</strong> Open-Meteo — données météo horaires (température, vent, weathercode)</li>
+    </ul>
+  </div>
+
+  <div>
+    <h3 class="font-semibold text-slate-800">Remarques</h3>
+    <p class="text-slate-500 mt-2">Les données sont obtenues en temps réel depuis les APIs publiques listées ci‑dessus.</p> 
+    <p>Aucune donnée utilisateur n'est envoyée à des services autres que ceux mentionnés.</p>
+  </div>
 </section>
