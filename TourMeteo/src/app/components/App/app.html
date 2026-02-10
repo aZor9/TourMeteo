@@ -1,0 +1,14 @@
+<div class="p-8 max-w-6xl mx-auto text-black">
+    <app-search-tab (searchRequest)="search($event)"></app-search-tab>
+
+    <div *ngIf="loading" class="flex justify-center items-center my-8">
+    <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+    </svg>
+    <span class="ml-3 text-blue-600 font-semibold">Chargement...</span>
+  </div>
+  <app-weather-sheet [meteo]="meteo" [showTemp]="showTemp" [showWind]="showWind" [showSummary]="showSummary" [selectedDate]="selectedDate"></app-weather-sheet>
+</div>
+
+<router-outlet></router-outlet>

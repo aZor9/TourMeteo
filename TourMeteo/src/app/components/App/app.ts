@@ -1,13 +1,15 @@
-
 import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { WeatherService, WeatherCity } from './weather.service';
+import { RouterOutlet } from '@angular/router';
+import { WeatherService, WeatherCity } from '../../service/weather.service';
+import { SearchTabComponent } from '../SearchTab/search-tab.component';
+import { WeatherSheetComponent } from '../WeatherSheet/weather-sheet.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, HttpClientModule],
+  imports: [CommonModule, HttpClientModule, RouterOutlet, SearchTabComponent, WeatherSheetComponent],
   templateUrl: './app.html',
   providers: [WeatherService]
 })
@@ -20,7 +22,6 @@ export class App {
   today = new Date().toISOString().slice(0, 10);
 
   getWeatherDescription(code: number): { emoji: string, desc: string } {
-    // Open-Meteo weathercode legend (abridged)
     if (code === 0) return { emoji: '☀️', desc: 'Ciel clair' };
     if (code === 1 || code === 2) return { emoji: '🌤️', desc: 'Partiellement nuageux' };
     if (code === 3) return { emoji: '☁️', desc: 'Couvert' };
@@ -35,14 +36,17 @@ export class App {
     if (code === 85 || code === 86) return { emoji: '🌨️', desc: 'Averses de neige' };
     if (code === 95) return { emoji: '⛈️', desc: 'Orage' };
     if (code === 96 || code === 99) return { emoji: '⛈️', desc: 'Orage avec grêle' };
-    return { emoji: '❓', desc: 'Inconnu (' + code + ')'};
+    return { emoji: '❓', desc: 'Inconnu (' + code + ')' };
   }
 
   loading = false;
 
   constructor(private weatherService: WeatherService, private cdr: ChangeDetectorRef) {}
-
-  search(cities: string, date: string) {
+  search(params: { cities: string; date: string; showTemp: boolean; showWind: boolean; showSummary: boolean }) {
+    const { cities, date, showTemp, showWind, showSummary } = params;
+    this.showTemp = showTemp;
+    this.showWind = showWind;
+    this.showSummary = showSummary;
     this.meteo = [];
     this.selectedDate = date;
     this.loading = true;
@@ -55,10 +59,9 @@ export class App {
     for (const city of cityList) {
       this.weatherService.getWeather(city, date).subscribe({
         next: data => {
-          // Format hours to only keep HH (no minutes)
           data.hourly = data.hourly.map(h => ({
             ...h,
-            hour: h.hour.split('T')[1]?.slice(0,2) || h.hour // "2024-02-08T13:00" => "13"
+            hour: h.hour.split('T')[1]?.slice(0,2) || h.hour
           }));
           this.meteo.push(data);
           count++;
@@ -78,4 +81,3 @@ export class App {
     }
   }
 }
-

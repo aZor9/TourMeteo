@@ -1,6 +1,10 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
-import { App } from './app/app';
+import { RootComponent } from './app/root.component';
+import { NavbarComponent } from './app/components/navbar/navbar.component';
 
-bootstrapApplication(App, appConfig)
+bootstrapApplication(RootComponent, appConfig)
   .catch((err) => console.error(err));
+
+// Also bootstrap the navbar into the static <app-navbar> element in index.html
+bootstrapApplication(NavbarComponent).catch((err) => console.error('Navbar bootstrap error', err));
