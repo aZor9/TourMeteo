@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, switchMap } from 'rxjs';
 import { CityService } from './city.service';
 
 export interface WeatherCity {
@@ -10,30 +9,32 @@ export interface WeatherCity {
 
 @Injectable({ providedIn: 'root' })
 export class WeatherService {
+  // URL de l'API météo
   private weatherApiUrl = 'https://api.open-meteo.com/v1/forecast';
 
   constructor(private http: HttpClient, private cityService: CityService) {}
 
-  getWeather(city: string, date: string): Observable<WeatherCity> {
-    return this.cityService.getLatLon(city).pipe(
-      switchMap(({ lat, lon }) =>
-        this.http
-          .get<any>(
-            `${this.weatherApiUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,weathercode,is_day&start_date=${date}&end_date=${date}`
-          )
-          .pipe(
-            map(response => ({
-              city,
-              hourly: response.hourly.time.map((hour: string, i: number) => ({
-                hour,
-                temperature: response.hourly.temperature_2m[i],
-                wind: response.hourly.wind_speed_10m[i],
-                summary: response.hourly.weathercode[i],
-                isDay: !!response.hourly.is_day && response.hourly.is_day[i] === 1
-              }))
-            }))
-          )
-      )
-    );
+  // Renvoie les données météo pour une ville et une date (Promise)
+  async getWeather(city: string, date: string): Promise<WeatherCity> {
+    // obtenir latitude/longitude (CityService retourne maintenant une Promise)
+    const { lat, lon } = await this.cityService.getLatLon(city);
+
+    const url = `${this.weatherApiUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,weathercode,is_day&start_date=${date}&end_date=${date}`;
+
+    // wrapper simple en Promise pour convertir l'Observable Http en Promise
+    const response: any = await new Promise((resolve, reject) => {
+      this.http.get<any>(url).subscribe({ next: res => resolve(res), error: err => reject(err) });
+    });
+
+    // transformer la réponse brute en objet typé WeatherCity
+    const hourly = response.hourly.time.map((hour: string, i: number) => ({
+      hour,
+      temperature: response.hourly.temperature_2m[i],
+      wind: response.hourly.wind_speed_10m[i],
+      summary: response.hourly.weathercode[i],
+      isDay: !!response.hourly.is_day && response.hourly.is_day[i] === 1
+    }));
+
+    return { city, hourly };
   }
 }

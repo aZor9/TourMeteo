@@ -1,8 +1,7 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterOutlet } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import { WeatherService, WeatherCity } from '../../service/weather.service';
 import { SearchTabComponent } from '../SearchTab/search-tab.component';
 import { WeatherSheetComponent } from '../WeatherSheet/weather-sheet.component';
@@ -42,36 +41,40 @@ export class App {
 
   loading = false;
 
-  constructor(private weatherService: WeatherService, private cdr: ChangeDetectorRef) {}
-  search(params: { cities: string; date: string; showTemp: boolean; showWind: boolean; showSummary: boolean }) {
+  constructor(private weatherService: WeatherService) {}
+
+  // Recherche météo pour les villes (séquentiel, simple)
+  async search(params: { cities: string; date: string; showTemp: boolean; showWind: boolean; showSummary: boolean }) {
     const { cities, date, showTemp, showWind, showSummary } = params;
     this.showTemp = showTemp;
     this.showWind = showWind;
     this.showSummary = showSummary;
     this.selectedDate = date;
     this.loading = true;
+    this.meteo = [];
+
     const cityList = cities.split(',').map(c => c.trim()).filter(c => !!c);
     if (cityList.length === 0) {
       this.loading = false;
       return;
     }
-    const requests = cityList.map(city => this.weatherService.getWeather(city, date));
-    forkJoin(requests).subscribe({
-      next: results => {
-        this.meteo = results.map(data => {
-          data.hourly = data.hourly.map(h => ({
-            ...h,
-            hour: h.hour.split('T')[1]?.slice(0,2) || h.hour
-          }));
-          return data;
-        });
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.loading = false;
-        this.cdr.detectChanges();
+
+    for (const city of cityList) {
+      try {
+        // weatherService.getWeather retourne maintenant une Promise (async)
+        const data = await this.weatherService.getWeather(city, date);
+        // simplifier l'affichage de l'heure (garder HH)
+        data.hourly = data.hourly.map(h => ({
+          ...h,
+          hour: h.hour.split('T')[1]?.slice(0,2) || h.hour
+        }));
+        this.meteo.push(data);
+      } catch (err) {
+        // si une ville échoue, on l'ignore mais on continue avec les autres
+        this.meteo.push({ city, hourly: [] });
       }
-    });
+    }
+
+    this.loading = false;
   }
 }
