@@ -4,7 +4,7 @@ Application Angular permettant de comparer la météo heure par heure entre plus
 
 ---
 
-## Livrables remis
+## Architecture du projet
 - Projet Angular complet — dossier racine `TourMeteo/`
 - Document texte (ce `readme.md`) listant : membres, API, instructions de lancement
 - Fichiers auxiliaires : `Dockerfile`, `docker-compose.yml` (si présent)
@@ -53,7 +53,7 @@ npm run watch
 ---
 
 
-## Fonctionnalités implémentées / limites connues / améliorations possibles
+## Fonctionnalités et améliorations possibles
 - Fonctionnalités : sélection multi-villes, tableau horaire, légende `weathercode` (voir `about.html`)
 - Améliorations possibles : parcours itinéraire (a mettre en place avec l'aide d'autre API), notifications météo, accessibilité améliorée
 - Affichage plus lisible (couleur de la case en fonction du jour ou de la nuit, grand emoji pour le score météo, ...)
