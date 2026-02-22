@@ -23,36 +23,21 @@ Application Angular permettant de comparer la météo heure par heure entre plus
 - npm (ou `pnpm`/`yarn`) : version récente
 - Angular CLI (optionnel) : `npm install -g @angular/cli`
 
-Commandes d'installation :
+
+Pour démarrer le docker :
 
 ```bash
-npm install
-```
-
-Pour démarrer en développement :
-
-```bash
-npm run start
-# ou (si le script est `ng serve`)
-# ng serve --open
-```
-
-Build de production :
-
-```bash
-npm run build
-```
-
----
-
-## Lancer avec Docker (optionnel)
-Si vous fournissez `Dockerfile` et `docker-compose.yml`, build et run :
-
-```bash
-docker build -t tourmeteo:latest .
-docker run -p 4200:80 tourmeteo:latest
+docker compose build 
+docker compose up
 # ou
 docker-compose up --build
+```
+
+Actualisation rapide en mode developpement :
+
+```bash
+cd .\TourMeteo\
+npm run watch
 ```
 
 ---
