@@ -1,7 +1,7 @@
 <section class="bg-white rounded-xl border border-slate-200 p-6 shadow">
   <header class="mb-4">
     <h1 class="text-2xl font-bold text-slate-900">{{ title }}</h1>
-    <p class="text-slate-500 mt-1">TourMeteo — une application de comparaison météo entre plusieurs villes, heure par heure</p>
+    <p class="text-slate-500 mt-1">TourMeteo — une application de comparaison météo entre plusieurs villes, heure par heure, pensée pour les cyclistes et randonneurs.</p>
   </header>
 
   <div class="mb-4">
@@ -12,8 +12,22 @@
   <div class="mb-4">
     <h2 class="font-semibold text-slate-800">APIs utilisées</h2>
     <ul class="mt-2 list-disc pl-5 text-slate-700">
-      <li><strong>Géocodage :</strong> Nominatim (OpenStreetMap) — recherche d'emplacements</li>
-      <li><strong>Météo :</strong> Open-Meteo — données météo horaires (température, vent, weathercode)</li>
+      <li><strong>Géocodage :</strong> Nominatim (OpenStreetMap) — recherche d'emplacements et reverse-géocodage (lat/lon → ville)</li>
+      <li><strong>Météo :</strong> Open-Meteo — données météo horaires (température, vent, direction du vent, weathercode, jour/nuit)</li>
+    </ul>
+  </div>
+
+  <div class="mb-4">
+    <h2 class="font-semibold text-slate-800">Fonctionnalités</h2>
+    <ul class="mt-2 list-disc pl-5 text-slate-700">
+      <li><strong>Recherche multi-villes :</strong> comparer la météo horaire de plusieurs villes sur une même date</li>
+      <li><strong>Filtres d'affichage :</strong> température, vent, résumé météo (activables/désactivables)</li>
+      <li><strong>Import GPX :</strong> charger un fichier <code>.gpx</code> pour calculer la distance totale du parcours</li>
+      <li><strong>Calcul d'itinéraire :</strong> estimation de l'heure de passage selon la vitesse moyenne et l'heure de départ</li>
+      <li><strong>Reverse-géocodage :</strong> détection automatique de la ville à chaque point (Nominatim, throttlé ~1 req/s, échantillonnage par distance)</li>
+      <li><strong>Météo par passage :</strong> température, vent (vitesse + direction cardinale) et emoji weathercode à l'heure estimée</li>
+      <li><strong>Export PNG :</strong> génération d'une image PNG du tableau des passages (rendu Canvas natif, sans librairie externe)</li>
+      <li><strong>Partage :</strong> via l'API Web Share sur navigateurs compatibles ; téléchargement automatique sinon</li>
     </ul>
   </div>
 
@@ -24,23 +38,26 @@
       <li>🌤️ Partiellement nuageux (1, 2)</li>
       <li>☁️ Couvert (3)</li>
       <li>🌫️ Brouillard (45, 48)</li>
-      <li>🌦️ Bruine / Averses légères (51, 53, 55 / 80, 81, 82)</li>
+      <li>🌦️ Bruine / Averses (51, 53, 55, 80, 81, 82)</li>
       <li>🌧️ Pluie / Bruine verglaçante (56, 57, 61, 63, 65, 66, 67)</li>
-      <li>❄️ Neige (71, 73, 75) / Grains de neige (77)</li>
+      <li>❄️ Neige / Grains de neige (71, 73, 75, 77)</li>
       <li>🌨️ Averses de neige (85, 86)</li>
-      <li>⛈️ Orage (95) / Orage avec grêle (96, 99)</li>
+      <li>⛈️ Orage / Orage avec grêle (95, 96, 99)</li>
       <li>❓ Inconnu (autres codes)</li>
     </ol>
   </div>
 
+  <div class="mb-4">
+    <h3 class="font-semibold text-slate-800">Import GPX et export</h3>
+    <p class="text-slate-500 mt-2">Importez un fichier <strong>.gpx</strong> via la page <em>GPX</em>. L'application parse les points <code>trkpt</code>, calcule la distance totale (formule de Haversine), puis estime l'heure de passage à chaque point d'échantillonnage selon la vitesse moyenne renseignée.</p>
+    <p class="text-slate-500 mt-1">Pour chaque point, un reverse-géocodage Nominatim identifie la ville, puis la météo horaire est récupérée via Open-Meteo. Les villes inconnues et les doublons consécutifs sont filtrés automatiquement.</p>
+    <p class="text-slate-500 mt-1">Les résultats peuvent être <strong>exportés en image PNG</strong> (rendu Canvas natif) ou <strong>partagés</strong> via l'API Web Share. Si le navigateur ne supporte pas le partage de fichiers, un téléchargement est proposé automatiquement.</p>
+  </div>
+
   <div>
     <h3 class="font-semibold text-slate-800">Remarques</h3>
-    <p class="text-slate-500 mt-2">Les données sont obtenues en temps réel depuis les APIs publiques listées ci‑dessus.</p> 
-    <p>Aucune donnée utilisateur n'est envoyée à des services autres que ceux mentionnés.</p>
-  </div>
-  <div class="mt-4">
-    <h3 class="font-semibold text-slate-800">Import GPX et export</h3>
-    <p class="text-slate-500 mt-2">Vous pouvez importer un fichier <strong>.gpx</strong> via la page <em>Import GPX</em>. L'application calcule la distance, estime l'heure de passage selon la vitesse moyenne renseignée, récupère la ville (reverse-geocoding) et affiche la météo horaire pour chaque passage.</p>
-    <p class="text-slate-500 mt-1">Les résultats peuvent être exportés en image PNG ou partagés depuis les navigateurs qui supportent l'API de partage. Pour éviter les limitations d'usage des services de géocodage, l'app effectue un échantillonnage par distance et applique un throttle aux requêtes.</p>
+    <p class="text-slate-500 mt-2">Les données sont obtenues en temps réel depuis les APIs publiques listées ci‑dessus.</p>
+    <p class="text-slate-500 mt-1">Aucune donnée utilisateur n'est envoyée à des services autres que ceux mentionnés.</p>
+    <p class="text-slate-500 mt-1">Nominatim applique des limites d'usage (1 requête/seconde). L'application utilise un throttle et un échantillonnage par distance (~2 km) pour respecter ces contraintes.</p>
   </div>
 </section>
