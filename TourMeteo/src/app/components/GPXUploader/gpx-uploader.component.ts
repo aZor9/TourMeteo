@@ -31,6 +31,7 @@ export class GpxUploaderComponent {
   }> = [];
   progressText = '';
   displayDate = '';
+  exportMessage = '';
 
   constructor(private http: HttpClient, private cd: ChangeDetectorRef, private weatherService: WeatherService) {
     // default departure: today at 09:00
@@ -229,6 +230,181 @@ export class GpxUploaderComponent {
     this.loading = false;
     this.progressText = 'Terminé';
     this.cd.detectChanges();
+  }
+
+  // Export the results container as PNG using html2canvas
+  async exportAsImage() {
+    console.log('exportAsImage called');
+    this.exportMessage = 'Génération en cours...';
+    this.exportMessage = 'Génération en cours...';
+    try {
+      const blob = await this.renderDataToPngBlob(this.passages, this.displayDate, 2);
+      if (!blob) { this.exportMessage = 'Échec de génération'; return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `gpx-passages-${this.displayDate.replace(/\//g,'-')}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      this.exportMessage = 'Image téléchargée';
+    } catch (e: any) {
+      console.error('exportAsImage error', e);
+      this.exportMessage = 'Erreur export: ' + (e?.message || String(e));
+    }
+  }
+
+  // Try to share the generated image using Web Share API (if supported)
+  async shareImage() {
+    console.log('shareImage called');
+    this.exportMessage = 'Génération en cours...';
+    this.exportMessage = 'Génération en cours...';
+    if (!('canShare' in navigator) && !('share' in navigator)) {
+      this.exportMessage = 'Partage non supporté par ce navigateur';
+      return;
+    }
+    try {
+      const blob = await this.renderDataToPngBlob(this.passages, this.displayDate, 2);
+      if (!blob) { this.exportMessage = 'Échec génération'; return; }
+      const file = new File([blob], `gpx-passages-${this.displayDate.replace(/\//g,'-')}.png`, { type: 'image/png' });
+      // @ts-ignore
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        // @ts-ignore
+        await navigator.share({ files: [file], title: 'GPX Passages', text: `Passages ${this.displayDate}` });
+        this.exportMessage = 'Partagé';
+      } else {
+        this.exportMessage = 'Partage de fichiers non supporté; téléchargement lancé';
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (e: any) {
+      console.error('shareImage error', e);
+      this.exportMessage = 'Erreur partage: ' + (e?.message || String(e));
+    }
+  }
+
+  // Render the passages data directly to a PNG blob using canvas (no foreignObject)
+  async renderDataToPngBlob(passages: typeof this.passages, dateLabel: string, scale = 2): Promise<Blob | null> {
+    // simple layout
+    const padding = 20;
+    const rowHeight = 56;
+    const headerHeight = 60;
+    const width = Math.max(520, 700);
+    const height = headerHeight + passages.length * rowHeight + padding * 2;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.scale(scale, scale);
+    // background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+
+    // title/date
+    ctx.fillStyle = '#111827';
+    ctx.font = '20px system-ui, Arial';
+    ctx.fillText(`Date: ${dateLabel}`, padding, padding + 18);
+
+    // header
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '14px system-ui, Arial';
+    ctx.fillText('Ville', padding, padding + headerHeight - 28);
+    ctx.fillText('Heure', padding + 240, padding + headerHeight - 28);
+    ctx.fillText('Météo', padding + 340, padding + headerHeight - 28);
+
+    // rows
+    let y = padding + headerHeight - 8;
+    for (const p of passages) {
+      y += rowHeight - 8;
+      // background row
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(padding, y - (rowHeight - 16), width - padding * 2, rowHeight - 16);
+
+      // city
+      ctx.fillStyle = '#111827';
+      ctx.font = '16px system-ui, Arial';
+      ctx.fillText(p.city, padding + 4, y + 4);
+
+      // time
+      ctx.fillStyle = '#374151';
+      ctx.font = '14px system-ui, Arial';
+      const hh = String(p.time.getHours()).padStart(2, '0');
+      const mm = String(p.time.getMinutes()).padStart(2, '0');
+      ctx.fillText(`${hh}:${mm}`, padding + 240, y + 4);
+
+      // weather: emoji, temp, wind
+      const desc = this.getWeatherDescription(p.weather?.code);
+      ctx.fillText(desc.emoji, padding + 340, y + 4);
+      const temp = p.weather?.temperature !== undefined ? `${p.weather.temperature}°C` : '';
+      ctx.fillText(temp, padding + 370, y + 4);
+      const wind = p.weather?.wind !== undefined ? `Vent ${p.weather.wind} m/s` : '';
+      const windDir = p.weather?.windDir ? ` (${this.degreesToCardinal(p.weather.windDir)})` : '';
+      ctx.fillText(wind + windDir, padding + 440, y + 4);
+    }
+
+    return await new Promise<Blob | null>(res => canvas.toBlob(b => res(b), 'image/png'));
+  }
+
+  // Render DOM node to PNG blob without external libraries.
+  async nodeToPngBlob(node: HTMLElement, scale = 2): Promise<Blob | null> {
+    // clone node and inline computed styles
+    const clone = node.cloneNode(true) as HTMLElement;
+
+    const inlineStyles = (source: Element, target: Element) => {
+      try {
+        const cs = window.getComputedStyle(source as Element);
+        (target as HTMLElement).style.cssText = cs.cssText;
+      } catch (e) {
+        // ignore
+      }
+      const srcChildren = Array.from(source.children || []);
+      const tgtChildren = Array.from(target.children || []);
+      for (let i = 0; i < srcChildren.length; i++) {
+        if (tgtChildren[i]) inlineStyles(srcChildren[i], tgtChildren[i]);
+      }
+    };
+    inlineStyles(node, clone);
+
+    const rect = node.getBoundingClientRect();
+    const width = Math.ceil(rect.width);
+    const height = Math.ceil(rect.height);
+
+    // Serialize clone to XHTML for foreignObject
+    const serialized = new XMLSerializer().serializeToString(clone);
+    const svgString = `<?xml version="1.0" encoding="utf-8"?>\n` +
+      `<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}'>` +
+      `<foreignObject width='100%' height='100%'>` +
+      `<div xmlns='http://www.w3.org/1999/xhtml' style='width:${width}px;height:${height}px;'>${serialized}</div>` +
+      `</foreignObject></svg>`;
+
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    try {
+      const img = await new Promise<HTMLImageElement>((res, rej) => {
+        const i = new Image();
+        i.onload = () => res(i);
+        i.onerror = (e) => rej(e);
+        i.src = url;
+      });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(width * scale));
+      canvas.height = Math.max(1, Math.round(height * scale));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      return await new Promise<Blob | null>(res => canvas.toBlob(b => res(b), 'image/png'));
+    } finally {
+      URL.revokeObjectURL(url);
+    }
   }
 
   reverseGeocode(lat: number, lon: number): Promise<string> {
