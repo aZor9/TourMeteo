@@ -1,5 +1,17 @@
 # TourMeteo
 
+> ## ⚠️ Information importante sur les branches
+>
+> **La branche `dev` est la version la plus récente et la plus complète du projet.**
+> Elle est actuellement déployée et accessible en ligne : **https://tour-meteo.vercel.app/**
+>
+> La branche `main` correspond à une version soumise dans le cadre d'un projet en attente de validation externe.
+> Son contenu ne sera pas modifié tant que cette validation n'aura pas eu lieu.
+>
+> **Pour consulter les dernières fonctionnalités (import GPX, export PNG, partage, etc.), basculez sur la branche `dev`.**
+
+---
+
 Application Angular permettant de comparer la météo heure par heure entre plusieurs villes — outil pensé pour les cyclistes.
 
 ---
@@ -7,7 +19,7 @@ Application Angular permettant de comparer la météo heure par heure entre plus
 ## Architecture du projet
 - Projet Angular complet — dossier racine `TourMeteo/`
 - Document texte (ce `readme.md`) listant : membres, API, instructions de lancement
-- Fichiers auxiliaires : `Dockerfile`, `docker-compose.yml` (si présent)
+- Fichiers auxiliaires : `Dockerfile`, `docker-compose.yml`
 
 ---
 
@@ -22,21 +34,31 @@ Application Angular permettant de comparer la météo heure par heure entre plus
 - Node.js : version 18+ recommandée
 - npm (ou `pnpm`/`yarn`) : version récente
 - Angular CLI (optionnel) : `npm install -g @angular/cli`
+- Docker (optionnel) : pour lancer le projet via conteneur
 
 
-Pour démarrer le docker :
+### Docker (recommandé)
 
 ```bash
-docker compose build 
+docker compose build
 docker compose up
 # ou
 docker-compose up --build
+# → http://localhost:4200
 ```
 
-Actualisation rapide en mode developpement :
+### Développement local (sans Docker)
 
 ```bash
-cd .\TourMeteo\
+cd TourMeteo
+npm install
+npm start           # ng serve → http://localhost:4200
+```
+
+### Mode watch (rebuild automatique)
+
+```bash
+cd TourMeteo
 npm run watch
 ```
 
@@ -55,14 +77,14 @@ npm run watch
 
 ## Fonctionnalités et améliorations possibles
 - Fonctionnalités : sélection multi-villes, tableau horaire, légende `weathercode` (voir `about.html`)
-- Améliorations possibles : parcours itinéraire (a mettre en place avec l'aide d'autre API), notifications météo, accessibilité améliorée
-- Affichage plus lisible (couleur de la case en fonction du jour ou de la nuit, grand emoji pour le score météo, ...)
-- Mettre l'application web  accessible en ligne
+- Améliorations possibles : parcours itinéraire (à mettre en place avec l'aide d'autres API), notifications météo, accessibilité améliorée
+- Affichage plus lisible (couleur de la case en fonction du jour ou de la nuit, grand emoji pour le score météo, …)
+- ✅ Application web accessible en ligne (Vercel) — voir la branche `dev`
 
 ---
 
 ## Difficultés rencontrées
-- Trouver un moyen de transmettre des longitudes et lattitudes a l'API météo.
+- Trouver un moyen de transmettre des longitudes et latitudes à l'API météo.
 
 ---
 
