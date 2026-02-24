@@ -4,7 +4,7 @@ import { CityService } from './city.service';
 
 export interface WeatherCity {
   city: string;
-  hourly: Array<{ hour: string; temperature: number; wind: number; summary: string; isDay: boolean }>;
+  hourly: Array<{ hour: string; temperature: number; wind: number; windDir?: number; summary: number; isDay: boolean }>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -19,7 +19,7 @@ export class WeatherService {
     // obtenir latitude/longitude (CityService retourne maintenant une Promise)
     const { lat, lon } = await this.cityService.getLatLon(city);
 
-    const url = `${this.weatherApiUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,weathercode,is_day&start_date=${date}&end_date=${date}`;
+    const url = `${this.weatherApiUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,winddirection_10m,weathercode,is_day&start_date=${date}&end_date=${date}`;
 
     // wrapper simple en Promise pour convertir l'Observable Http en Promise
     const response: any = await new Promise((resolve, reject) => {
@@ -31,6 +31,7 @@ export class WeatherService {
       hour,
       temperature: response.hourly.temperature_2m[i],
       wind: response.hourly.wind_speed_10m[i],
+      windDir: response.hourly.winddirection_10m ? response.hourly.winddirection_10m[i] : undefined,
       summary: response.hourly.weathercode[i],
       isDay: !!response.hourly.is_day && response.hourly.is_day[i] === 1
     }));

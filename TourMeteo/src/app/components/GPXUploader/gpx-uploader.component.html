@@ -1,0 +1,65 @@
+<div class="p-4">
+  <h2 class="text-xl font-bold mb-3">Import GPX</h2>
+
+  <div class="mb-3">
+    <label class="block mb-1">Fichier GPX</label>
+    <input type="file" accept=".gpx" (change)="onFileChange($event)" />
+  </div>
+
+
+  <div class="p-6 bg-white rounded-lg shadow mt-4">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <div *ngIf="parseMessage" class="text-sm text-slate-600">{{ parseMessage }}</div>
+        <div class="text-lg font-semibold">Distance totale: {{ totalDistanceKm }} km</div>
+      </div>
+      <div *ngIf="points.length > 1" class="text-sm">
+        <label class="block">Vitesse moyenne (km/h)</label>
+        <input type="number" [(ngModel)]="avgSpeed" min="1" class="border p-1 rounded w-24" />
+        <label class="block mt-2">Heure de départ</label>
+        <input type="datetime-local" [(ngModel)]="departure" class="border p-1 rounded" />
+        <div class="mt-2">
+          <button (click)="computeSchedule()" class="px-3 py-1 rounded bg-blue-500 text-white">Calculer</button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="progressText" class="mb-3 text-sm text-slate-700">{{ progressText }}</div>
+    <div *ngIf="loading" class="flex items-center gap-2 mb-3">
+      <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      <div class="text-sm text-slate-600">Traitement en cours...</div>
+    </div>
+
+    <div *ngIf="passages.length > 0" class="mb-2 font-medium">Date: {{ displayDate }}</div>
+    <table *ngIf="passages.length > 0" class="w-full border-collapse">
+      <thead>
+        <tr class="text-left text-sm text-slate-600 border-b">
+          <th class="py-2">Ville</th>
+          <th class="py-2">Heure</th>
+          <th class="py-2">Météo (heure)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of passages" class="border-b">
+          <td class="py-2">{{ p.city }}</td>
+          <td class="py-2">{{ p.time | date:'HH:mm' }}</td>
+          <td class="py-2">
+            <div *ngIf="p.status === 'pending'" class="text-sm text-slate-500">En cours...</div>
+            <div *ngIf="p.status === 'error'" class="text-sm text-red-600">Erreur: {{ p.message }}</div>
+            <div *ngIf="p.status === 'ok'" class="text-sm flex items-center gap-2">
+              <span class="text-lg">{{ getWeatherDescription(p.weather?.code).emoji }}</span>
+              <div>
+                <div>{{ p.weather?.temperature }}°C</div>
+                <div class="text-xs text-slate-600">{{ getWeatherDescription(p.weather?.code).desc }}</div>
+                <div class="text-xs text-slate-600">Vent: {{ p.weather?.wind }} m/s <span *ngIf="p.weather?.windDir">({{ degreesToCardinal(p.weather?.windDir) }})</span></div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
