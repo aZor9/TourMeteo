@@ -210,7 +210,7 @@ export class GpxUploaderComponent {
           const targetHour = p.time.getHours();
           const found = weather.hourly.find(h => new Date(h.hour).getHours() === targetHour) || weather.hourly.reduce((a,b)=>Math.abs(new Date(a.hour).getTime()-p.time.getTime())<Math.abs(new Date(b.hour).getTime()-p.time.getTime())?a:b);
           if (found) {
-            p.weather = { temperature: found.temperature, code: found.summary };
+            p.weather = { temperature: found.temperature, code: found.summary, wind: found.wind, windDir: found.windDir };
             p.status = 'ok';
           } else {
             p.status = 'error';
