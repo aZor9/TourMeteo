@@ -57,3 +57,19 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## GPX import and PNG export
+
+This app includes an "Import GPX" page where you can upload a .gpx track. The app:
+
+- Parses the GPX track and computes total distance.
+- Lets you enter an average speed and departure time to estimate passage times.
+- Performs reverse-geocoding to find nearby cities (sampling by distance and throttling requests to avoid rate limits).
+- Fetches hourly weather for each passage and displays an emoji/description, temperature and wind.
+
+You can export the results as a PNG image or share them via the Web Share API on supported browsers.
+
+Notes:
+
+- The app performs client-side reverse-geocoding using Nominatim (OpenStreetMap). Nominatim enforces rate limits and CORS — for robust production usage consider routing requests through a small server-side proxy with caching and a proper User-Agent header.
+- Export is implemented client-side (no extra dependency) and produces a simple PNG summary of passages.

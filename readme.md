@@ -56,6 +56,14 @@ npm run watch
 ## Fonctionnalités et améliorations possibles
 - Fonctionnalités : sélection multi-villes, tableau horaire, légende `weathercode` (voir `about.html`)
 - Améliorations possibles : parcours itinéraire (a mettre en place avec l'aide d'autre API), notifications météo, accessibilité améliorée
+- 
+- ## Import GPX et export PNG
+-
+- - Page « Import GPX » : importez un fichier `.gpx` pour calculer la distance et estimer les heures de passage selon une vitesse moyenne et une heure de départ.
+- - L'application tente de déterminer la ville à chaque passage (reverse-geocoding), récupère la météo horaire (Open-Meteo) et affiche température, vent et un emoji descriptif.
+- - Export / partage : les résultats peuvent être exportés en image PNG ou partagés via l'API Web Share sur les navigateurs compatibles.
+-
+- - Remarque : Nominatim (OpenStreetMap) applique des limites d'usage et peut bloquer les requêtes CORS. Pour un usage stable en production, déployer un petit proxy serveur (Express) avec cache et throttle est recommandé.
 - Affichage plus lisible (couleur de la case en fonction du jour ou de la nuit, grand emoji pour le score météo, ...)
 - Mettre l'application web  accessible en ligne
 
