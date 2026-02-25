@@ -1,7 +1,6 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { RouterOutlet } from '@angular/router';
 import { WeatherService, WeatherCity } from '../../service/weather.service';
 import { SearchTabComponent } from '../SearchTab/search-tab.component';
 import { WeatherSheetComponent } from '../WeatherSheet/weather-sheet.component';
@@ -9,7 +8,7 @@ import { WeatherSheetComponent } from '../WeatherSheet/weather-sheet.component';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, RouterOutlet, SearchTabComponent, WeatherSheetComponent],
+  imports: [CommonModule, HttpClientModule, SearchTabComponent, WeatherSheetComponent],
   templateUrl: './app.html',
   providers: [WeatherService]
 })
