@@ -25,13 +25,19 @@ export class GpxUploaderComponent {
     lat: number;
     lon: number;
     time: Date;
+    distanceKm: number;
     status: 'pending' | 'ok' | 'error';
     message?: string;
-    weather?: { temperature?: number; code?: number; wind?: number; windDir?: number; isDay?: boolean };
+    weather?: { temperature?: number; code?: number; wind?: number; windDir?: number; isDay?: boolean; precipitation?: number; precipitationProbability?: number; humidity?: number; apparentTemperature?: number };
   }> = [];
   progressText = '';
   displayDate = '';
   exportMessage = '';
+  durationText = '';
+  departureTime = '';
+  arrivalTime = '';
+  cityCount = 0;
+  private map: any = null;
 
   constructor(private http: HttpClient, private cd: ChangeDetectorRef, private weatherService: WeatherService) {
     // default departure: today at 09:00
@@ -164,7 +170,7 @@ export class GpxUploaderComponent {
       if (seenCoords.has(key)) {
         // duplicate area, skip reverse-geocoding
         const city = coordToCity.get(key) || 'Inconnu';
-        this.passages.push({ city, lat, lon, time, status: 'pending' });
+        this.passages.push({ city, lat, lon, time, distanceKm: +(meters / 1000).toFixed(1), status: 'pending' });
       } else {
         seenCoords.add(key);
         // be polite: wait ~1.1s between Nominatim calls to avoid rate limits
@@ -172,10 +178,10 @@ export class GpxUploaderComponent {
           await delay(1100);
           const city = await this.reverseGeocode(lat, lon);
           coordToCity.set(key, city);
-          this.passages.push({ city, lat, lon, time, status: 'pending' });
+          this.passages.push({ city, lat, lon, time, distanceKm: +(meters / 1000).toFixed(1), status: 'pending' });
         } catch (err: any) {
           coordToCity.set(key, 'Inconnu');
-          this.passages.push({ city: 'Inconnu', lat, lon, time, status: 'error', message: err?.message || 'Reverse geocode failed' });
+          this.passages.push({ city: 'Inconnu', lat, lon, time, distanceKm: +(meters / 1000).toFixed(1), status: 'error', message: err?.message || 'Reverse geocode failed' });
         }
       }
       this.progressText = `Recherche des villes... (${this.passages.length} passages échantillonnés, ${coordToCity.size} géocodages)`;
@@ -211,7 +217,7 @@ export class GpxUploaderComponent {
           const targetHour = p.time.getHours();
           const found = weather.hourly.find(h => new Date(h.hour).getHours() === targetHour) || weather.hourly.reduce((a,b)=>Math.abs(new Date(a.hour).getTime()-p.time.getTime())<Math.abs(new Date(b.hour).getTime()-p.time.getTime())?a:b);
           if (found) {
-            p.weather = { temperature: found.temperature, code: found.summary, wind: found.wind, windDir: found.windDir, isDay: found.isDay };
+            p.weather = { temperature: found.temperature, code: found.summary, wind: found.wind, windDir: found.windDir, isDay: found.isDay, precipitation: found.precipitation, precipitationProbability: found.precipitationProbability, humidity: found.humidity, apparentTemperature: found.apparentTemperature };
             p.status = 'ok';
           } else {
             p.status = 'error';
@@ -229,7 +235,86 @@ export class GpxUploaderComponent {
 
     this.loading = false;
     this.progressText = 'Terminé';
+
+    // Compute summary stats
+    this.cityCount = this.passages.length;
+    if (this.passages.length > 0) {
+      const dep = this.passages[0].time;
+      const arr = this.passages[this.passages.length - 1].time;
+      this.departureTime = `${String(dep.getHours()).padStart(2,'0')}:${String(dep.getMinutes()).padStart(2,'0')}`;
+      this.arrivalTime = `${String(arr.getHours()).padStart(2,'0')}:${String(arr.getMinutes()).padStart(2,'0')}`;
+      const diffMs = arr.getTime() - dep.getTime();
+      const diffH = Math.floor(diffMs / 3600000);
+      const diffM = Math.round((diffMs % 3600000) / 60000);
+      this.durationText = `${diffH}h${String(diffM).padStart(2,'0')}`;
+    }
+
+    // Render map
+    this.renderMap();
+
     this.cd.detectChanges();
+  }
+
+  // Render Leaflet map with route polyline and city markers
+  async renderMap() {
+    // Dynamic import of Leaflet
+    const L = (await import('leaflet')).default || await import('leaflet');
+
+    // Fix default marker icons for Leaflet (bundled assets are broken in Angular)
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    });
+
+    // Destroy previous map instance
+    if (this.map) {
+      this.map.remove();
+      this.map = null;
+    }
+
+    const container = document.getElementById('gpx-map');
+    if (!container) return;
+
+    this.map = L.map('gpx-map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(this.map);
+
+    // Draw full route polyline from GPX points
+    if (this.points.length > 1) {
+      const routeLatLngs = this.points.map(p => L.latLng(p.lat, p.lon));
+      L.polyline(routeLatLngs, { color: '#4F46E5', weight: 4, opacity: 0.8 }).addTo(this.map);
+    }
+
+    // Add numbered circle markers for each passage city
+    const bounds: any[] = [];
+    this.passages.forEach((p, idx) => {
+      const latlng = L.latLng(p.lat, p.lon);
+      bounds.push(latlng);
+      const marker = L.circleMarker(latlng, {
+        radius: 14,
+        fillColor: '#4F46E5',
+        color: '#ffffff',
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0.9
+      }).addTo(this.map);
+      // Number label using a divIcon overlaid
+      const numberIcon = L.divIcon({
+        html: `<div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#4F46E5;color:#fff;font-weight:bold;font-size:13px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3)">${idx + 1}</div>`,
+        className: '',
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
+      });
+      L.marker(latlng, { icon: numberIcon }).addTo(this.map)
+        .bindPopup(`<b>${idx + 1}. ${p.city}</b><br>${p.distanceKm} km`);
+    });
+
+    if (bounds.length > 0) {
+      this.map.fitBounds(L.latLngBounds(bounds).pad(0.1));
+    }
   }
 
   // Export the results container as PNG using html2canvas
@@ -288,11 +373,12 @@ export class GpxUploaderComponent {
 
   // Render the passages data directly to a PNG blob using canvas (no foreignObject)
   async renderDataToPngBlob(passages: typeof this.passages, dateLabel: string, scale = 2): Promise<Blob | null> {
-    const padding = 20;
-    const rowHeight = 48;
+    const padding = 28;
+    const rowHeight = 64;
     const headerHeight = 60;
-    const width = 750;
-    const height = headerHeight + passages.length * rowHeight + padding * 2 + 10;
+    const summaryHeight = 60;
+    const width = 860;
+    const height = headerHeight + summaryHeight + passages.length * rowHeight + padding * 2 + 10;
 
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(width * scale);
@@ -310,24 +396,40 @@ export class GpxUploaderComponent {
     ctx.font = 'bold 18px system-ui, Arial';
     ctx.fillText(`📅 ${dateLabel}`, padding, padding + 20);
 
+    // summary row
+    const summaryY = padding + 35;
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(padding, summaryY, width - padding * 2, 36);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '12px system-ui, Arial';
+    ctx.fillText(`📏 ${this.totalDistanceKm} km   ⏱ ${this.durationText}   🕐 ${this.departureTime} → ${this.arrivalTime}   📍 ${this.cityCount} villes`, padding + 8, summaryY + 23);
+
+    // Column layout:  # | Ville (+ km sous ville) | Heure | Météo (centré dans la zone)
+    const colNum = padding + 8;        // #
+    const colCity = padding + 44;      // Ville
+    const colHour = padding + 240;     // Heure
+    const colMeteoStart = padding + 320; // début zone météo
+    const colMeteoEnd = width - padding; // fin zone météo
+    const colMeteoCenter = (colMeteoStart + colMeteoEnd) / 2;
+
     // header row
-    const headerY = padding + 40;
+    const headerY = summaryY + 44;
     ctx.fillStyle = '#f1f5f9';
     ctx.fillRect(padding, headerY, width - padding * 2, 28);
     ctx.fillStyle = '#64748b';
-    ctx.font = 'bold 12px system-ui, Arial';
-    ctx.fillText('VILLE', padding + 8, headerY + 18);
-    ctx.fillText('HEURE', padding + 220, headerY + 18);
-    ctx.fillText('MÉTÉO', padding + 310, headerY + 18);
-    ctx.fillText('JOUR/NUIT', padding + 620, headerY + 18);
+    ctx.font = 'bold 11px system-ui, Arial';
+    ctx.fillText('#', colNum, headerY + 18);
+    ctx.fillText('VILLE', colCity, headerY + 18);
+    ctx.fillText('HEURE', colHour, headerY + 18);
+    ctx.fillText('MÉTÉO', colMeteoStart + 10, headerY + 18);
 
     // data rows
     const startY = headerY + 32;
     passages.forEach((p, idx) => {
       const rowTop = startY + idx * rowHeight;
-      const textY = rowTop + rowHeight / 2 + 5; // vertically centered text baseline
+      const textY = rowTop + rowHeight / 2;
 
-      // row background – alternating + day/night tint
+      // row background
       if (p.weather?.isDay !== undefined) {
         ctx.fillStyle = p.weather.isDay ? '#fffbeb' : '#eef2ff';
       } else {
@@ -335,7 +437,7 @@ export class GpxUploaderComponent {
       }
       ctx.fillRect(padding, rowTop, width - padding * 2, rowHeight);
 
-      // subtle bottom border
+      // border
       ctx.strokeStyle = '#e2e8f0';
       ctx.lineWidth = 0.5;
       ctx.beginPath();
@@ -343,43 +445,63 @@ export class GpxUploaderComponent {
       ctx.lineTo(width - padding, rowTop + rowHeight);
       ctx.stroke();
 
-      // city
+      // number badge
+      ctx.fillStyle = '#4F46E5';
+      ctx.beginPath();
+      ctx.arc(colNum + 10, textY, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px system-ui, Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(String(idx + 1), colNum + 10, textY + 4);
+      ctx.textAlign = 'left';
+
+      // city name
       ctx.fillStyle = '#111827';
-      ctx.font = 'bold 14px system-ui, Arial';
-      ctx.fillText(p.city, padding + 8, textY);
+      ctx.font = 'bold 13px system-ui, Arial';
+      ctx.fillText(p.city, colCity, textY - 4);
+      // distance under city
+      ctx.fillStyle = '#ef4444';
+      ctx.font = '11px system-ui, Arial';
+      ctx.fillText(`📍 ${p.distanceKm} km`, colCity, textY + 12);
 
       // time
       ctx.fillStyle = '#374151';
       ctx.font = '14px system-ui, Arial';
       const hh = String(p.time.getHours()).padStart(2, '0');
       const mm = String(p.time.getMinutes()).padStart(2, '0');
-      ctx.fillText(`${hh}:${mm}`, padding + 220, textY);
+      ctx.fillText(`${hh}:${mm}`, colHour, textY + 2);
 
-      // weather
+      // weather — centered in [colMeteoStart .. colMeteoEnd]
       if (p.weather) {
         const desc = this.getWeatherDescription(p.weather.code);
-        ctx.font = '14px system-ui, Arial';
-        ctx.fillStyle = '#111827';
-        const tempStr = p.weather.temperature !== undefined ? `${p.weather.temperature}°C` : '';
-        ctx.fillText(`${desc.emoji} ${tempStr}`, padding + 310, textY);
 
+        // Left part: wind + rain details
         ctx.fillStyle = '#64748b';
-        ctx.font = '12px system-ui, Arial';
-        const windStr = p.weather.wind !== undefined ? `💨 ${p.weather.wind} m/s` : '';
-        const windDir = p.weather.windDir ? ` ${this.degreesToCardinal(p.weather.windDir)}` : '';
-        ctx.fillText(windStr + windDir, padding + 310, textY + 16);
-
-        ctx.fillStyle = '#6b7280';
         ctx.font = '11px system-ui, Arial';
-        ctx.fillText(desc.desc, padding + 460, textY);
-      }
+        const windStr = `💨 ${p.weather.wind} km/h`;
+        const rainStr = `🌂 ${p.weather.precipitationProbability ?? 0}% · ${p.weather.precipitation ?? 0} mm`;
+        ctx.fillText(`${windStr}  ${rainStr}`, colMeteoStart + 10, textY + 14);
 
-      // jour/nuit badge
-      if (p.weather?.isDay !== undefined) {
-        const label = p.weather.isDay ? '☀️ Jour' : '🌙 Nuit';
-        ctx.fillStyle = p.weather.isDay ? '#92400e' : '#4338ca';
-        ctx.font = 'bold 12px system-ui, Arial';
-        ctx.fillText(label, padding + 620, textY);
+        // Right part: emoji + temp + desc (centered in right half of meteo zone)
+        const rightCenter = colMeteoCenter + (colMeteoEnd - colMeteoCenter) / 2;
+
+        // emoji
+        ctx.font = '26px system-ui, Arial';
+        ctx.fillStyle = '#111827';
+        ctx.textAlign = 'center';
+        ctx.fillText(desc.emoji, rightCenter - 30, textY + 4);
+
+        // temp
+        ctx.font = 'bold 18px system-ui, Arial';
+        ctx.fillText(`${p.weather.temperature}°`, rightCenter + 16, textY - 2);
+
+        // apparent temp + desc
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px system-ui, Arial';
+        const apparentStr = p.weather.apparentTemperature !== undefined ? `Ressenti ${p.weather.apparentTemperature}°` : '';
+        ctx.fillText(`${apparentStr} · ${desc.desc}`, rightCenter, textY + 16);
+        ctx.textAlign = 'left';
       }
     });
 
