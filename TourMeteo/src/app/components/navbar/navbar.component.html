@@ -1,14 +1,56 @@
-<nav class="flex items-center justify-between p-4 mb-6 rounded-lg border-b border-slate-200 shadow-sm"
-     style="background: linear-gradient(90deg, rgb(231, 243, 255) 0%, rgb(243, 247, 255) 50%, rgba(255,255,255,1) 100%);">
-  <a href="/" class="flex items-center gap-3">
-    <div class="p-1.5 rounded-md bg-slate-100">
-      <img src="/logo.png" alt="TourMeteo" class="w-6 h-6 object-contain">
+<nav class="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-slate-200 shadow-sm">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <!-- Logo + title -->
+    <a routerLink="/" class="flex items-center gap-2.5 no-underline">
+      <div class="p-1 rounded-lg bg-slate-100">
+        <img src="/logo.png" alt="TourMeteo" class="w-7 h-7 object-contain">
+      </div>
+      <span class="font-bold text-lg text-slate-800">TourMeteo</span>
+    </a>
+
+    <!-- Desktop links -->
+    <div class="hidden sm:flex items-center gap-1">
+      <a routerLink="/" routerLinkActive="bg-blue-50 text-blue-700" [routerLinkActiveOptions]="{exact: true}"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+        Accueil
+      </a>
+      <a routerLink="/gpx" routerLinkActive="bg-blue-50 text-blue-700"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+        GPX
+      </a>
+      <a routerLink="/about" routerLinkActive="bg-blue-50 text-blue-700"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+        À propos
+      </a>
     </div>
-    <div class="font-bold text-lg text-slate-800">TourMeteo</div>
-  </a>
-  <div class="space-x-4">
-    <a href="/" class="text-slate-600 hover:text-slate-800">Accueil</a>
-    <a href="/gpx" class="text-slate-600 hover:text-slate-800">GPX</a>
-    <a href="/about" class="text-slate-600 hover:text-slate-800">À propos</a>
+
+    <!-- Mobile hamburger -->
+    <button (click)="mobileMenuOpen = !mobileMenuOpen"
+            class="sm:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            [attr.aria-expanded]="mobileMenuOpen"
+            aria-label="Menu">
+      <svg *ngIf="!mobileMenuOpen" class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+      <svg *ngIf="mobileMenuOpen" class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Mobile menu dropdown -->
+  <div *ngIf="mobileMenuOpen" class="sm:hidden border-t border-slate-200 bg-white/95 backdrop-blur-md px-4 pb-3 space-y-1">
+    <a routerLink="/" (click)="mobileMenuOpen = false" routerLinkActive="bg-blue-50 text-blue-700" [routerLinkActiveOptions]="{exact: true}"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+      Accueil
+    </a>
+    <a routerLink="/gpx" (click)="mobileMenuOpen = false" routerLinkActive="bg-blue-50 text-blue-700"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+      GPX
+    </a>
+    <a routerLink="/about" (click)="mobileMenuOpen = false" routerLinkActive="bg-blue-50 text-blue-700"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+      À propos
+    </a>
   </div>
 </nav>

@@ -7,4 +7,4 @@ bootstrapApplication(RootComponent, appConfig)
   .catch((err) => console.error(err));
 
 // Also bootstrap the navbar into the static <app-navbar> element in index.html
-bootstrapApplication(NavbarComponent).catch((err) => console.error('Navbar bootstrap error', err));
+bootstrapApplication(NavbarComponent, appConfig).catch((err) => console.error('Navbar bootstrap error', err));

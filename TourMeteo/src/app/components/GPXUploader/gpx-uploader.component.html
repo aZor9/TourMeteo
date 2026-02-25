@@ -1,72 +1,133 @@
-<div class="p-4">
-  <h2 class="text-xl font-bold mb-3">Import GPX</h2>
+<div class="px-3 sm:px-6 py-4 max-w-4xl mx-auto">
+  <h2 class="text-xl font-bold text-slate-800 mb-4">Import GPX</h2>
 
-  <div class="mb-3">
-    <label class="block mb-1">Fichier GPX</label>
-    <input type="file" accept=".gpx" (change)="onFileChange($event)" />
+  <!-- File upload -->
+  <div class="mb-4">
+    <label class="block text-xs font-medium text-slate-500 mb-1.5">Fichier GPX</label>
+    <label class="flex items-center justify-center gap-2 w-full border-2 border-dashed border-slate-300 rounded-xl p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors">
+      <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+      </svg>
+      <span class="text-sm text-slate-500">Déposer ou sélectionner un fichier .gpx</span>
+      <input type="file" accept=".gpx" (change)="onFileChange($event)" class="hidden" />
+    </label>
   </div>
 
-
-  <div class="p-6 bg-white rounded-lg shadow mt-4">
-    <div class="flex items-center justify-between mb-4">
+  <!-- Main card -->
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
+    <!-- Info + controls -->
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
       <div>
-        <div *ngIf="parseMessage" class="text-sm text-slate-600">{{ parseMessage }}</div>
-        <div class="text-lg font-semibold">Distance totale: {{ totalDistanceKm }} km</div>
+        <div *ngIf="parseMessage" class="text-sm text-slate-500 mb-1">{{ parseMessage }}</div>
+        <div class="text-xl font-bold text-slate-800">{{ totalDistanceKm }} km</div>
+        <div class="text-xs text-slate-400">Distance totale</div>
       </div>
-      <div *ngIf="points.length > 1" class="text-sm">
-        <label class="block">Vitesse moyenne (km/h)</label>
-        <input type="number" [(ngModel)]="avgSpeed" min="1" class="border p-1 rounded w-24" />
-        <label class="block mt-2">Heure de départ</label>
-        <input type="datetime-local" [(ngModel)]="departure" class="border p-1 rounded" />
-        <div class="mt-2">
-          <button (click)="computeSchedule()" class="px-3 py-1 rounded bg-blue-500 text-white">Calculer</button>
+      <div *ngIf="points.length > 1" class="space-y-2 w-full sm:w-auto">
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-0.5">Vitesse moyenne (km/h)</label>
+          <input type="number" [(ngModel)]="avgSpeed" min="1"
+                 class="w-full sm:w-28 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
         </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-0.5">Heure de départ</label>
+          <input type="datetime-local" [(ngModel)]="departure"
+                 class="w-full sm:w-auto border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+        </div>
+        <button (click)="computeSchedule()"
+                class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors shadow-sm">
+          Calculer
+        </button>
       </div>
     </div>
 
-    <div *ngIf="progressText" class="mb-3 text-sm text-slate-700">{{ progressText }}</div>
-    <div class="mb-3">
-      <button (click)="exportAsImage()" class="px-3 py-1 rounded bg-green-600 text-white mr-2">Exporter PNG</button>
-      <button (click)="shareImage()" class="px-3 py-1 rounded bg-indigo-600 text-white" title="Partager si supporté">Partager</button>
-      <div *ngIf="exportMessage" class="mt-2 text-xs text-slate-600">{{ exportMessage }}</div>
-    </div>
+    <!-- Progress -->
+    <div *ngIf="progressText" class="mb-3 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-2">{{ progressText }}</div>
+
+    <!-- Loading spinner -->
     <div *ngIf="loading" class="flex items-center gap-2 mb-3">
       <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
       </svg>
-      <div class="text-sm text-slate-600">Traitement en cours...</div>
+      <span class="text-sm text-slate-600">Traitement en cours...</span>
     </div>
 
+    <!-- Export buttons -->
+    <div *ngIf="passages.length > 0" class="flex flex-wrap gap-2 mb-4">
+      <button (click)="exportAsImage()"
+              class="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors">
+        📷 Exporter PNG
+      </button>
+      <button (click)="shareImage()"
+              class="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
+              title="Partager si supporté">
+        🔗 Partager
+      </button>
+      <div *ngIf="exportMessage" class="w-full text-xs text-slate-500 mt-1">{{ exportMessage }}</div>
+    </div>
+
+    <!-- Results -->
     <div id="gpx-results" *ngIf="passages.length > 0">
-      <div class="mb-2 font-medium">Date: {{ displayDate }}</div>
-      <table class="w-full border-collapse">
-      <thead>
-        <tr class="text-left text-sm text-slate-600 border-b">
-          <th class="py-2">Ville</th>
-          <th class="py-2">Heure</th>
-          <th class="py-2">Météo (heure)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let p of passages" class="border-b">
-          <td class="py-2">{{ p.city }}</td>
-          <td class="py-2">{{ p.time | date:'HH:mm' }}</td>
-          <td class="py-2">
-            <div *ngIf="p.status === 'pending'" class="text-sm text-slate-500">En cours...</div>
-            <div *ngIf="p.status === 'error'" class="text-sm text-red-600">Erreur: {{ p.message }}</div>
-            <div *ngIf="p.status === 'ok'" class="text-sm flex items-center gap-2">
-              <span class="text-lg">{{ getWeatherDescription(p.weather?.code).emoji }}</span>
+      <div class="mb-3 text-sm font-semibold text-slate-700">📅 {{ displayDate }}</div>
+
+      <!-- Desktop table -->
+      <div class="hidden sm:block overflow-x-auto rounded-lg border border-slate-200">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <th class="px-4 py-3">Ville</th>
+              <th class="px-4 py-3">Heure</th>
+              <th class="px-4 py-3">Météo</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr *ngFor="let p of passages" class="hover:bg-slate-50/50 transition-colors">
+              <td class="px-4 py-3 text-sm font-medium text-slate-800">{{ p.city }}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">{{ p.time | date:'HH:mm' }}</td>
+              <td class="px-4 py-3">
+                <div *ngIf="p.status === 'pending'" class="text-sm text-slate-400">En cours...</div>
+                <div *ngIf="p.status === 'error'" class="text-sm text-red-500">{{ p.message }}</div>
+                <div *ngIf="p.status === 'ok'" class="flex items-center gap-3">
+                  <span class="text-2xl">{{ getWeatherDescription(p.weather?.code).emoji }}</span>
+                  <div>
+                    <div class="text-sm font-semibold text-slate-800">{{ p.weather?.temperature }}°C</div>
+                    <div class="text-xs text-slate-500">{{ getWeatherDescription(p.weather?.code).desc }}</div>
+                    <div class="text-xs text-slate-400">💨 {{ p.weather?.wind }} m/s
+                      <span *ngIf="p.weather?.windDir">({{ degreesToCardinal(p.weather?.windDir) }})</span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div class="sm:hidden space-y-2">
+        <div *ngFor="let p of passages"
+             class="relative overflow-hidden bg-white rounded-xl border border-slate-200 p-3">
+          <!-- Background emoji -->
+          <div *ngIf="p.status === 'ok'" class="absolute right-2 top-1/2 -translate-y-1/2 text-5xl opacity-[0.1] pointer-events-none select-none">
+            {{ getWeatherDescription(p.weather?.code).emoji }}
+          </div>
+          <div class="relative z-[1]">
+            <div class="flex items-baseline justify-between mb-1">
+              <span class="font-semibold text-sm text-slate-800">📍 {{ p.city }}</span>
+              <span class="text-xs text-slate-400">{{ p.time | date:'HH:mm' }}</span>
+            </div>
+            <div *ngIf="p.status === 'pending'" class="text-xs text-slate-400">En cours...</div>
+            <div *ngIf="p.status === 'error'" class="text-xs text-red-500">{{ p.message }}</div>
+            <div *ngIf="p.status === 'ok'" class="flex items-center gap-2">
+              <span class="text-xl">{{ getWeatherDescription(p.weather?.code).emoji }}</span>
               <div>
-                <div>{{ p.weather?.temperature }}°C</div>
-                <div class="text-xs text-slate-600">{{ getWeatherDescription(p.weather?.code).desc }}</div>
-                <div class="text-xs text-slate-600">Vent: {{ p.weather?.wind }} m/s <span *ngIf="p.weather?.windDir">({{ degreesToCardinal(p.weather?.windDir) }})</span></div>
+                <span class="text-sm font-semibold text-slate-800">{{ p.weather?.temperature }}°C</span>
+                <span class="text-xs text-slate-500 ml-1.5">💨 {{ p.weather?.wind }} m/s</span>
               </div>
             </div>
-          </td>
-        </tr>
-      </tbody>
-      </table>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
