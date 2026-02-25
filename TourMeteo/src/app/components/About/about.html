@@ -6,7 +6,7 @@
   </header>
 
   <div class="mb-4">
-    <p class="text-slate-500">Version: 1.0.0 — Réalisé avec Angular et Tailwind.</p>
+    <p class="text-slate-500">Version: 2.0.0 — Réalisé avec Angular 21, Tailwind CSS et Leaflet.</p>
     <p class="text-slate-500 mt-1">Lien du répertoire GitHub : <a href="https://github.com/aZor9/TourMeteo" class="text-primary hover:underline">https://github.com/aZor9/TourMeteo</a></p>
   </div>
 
@@ -14,7 +14,7 @@
     <h2 class="font-semibold text-slate-800">APIs utilisées</h2>
     <ul class="mt-2 list-disc pl-5 text-slate-700">
       <li><strong>Géocodage :</strong> Nominatim (OpenStreetMap) — recherche d'emplacements et reverse-géocodage (lat/lon → ville)</li>
-      <li><strong>Météo :</strong> Open-Meteo — données météo horaires (température, vent, direction du vent, weathercode, jour/nuit)</li>
+      <li><strong>Météo :</strong> Open-Meteo — données météo horaires (température, température ressentie, vent, direction, précipitations, probabilité de pluie, humidité, weathercode, jour/nuit)</li>
     </ul>
   </div>
 
@@ -24,11 +24,27 @@
       <li><strong>Recherche multi-villes :</strong> comparer la météo horaire de plusieurs villes sur une même date</li>
       <li><strong>Filtres d'affichage :</strong> température, vent, résumé météo (activables/désactivables)</li>
       <li><strong>Import GPX :</strong> charger un fichier <code>.gpx</code> pour calculer la distance totale du parcours</li>
-      <li><strong>Calcul d'itinéraire :</strong> estimation de l'heure de passage selon la vitesse moyenne et l'heure de départ</li>
+      <li><strong>Calcul d'itinéraire :</strong> estimation de l'heure de passage et distance cumulative selon la vitesse moyenne et l'heure de départ</li>
       <li><strong>Reverse-géocodage :</strong> détection automatique de la ville à chaque point (Nominatim, throttlé ~1 req/s, échantillonnage par distance)</li>
-      <li><strong>Météo par passage :</strong> température, vent (vitesse + direction cardinale) et emoji weathercode à l'heure estimée</li>
+      <li><strong>Carte interactive :</strong> tracé du parcours GPX avec marqueurs numérotés pour chaque ville (Leaflet + OpenStreetMap)</li>
+      <li><strong>Météo par passage :</strong> température, température ressentie, vent (vitesse + direction cardinale), humidité, probabilité de pluie, quantité de précipitations et emoji weathercode</li>
+      <li><strong>Score de sortie vélo :</strong> score sur 100 évaluant les conditions météo, avec recommandation de tenue cycliste (cuissard, maillot, gants, etc.), alertes et conseils</li>
+      <li><strong>Statistiques résumées :</strong> distance totale, durée estimée, heures de départ/arrivée, nombre de villes traversées</li>
       <li><strong>Export PNG :</strong> génération d'une image PNG du tableau des passages (rendu Canvas natif, sans librairie externe)</li>
       <li><strong>Partage :</strong> via l'API Web Share sur navigateurs compatibles ; téléchargement automatique sinon</li>
+    </ul>
+  </div>
+
+  <div class="mb-4">
+    <h2 class="font-semibold text-slate-800">Architecture des composants</h2>
+    <ul class="mt-2 list-disc pl-5 text-slate-700">
+      <li><strong>GpxUploaderComponent :</strong> orchestrateur principal (upload, parsing GPX, calcul d'itinéraire, récupération météo)</li>
+      <li><strong>GpxMapComponent :</strong> carte Leaflet avec tracé polyline et marqueurs numérotés</li>
+      <li><strong>RideScoreComponent :</strong> calcul et affichage du score de sortie vélo, tenue recommandée, alertes et conseils</li>
+      <li><strong>GpxSummaryBarComponent :</strong> barre de statistiques résumées (distance, durée, départ, arrivée, villes)</li>
+      <li><strong>GpxResultsTableComponent :</strong> tableau desktop et cartes mobile des passages météo</li>
+      <li><strong>GpxExportService :</strong> service d'export Canvas → PNG et partage Web Share</li>
+      <li><strong>WeatherUtils :</strong> fonctions partagées (weathercode → emoji, degrés → direction cardinale)</li>
     </ul>
   </div>
 
@@ -50,9 +66,11 @@
 
   <div class="mb-4">
     <h3 class="font-semibold text-slate-800">Import GPX et export</h3>
-    <p class="text-slate-500 mt-2">Importez un fichier <strong>.gpx</strong> via la page <em>GPX</em>. L'application parse les points <code>trkpt</code>, calcule la distance totale (formule de Haversine), puis estime l'heure de passage à chaque point d'échantillonnage selon la vitesse moyenne renseignée.</p>
-    <p class="text-slate-500 mt-1">Pour chaque point, un reverse-géocodage Nominatim identifie la ville, puis la météo horaire est récupérée via Open-Meteo. Les villes inconnues et les doublons consécutifs sont filtrés automatiquement.</p>
-    <p class="text-slate-500 mt-1">Les résultats peuvent être <strong>exportés en image PNG</strong> (rendu Canvas natif) ou <strong>partagés</strong> via l'API Web Share. Si le navigateur ne supporte pas le partage de fichiers, un téléchargement est proposé automatiquement.</p>
+    <p class="text-slate-500 mt-2">Importez un fichier <strong>.gpx</strong> via la page <em>GPX</em>. L'application parse les points <code>trkpt</code>, calcule la distance totale (formule de Haversine), puis estime l'heure de passage et la distance cumulative à chaque point d'échantillonnage selon la vitesse moyenne renseignée.</p>
+    <p class="text-slate-500 mt-1">Pour chaque point, un reverse-géocodage Nominatim identifie la ville, puis la météo horaire est récupérée via Open-Meteo (température, ressenti, vent, humidité, précipitations). Les villes inconnues et les doublons consécutifs sont filtrés automatiquement.</p>
+    <p class="text-slate-500 mt-1">Le tracé complet est affiché sur une carte interactive (Leaflet) avec des marqueurs numérotés pour chaque ville.</p>
+    <p class="text-slate-500 mt-1">Un <strong>score de sortie vélo</strong> (0-100) est calculé automatiquement en fonction de la température, du vent, des précipitations, de l'humidité et des conditions spéciales (orage, brouillard). Des recommandations de tenue cycliste, des alertes et des conseils sont générés.</p>
+    <p class="text-slate-500 mt-1">Les résultats peuvent être <strong>exportés en image PNG</strong> (rendu Canvas natif) ou <strong>partagés</strong> via l'API Web Share.</p>
   </div>
 
   <div>

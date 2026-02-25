@@ -30,7 +30,7 @@
                 <ng-container *ngIf="ville.hourly && ville.hourly[i]; else noData">
                   <!-- Big background emoji -->
                   <div *ngIf="showSummary && ville.hourly[i].summary !== undefined"
-                       class="absolute right-1 top-1/2 -translate-y-1/2 text-5xl opacity-[0.15] pointer-events-none select-none leading-none">
+                       class="absolute right-1 top-1/2 -translate-y-1/2 text-5xl opacity-[0.85] pointer-events-none select-none leading-none">
                     {{ getWeatherDescription(+ville.hourly[i].summary).emoji }}
                   </div>
                   <div class="relative z-[1] space-y-0.5">

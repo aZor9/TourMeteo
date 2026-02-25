@@ -1,75 +1,80 @@
 # TourMeteo
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.1.3.
+Application Angular de comparaison météo entre plusieurs villes, heure par heure, pensée pour les cyclistes et randonneurs.
 
-## Development server
+## Fonctionnalités
 
-To start a local development server, run:
+- **Recherche multi-villes** : comparer la météo horaire de plusieurs villes sur une même date
+- **Filtres d'affichage** : température, vent, résumé météo (activables/désactivables)
+- **Import GPX** : charger un fichier `.gpx` pour calculer la distance totale et estimer les horaires de passage
+- **Carte interactive** : tracé du parcours GPX sur une carte Leaflet avec marqueurs numérotés par ville
+- **Météo par passage** : température, ressenti, vent (vitesse + direction), humidité, probabilité de pluie, quantité de précipitations
+- **Score de sortie vélo** : score 0-100 basé sur les conditions météo, avec recommandation de tenue cycliste, alertes et conseils
+- **Statistiques résumées** : distance totale, durée estimée, heures de départ/arrivée, nombre de villes traversées
+- **Export PNG** : génération d'image PNG (rendu Canvas natif, sans librairie externe)
+- **Partage** : via l'API Web Share sur navigateurs compatibles ; téléchargement automatique sinon
+
+## Stack technique
+
+- **Angular 21** avec composants standalone
+- **Tailwind CSS** (CDN)
+- **Leaflet** pour les cartes interactives
+- **Open-Meteo API** pour les données météo horaires
+- **Nominatim / OpenStreetMap** pour le géocodage et reverse-géocodage
+
+## Architecture des composants
+
+```
+src/app/
+├── components/
+│   ├── App/                        # Page d'accueil (recherche multi-villes)
+│   ├── About/                      # Page À propos
+│   ├── GPXUploader/                # Page GPX
+│   │   ├── gpx-uploader.component  # Orchestrateur (upload, parsing, météo)
+│   │   ├── gpx-map/                # Carte Leaflet (tracé + marqueurs)
+│   │   ├── ride-score/             # Score de sortie vélo + tenue
+│   │   ├── gpx-summary-bar/        # Barre de statistiques
+│   │   └── gpx-results-table/      # Tableau desktop + cartes mobile
+│   ├── SearchTab/                  # Barre de recherche + filtres
+│   ├── WeatherSheet/               # Grille météo horaire par ville
+│   └── navbar/                     # Navigation
+├── models/
+│   └── passage.model.ts            # Interfaces Passage et PassageWeather
+├── service/
+│   ├── weather.service.ts          # Service Open-Meteo
+│   ├── city.service.ts             # Service Nominatim
+│   └── gpx-export.service.ts       # Service export PNG + partage
+└── utils/
+    └── weather-utils.ts            # Fonctions partagées (weathercode → emoji, etc.)
+```
+
+## Développement
 
 ```bash
+cd TourMeteo
+npm install
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Ouvrir `http://localhost:4200/` dans le navigateur.
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+## Build
 
 ```bash
 ng build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Les fichiers de production seront dans le dossier `dist/`.
 
-## Running unit tests
+## APIs utilisées
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+| API | Usage |
+|-----|-------|
+| [Open-Meteo](https://open-meteo.com/) | Données météo horaires (température, vent, précipitations, humidité, weathercode) |
+| [Nominatim](https://nominatim.openstreetmap.org/) | Géocodage et reverse-géocodage (lat/lon → ville) |
 
-```bash
-ng test
-```
+## Notes
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
-
-## GPX import and PNG export
-
-This app includes an "Import GPX" page where you can upload a .gpx track. The app:
-
-- Parses the GPX track and computes total distance.
-- Lets you enter an average speed and departure time to estimate passage times.
-- Performs reverse-geocoding to find nearby cities (sampling by distance and throttling requests to avoid rate limits).
-- Fetches hourly weather for each passage and displays an emoji/description, temperature and wind.
-
-You can export the results as a PNG image or share them via the Web Share API on supported browsers.
-
-Notes:
-
-- The app performs client-side reverse-geocoding using Nominatim (OpenStreetMap). Nominatim enforces rate limits and CORS — for robust production usage consider routing requests through a small server-side proxy with caching and a proper User-Agent header.
-- Export is implemented client-side (no extra dependency) and produces a simple PNG summary of passages.
+- Le reverse-géocodage Nominatim est throttlé à ~1 requête/seconde avec échantillonnage par distance (~2 km)
+- L'export PNG utilise le Canvas API natif, sans dépendance externe
+- Leaflet est importé dynamiquement (lazy loading) pour réduire la taille du bundle initial
