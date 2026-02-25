@@ -25,6 +25,7 @@ export class GpxUploaderComponent {
   avgSpeed = 20;
   departure = '';
   loading = false;
+  fileName = '';
   parseMessage = '';
   passages: Passage[] = [];
   progressText = '';
@@ -57,6 +58,7 @@ export class GpxUploaderComponent {
   onFileChange(ev: Event) {
     const input = ev.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
+    this.fileName = input.files[0].name;
     const reader = new FileReader();
     reader.onload = () => this.parseGpx(reader.result as string);
     reader.readAsText(input.files[0]);

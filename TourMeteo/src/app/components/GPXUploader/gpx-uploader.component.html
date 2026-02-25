@@ -1,74 +1,113 @@
-<div class="px-3 sm:px-6 py-4 max-w-4xl mx-auto">
-  <h2 class="text-xl font-bold text-slate-800 mb-4">Import GPX</h2>
+<div class="px-3 sm:px-6 py-6 max-w-4xl mx-auto">
+
+  <!-- Header -->
+  <div class="flex items-center gap-3 mb-6">
+    <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md">
+      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+      </svg>
+    </div>
+    <div>
+      <h2 class="text-xl font-bold text-slate-800 leading-tight">Import GPX</h2>
+      <p class="text-xs text-slate-400">Analysez la météo sur votre parcours vélo</p>
+    </div>
+  </div>
 
   <!-- File upload -->
-  <div class="mb-4">
-    <label class="block text-xs font-medium text-slate-500 mb-1.5">Fichier GPX</label>
-    <label class="flex items-center justify-center gap-2 w-full border-2 border-dashed border-slate-300 rounded-xl p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors">
-      <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-      </svg>
-      <span class="text-sm text-slate-500">Déposer ou sélectionner un fichier .gpx</span>
+  <div class="mb-6">
+    <label class="group flex flex-col items-center justify-center gap-3 w-full border-2 border-dashed border-slate-300 rounded-2xl p-8 cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition-all duration-200">
+      <div class="flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 group-hover:bg-blue-100 transition-colors">
+        <svg class="w-6 h-6 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+      </div>
+      <div class="text-center">
+        <span *ngIf="!fileName" class="text-sm font-medium text-slate-600 group-hover:text-blue-600 transition-colors">Déposer ou sélectionner un fichier .gpx</span>
+        <span *ngIf="!fileName" class="block text-xs text-slate-400 mt-0.5">Format GPX uniquement</span>
+        <span *ngIf="fileName" class="text-sm font-medium text-blue-600">📄 {{ fileName }}</span>
+        <span *ngIf="fileName" class="block text-xs text-slate-400 mt-0.5">Cliquez pour changer de fichier</span>
+      </div>
       <input type="file" accept=".gpx" (change)="onFileChange($event)" class="hidden" />
     </label>
   </div>
 
   <!-- Main card -->
-  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
     <!-- Info + controls -->
-    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-      <div>
-        <div *ngIf="parseMessage" class="text-sm text-slate-500 mb-1">{{ parseMessage }}</div>
-        <div class="text-xl font-bold text-slate-800">{{ totalDistanceKm }} km</div>
-        <div class="text-xs text-slate-400">Distance totale</div>
-      </div>
-      <div *ngIf="points.length > 1" class="space-y-2 w-full sm:w-auto">
+    <div class="p-5 sm:p-6">
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
+        <!-- Left: distance info -->
         <div>
-          <label class="block text-xs font-medium text-slate-500 mb-0.5">Vitesse moyenne (km/h)</label>
-          <input type="number" [(ngModel)]="avgSpeed" min="1"
-                 class="w-full sm:w-28 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+          <div *ngIf="fileName" class="flex items-center gap-1.5 mb-2">
+            <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-medium px-2.5 py-1 rounded-lg border border-blue-200">📄 {{ fileName }}</span>
+          </div>
+          <div *ngIf="parseMessage" class="text-sm text-slate-500 mb-2">{{ parseMessage }}</div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-slate-800">{{ totalDistanceKm }}</span>
+            <span class="text-lg font-semibold text-slate-400">km</span>
+          </div>
+          <div class="text-xs text-slate-400 mt-0.5">Distance totale du parcours</div>
         </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-500 mb-0.5">Heure de départ</label>
-          <input type="datetime-local" [(ngModel)]="departure"
-                 class="w-full sm:w-auto border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+
+        <!-- Right: controls -->
+        <div *ngIf="points.length > 1" class="space-y-3 w-full sm:w-auto">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Vitesse (km/h)</label>
+              <input type="number" [(ngModel)]="avgSpeed" min="1"
+                     class="w-full sm:w-28 border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Heure de départ</label>
+              <input type="datetime-local" [(ngModel)]="departure"
+                     class="w-full sm:w-auto border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+            </div>
+          </div>
+          <button (click)="computeSchedule()"
+                  class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:from-blue-800 active:to-indigo-800 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm hover:shadow-md">
+            🚴 Calculer l'itinéraire
+          </button>
         </div>
-        <button (click)="computeSchedule()"
-                class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors shadow-sm">
-          Calculer
-        </button>
       </div>
     </div>
 
     <!-- Progress -->
-    <div *ngIf="progressText" class="mb-3 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-2">{{ progressText }}</div>
+    <div *ngIf="progressText" class="mx-5 sm:mx-6 mb-4 text-sm text-slate-600 bg-blue-50 rounded-xl px-4 py-2.5 border border-blue-100">
+      {{ progressText }}
+    </div>
 
     <!-- Loading spinner -->
-    <div *ngIf="loading" class="flex items-center gap-2 mb-3">
+    <div *ngIf="loading" class="flex items-center gap-3 mx-5 sm:mx-6 mb-4 px-4 py-3 bg-slate-50 rounded-xl">
       <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
       </svg>
-      <span class="text-sm text-slate-600">Traitement en cours...</span>
-    </div>
-
-    <!-- Export buttons -->
-    <div *ngIf="passages.length > 0" class="flex flex-wrap gap-2 mb-4">
-      <button (click)="exportAsImage()"
-              class="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors">
-        📷 Exporter PNG
-      </button>
-      <button (click)="shareImage()"
-              class="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
-              title="Partager si supporté">
-        🔗 Partager
-      </button>
-      <div *ngIf="exportMessage" class="w-full text-xs text-slate-500 mt-1">{{ exportMessage }}</div>
+      <span class="text-sm text-slate-600 font-medium">Traitement en cours...</span>
     </div>
 
     <!-- Results -->
-    <div id="gpx-results" *ngIf="passages.length > 0">
-      <div class="mb-3 text-sm font-semibold text-slate-700">📅 {{ displayDate }}</div>
+    <div id="gpx-results" *ngIf="passages.length > 0" class="px-5 sm:px-6 pb-6">
+
+      <!-- Date header + Export buttons -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5 pb-4 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📅</span>
+          <span class="text-lg font-bold text-slate-800">{{ displayDate }}</span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button (click)="exportAsImage()"
+                  class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors shadow-sm hover:shadow-md">
+            📷 Exporter PNG
+          </button>
+          <button (click)="shareImage()"
+                  class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                  title="Partager si supporté">
+            🔗 Partager
+          </button>
+        </div>
+      </div>
+      <div *ngIf="exportMessage" class="text-xs text-slate-500 -mt-3 mb-4">{{ exportMessage }}</div>
 
       <!-- Summary stats -->
       <app-gpx-summary-bar
