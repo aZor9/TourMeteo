@@ -1,5 +1,5 @@
 <div class="px-3 sm:px-8 py-4 max-w-6xl mx-auto text-black">
-    <app-search-tab (searchRequest)="search($event)"></app-search-tab>
+    <app-search-tab (searchRequest)="search($event)" (filterChange)="onFilterChange($event)"></app-search-tab>
 
     <div *ngIf="loading" class="flex justify-center items-center my-8">
     <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

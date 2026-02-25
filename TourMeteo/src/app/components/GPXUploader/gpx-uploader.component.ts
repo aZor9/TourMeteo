@@ -27,7 +27,7 @@ export class GpxUploaderComponent {
     time: Date;
     status: 'pending' | 'ok' | 'error';
     message?: string;
-    weather?: { temperature?: number; code?: number; wind?: number; windDir?: number };
+    weather?: { temperature?: number; code?: number; wind?: number; windDir?: number; isDay?: boolean };
   }> = [];
   progressText = '';
   displayDate = '';
@@ -211,7 +211,7 @@ export class GpxUploaderComponent {
           const targetHour = p.time.getHours();
           const found = weather.hourly.find(h => new Date(h.hour).getHours() === targetHour) || weather.hourly.reduce((a,b)=>Math.abs(new Date(a.hour).getTime()-p.time.getTime())<Math.abs(new Date(b.hour).getTime()-p.time.getTime())?a:b);
           if (found) {
-            p.weather = { temperature: found.temperature, code: found.summary, wind: found.wind, windDir: found.windDir };
+            p.weather = { temperature: found.temperature, code: found.summary, wind: found.wind, windDir: found.windDir, isDay: found.isDay };
             p.status = 'ok';
           } else {
             p.status = 'error';
@@ -292,7 +292,7 @@ export class GpxUploaderComponent {
     const padding = 20;
     const rowHeight = 56;
     const headerHeight = 60;
-    const width = Math.max(520, 700);
+    const width = Math.max(520, 750);
     const height = headerHeight + passages.length * rowHeight + padding * 2;
 
     const canvas = document.createElement('canvas');
@@ -321,8 +321,12 @@ export class GpxUploaderComponent {
     let y = padding + headerHeight - 8;
     for (const p of passages) {
       y += rowHeight - 8;
-      // background row
-      ctx.fillStyle = '#ffffff';
+      // background row – day/night tint
+      if (p.weather?.isDay !== undefined) {
+        ctx.fillStyle = p.weather.isDay ? '#fffbeb' : '#eef2ff';
+      } else {
+        ctx.fillStyle = '#ffffff';
+      }
       ctx.fillRect(padding, y - (rowHeight - 16), width - padding * 2, rowHeight - 16);
 
       // city
@@ -345,6 +349,14 @@ export class GpxUploaderComponent {
       const wind = p.weather?.wind !== undefined ? `Vent ${p.weather.wind} m/s` : '';
       const windDir = p.weather?.windDir ? ` (${this.degreesToCardinal(p.weather.windDir)})` : '';
       ctx.fillText(wind + windDir, padding + 440, y + 4);
+
+      // jour/nuit label
+      if (p.weather?.isDay !== undefined) {
+        const label = p.weather.isDay ? '☀️ Jour' : '🌙 Nuit';
+        ctx.fillStyle = p.weather.isDay ? '#92400e' : '#4338ca';
+        ctx.font = '12px system-ui, Arial';
+        ctx.fillText(label, padding + 600, y + 4);
+      }
     }
 
     return await new Promise<Blob | null>(res => canvas.toBlob(b => res(b), 'image/png'));

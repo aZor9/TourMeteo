@@ -25,17 +25,17 @@
 
     <!-- Filter toggles -->
     <div class="flex flex-wrap gap-2 pt-1">
-      <button type="button" (click)="showTemp = !showTemp"
+      <button type="button" (click)="toggleTemp()"
               class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
               [ngClass]="showTemp ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-slate-50 text-slate-400 border-slate-200'">
         🌡️ Température
       </button>
-      <button type="button" (click)="showWind = !showWind"
+      <button type="button" (click)="toggleWind()"
               class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
               [ngClass]="showWind ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-slate-50 text-slate-400 border-slate-200'">
         💨 Vent
       </button>
-      <button type="button" (click)="showSummary = !showSummary"
+      <button type="button" (click)="toggleSummary()"
               class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
               [ngClass]="showSummary ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-slate-50 text-slate-400 border-slate-200'">
         ☁️ Météo globale

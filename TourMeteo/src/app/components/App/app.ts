@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterOutlet } from '@angular/router';
@@ -41,7 +41,15 @@ export class App {
 
   loading = false;
 
-  constructor(private weatherService: WeatherService) {}
+  constructor(private weatherService: WeatherService, private cd: ChangeDetectorRef) {}
+
+  // Mise à jour des filtres en temps réel (depuis SearchTab)
+  onFilterChange(filters: { showTemp: boolean; showWind: boolean; showSummary: boolean }) {
+    this.showTemp = filters.showTemp;
+    this.showWind = filters.showWind;
+    this.showSummary = filters.showSummary;
+    this.cd.detectChanges();
+  }
 
   // Recherche météo pour les villes (séquentiel, simple)
   async search(params: { cities: string; date: string; showTemp: boolean; showWind: boolean; showSummary: boolean }) {
@@ -52,29 +60,30 @@ export class App {
     this.selectedDate = date;
     this.loading = true;
     this.meteo = [];
+    this.cd.detectChanges();
 
     const cityList = cities.split(',').map(c => c.trim()).filter(c => !!c);
     if (cityList.length === 0) {
       this.loading = false;
+      this.cd.detectChanges();
       return;
     }
 
     for (const city of cityList) {
       try {
-        // weatherService.getWeather retourne maintenant une Promise (async)
         const data = await this.weatherService.getWeather(city, date);
-        // simplifier l'affichage de l'heure (garder HH)
         data.hourly = data.hourly.map(h => ({
           ...h,
           hour: h.hour.split('T')[1]?.slice(0,2) || h.hour
         }));
         this.meteo.push(data);
       } catch (err) {
-        // si une ville échoue, on l'ignore mais on continue avec les autres
         this.meteo.push({ city, hourly: [] });
       }
+      this.cd.detectChanges();
     }
 
     this.loading = false;
+    this.cd.detectChanges();
   }
 }

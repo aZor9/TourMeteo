@@ -84,7 +84,10 @@
             <tr *ngFor="let p of passages" class="hover:bg-slate-50/50 transition-colors">
               <td class="px-4 py-3 text-sm font-medium text-slate-800">{{ p.city }}</td>
               <td class="px-4 py-3 text-sm text-slate-600">{{ p.time | date:'HH:mm' }}</td>
-              <td class="px-4 py-3">
+              <td class="px-4 py-3"
+                  [ngClass]="p.status === 'ok' && p.weather?.isDay !== undefined
+                    ? (p.weather?.isDay ? 'bg-amber-50/40' : 'bg-indigo-950/5')
+                    : ''">
                 <div *ngIf="p.status === 'pending'" class="text-sm text-slate-400">En cours...</div>
                 <div *ngIf="p.status === 'error'" class="text-sm text-red-500">{{ p.message }}</div>
                 <div *ngIf="p.status === 'ok'" class="flex items-center gap-3">
@@ -96,6 +99,11 @@
                       <span *ngIf="p.weather?.windDir">({{ degreesToCardinal(p.weather?.windDir) }})</span>
                     </div>
                   </div>
+                  <span *ngIf="p.weather?.isDay !== undefined"
+                        class="ml-auto text-xs px-2 py-0.5 rounded-full"
+                        [ngClass]="p.weather?.isDay ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'">
+                    {{ p.weather?.isDay ? '☀️ Jour' : '🌙 Nuit' }}
+                  </span>
                 </div>
               </td>
             </tr>
@@ -106,7 +114,10 @@
       <!-- Mobile cards -->
       <div class="sm:hidden space-y-2">
         <div *ngFor="let p of passages"
-             class="relative overflow-hidden bg-white rounded-xl border border-slate-200 p-3">
+             class="relative overflow-hidden bg-white rounded-xl border border-slate-200 p-3"
+             [ngClass]="p.status === 'ok' && p.weather?.isDay !== undefined
+               ? (p.weather?.isDay ? 'bg-amber-50/40' : 'bg-indigo-950/5')
+               : ''">
           <!-- Background emoji -->
           <div *ngIf="p.status === 'ok'" class="absolute right-2 top-1/2 -translate-y-1/2 text-5xl opacity-[0.1] pointer-events-none select-none">
             {{ getWeatherDescription(p.weather?.code).emoji }}
@@ -124,6 +135,11 @@
                 <span class="text-sm font-semibold text-slate-800">{{ p.weather?.temperature }}°C</span>
                 <span class="text-xs text-slate-500 ml-1.5">💨 {{ p.weather?.wind }} m/s</span>
               </div>
+              <span *ngIf="p.weather?.isDay !== undefined"
+                    class="ml-auto text-xs px-1.5 py-0.5 rounded-full"
+                    [ngClass]="p.weather?.isDay ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'">
+                {{ p.weather?.isDay ? '☀️' : '🌙' }}
+              </span>
             </div>
           </div>
         </div>

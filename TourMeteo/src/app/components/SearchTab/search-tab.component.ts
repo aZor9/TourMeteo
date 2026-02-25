@@ -23,6 +23,31 @@ export class SearchTabComponent {
     showSummary: boolean;
   }>();
 
+  @Output() filterChange = new EventEmitter<{
+    showTemp: boolean;
+    showWind: boolean;
+    showSummary: boolean;
+  }>();
+
+  toggleTemp() {
+    this.showTemp = !this.showTemp;
+    this.emitFilter();
+  }
+
+  toggleWind() {
+    this.showWind = !this.showWind;
+    this.emitFilter();
+  }
+
+  toggleSummary() {
+    this.showSummary = !this.showSummary;
+    this.emitFilter();
+  }
+
+  private emitFilter() {
+    this.filterChange.emit({ showTemp: this.showTemp, showWind: this.showWind, showSummary: this.showSummary });
+  }
+
   submit() {
     this.searchRequest.emit({
       cities: this.cities,
