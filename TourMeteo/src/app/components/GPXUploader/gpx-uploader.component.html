@@ -83,7 +83,7 @@
       <app-gpx-map [passages]="passages" [points]="points"></app-gpx-map>
 
       <!-- Ride Score -->
-      <app-ride-score [passages]="passages" [totalDistanceKm]="totalDistanceKm"></app-ride-score>
+      <app-ride-score [passages]="passages" [totalDistanceKm]="totalDistanceKm" (scoreComputed)="onScoreComputed($event)"></app-ride-score>
 
       <!-- Weather table -->
       <app-gpx-results-table [passages]="passages"></app-gpx-results-table>

@@ -1,11 +1,6 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Passage } from '../../../models/passage.model';
-
-interface ClothingItem {
-  emoji: string;
-  label: string;
-}
+import { Passage, ClothingItem, RideScoreData } from '../../../models/passage.model';
 
 @Component({
   selector: 'app-ride-score',
@@ -16,6 +11,7 @@ interface ClothingItem {
 export class RideScoreComponent implements OnChanges {
   @Input() passages: Passage[] = [];
   @Input() totalDistanceKm = 0;
+  @Output() scoreComputed = new EventEmitter<RideScoreData>();
 
   rideScore = 0;
   rideScoreLabel = '';
@@ -152,5 +148,21 @@ export class RideScoreComponent implements OnChanges {
     if (this.avgTemp > 25) this.rideTips.push('💦 Pensez à mouiller votre maillot et remplir vos bidons régulièrement');
     if (minApparent < 10 && maxTemp > 18) this.rideTips.push('🎒 Grand écart de ressenti — emportez un gilet dans la poche');
     if (this.maxPrecipProb > 30 && this.maxPrecipProb <= 50) this.rideTips.push('☂️ Risque de pluie modéré — gardez un coupe-vent léger à portée');
+
+    // Emit score data for export
+    this.scoreComputed.emit({
+      score: this.rideScore,
+      label: this.rideScoreLabel,
+      emoji: this.rideScoreEmoji,
+      clothingItems: [...this.clothingItems],
+      warnings: [...this.rideWarnings],
+      tips: [...this.rideTips],
+      avgTemp: this.avgTemp,
+      avgApparentTemp: this.avgApparentTemp,
+      avgWind: this.avgWind,
+      avgHumidity: this.avgHumidity,
+      maxPrecipProb: this.maxPrecipProb,
+      totalPrecip: this.totalPrecip
+    });
   }
 }

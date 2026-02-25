@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { WeatherService } from '../../service/weather.service';
 import { GpxExportService } from '../../service/gpx-export.service';
-import { Passage } from '../../models/passage.model';
+import { Passage, RideScoreData } from '../../models/passage.model';
 import { GpxMapComponent } from './gpx-map/gpx-map.component';
 import { RideScoreComponent } from './ride-score/ride-score.component';
 import { GpxSummaryBarComponent } from './gpx-summary-bar/gpx-summary-bar.component';
@@ -34,6 +34,7 @@ export class GpxUploaderComponent {
   departureTime = '';
   arrivalTime = '';
   cityCount = 0;
+  rideScoreData: RideScoreData | null = null;
 
   constructor(
     private http: HttpClient,
@@ -224,13 +225,20 @@ export class GpxUploaderComponent {
     this.cd.detectChanges();
   }
 
+  // ─── Score callback ───
+
+  onScoreComputed(data: RideScoreData) {
+    this.rideScoreData = data;
+  }
+
   // ─── Export actions ───
 
   async exportAsImage() {
     this.exportMessage = 'Génération en cours...';
     this.exportMessage = await this.exportService.exportAsImage(
       this.passages, this.displayDate, this.totalDistanceKm,
-      this.durationText, this.departureTime, this.arrivalTime, this.cityCount
+      this.durationText, this.departureTime, this.arrivalTime, this.cityCount,
+      this.rideScoreData
     );
   }
 
@@ -238,7 +246,8 @@ export class GpxUploaderComponent {
     this.exportMessage = 'Génération en cours...';
     this.exportMessage = await this.exportService.shareImage(
       this.passages, this.displayDate, this.totalDistanceKm,
-      this.durationText, this.departureTime, this.arrivalTime, this.cityCount
+      this.durationText, this.departureTime, this.arrivalTime, this.cityCount,
+      this.rideScoreData
     );
   }
 

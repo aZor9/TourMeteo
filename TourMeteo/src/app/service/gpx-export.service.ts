@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Passage } from '../models/passage.model';
+import { Passage, RideScoreData } from '../models/passage.model';
 import { getWeatherDescription } from '../utils/weather-utils';
 
 @Injectable({ providedIn: 'root' })
@@ -14,6 +14,7 @@ export class GpxExportService {
     departureTime: string,
     arrivalTime: string,
     cityCount: number,
+    rideScore: RideScoreData | null = null,
     scale = 2
   ): Promise<Blob | null> {
     const padding = 28;
@@ -21,7 +22,20 @@ export class GpxExportService {
     const headerHeight = 60;
     const summaryHeight = 60;
     const width = 860;
-    const height = headerHeight + summaryHeight + passages.length * rowHeight + padding * 2 + 10;
+
+    // Calculate ride score section height
+    let scoreBlockHeight = 0;
+    if (rideScore && rideScore.score > 0) {
+      scoreBlockHeight += 90; // separator + header + score bar
+      if (rideScore.warnings.length > 0) scoreBlockHeight += rideScore.warnings.length * 26 + 16;
+      scoreBlockHeight += 40; // clothing header
+      const clothingRows = Math.ceil(rideScore.clothingItems.length / 3);
+      scoreBlockHeight += clothingRows * 32 + 16;
+      if (rideScore.tips.length > 0) scoreBlockHeight += rideScore.tips.length * 24 + 32;
+      scoreBlockHeight += 30; // bottom spacing
+    }
+
+    const height = headerHeight + summaryHeight + passages.length * rowHeight + scoreBlockHeight + padding * 2 + 10;
 
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(width * scale);
@@ -148,6 +162,90 @@ export class GpxExportService {
       }
     });
 
+    // ── Ride score section ──
+    if (rideScore && rideScore.score > 0) {
+      let sy = startY + passages.length * rowHeight + 24;
+
+      // Separator line
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padding, sy);
+      ctx.lineTo(width - padding, sy);
+      ctx.stroke();
+      sy += 22;
+
+      // Score header: emoji + score/100 + label
+      ctx.font = '24px system-ui, Arial';
+      ctx.fillStyle = '#111827';
+      ctx.fillText(rideScore.emoji, padding + 4, sy + 22);
+      ctx.font = 'bold 20px system-ui, Arial';
+      const scoreColor = rideScore.score >= 70 ? '#16a34a' : rideScore.score >= 40 ? '#f59e0b' : '#ef4444';
+      ctx.fillStyle = scoreColor;
+      ctx.fillText(`${rideScore.score}/100`, padding + 40, sy + 22);
+      ctx.fillStyle = '#374151';
+      ctx.font = '15px system-ui, Arial';
+      ctx.fillText(`— ${rideScore.label}`, padding + 120, sy + 22);
+
+      // Mini bar
+      const barX = padding + 4;
+      const barY2 = sy + 36;
+      const barW = width - padding * 2 - 8;
+      const barH = 10;
+      ctx.fillStyle = '#e5e7eb';
+      ctx.beginPath(); ctx.roundRect(barX, barY2, barW, barH, 5); ctx.fill();
+      ctx.fillStyle = scoreColor;
+      ctx.beginPath(); ctx.roundRect(barX, barY2, barW * rideScore.score / 100, barH, 5); ctx.fill();
+      sy += 60;
+
+      // Warnings
+      if (rideScore.warnings.length > 0) {
+        rideScore.warnings.forEach(w => {
+          ctx.fillStyle = '#dc2626';
+          ctx.font = '12px system-ui, Arial';
+          ctx.fillText(`⚠️ ${w}`, padding + 8, sy);
+          sy += 26;
+        });
+        sy += 10;
+      }
+
+      // Clothing header
+      ctx.fillStyle = '#374151';
+      ctx.font = 'bold 14px system-ui, Arial';
+      ctx.fillText('👕 Tenue recommandée', padding + 4, sy);
+      sy += 24;
+
+      // Clothing items as pills (3 per row)
+      const pillW = Math.floor((width - padding * 2 - 28) / 3);
+      rideScore.clothingItems.forEach((item, i) => {
+        const col = i % 3;
+        const row = Math.floor(i / 3);
+        const px = padding + 4 + col * (pillW + 12);
+        const py = sy + row * 32;
+        ctx.fillStyle = '#f1f5f9';
+        ctx.beginPath(); ctx.roundRect(px, py, pillW, 24, 6); ctx.fill();
+        ctx.fillStyle = '#334155';
+        ctx.font = '12px system-ui, Arial';
+        ctx.fillText(`${item.emoji} ${item.label}`, px + 8, py + 16);
+      });
+      const clothingRows = Math.ceil(rideScore.clothingItems.length / 3);
+      sy += clothingRows * 32 + 16;
+
+      // Tips
+      if (rideScore.tips.length > 0) {
+        ctx.fillStyle = '#374151';
+        ctx.font = 'bold 13px system-ui, Arial';
+        ctx.fillText('💡 Conseils', padding + 4, sy);
+        sy += 22;
+        rideScore.tips.forEach(t => {
+          ctx.fillStyle = '#64748b';
+          ctx.font = '12px system-ui, Arial';
+          ctx.fillText(`• ${t}`, padding + 12, sy);
+          sy += 24;
+        });
+      }
+    }
+
     return await new Promise<Blob | null>(res => canvas.toBlob(b => res(b), 'image/png'));
   }
 
@@ -159,10 +257,11 @@ export class GpxExportService {
     durationText: string,
     departureTime: string,
     arrivalTime: string,
-    cityCount: number
+    cityCount: number,
+    rideScore: RideScoreData | null = null
   ): Promise<string> {
     try {
-      const blob = await this.renderDataToPngBlob(passages, displayDate, totalDistanceKm, durationText, departureTime, arrivalTime, cityCount, 2);
+      const blob = await this.renderDataToPngBlob(passages, displayDate, totalDistanceKm, durationText, departureTime, arrivalTime, cityCount, rideScore, 2);
       if (!blob) return 'Échec de génération';
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -185,13 +284,14 @@ export class GpxExportService {
     durationText: string,
     departureTime: string,
     arrivalTime: string,
-    cityCount: number
+    cityCount: number,
+    rideScore: RideScoreData | null = null
   ): Promise<string> {
     if (!('canShare' in navigator) && !('share' in navigator)) {
       return 'Partage non supporté par ce navigateur';
     }
     try {
-      const blob = await this.renderDataToPngBlob(passages, displayDate, totalDistanceKm, durationText, departureTime, arrivalTime, cityCount, 2);
+      const blob = await this.renderDataToPngBlob(passages, displayDate, totalDistanceKm, durationText, departureTime, arrivalTime, cityCount, rideScore, 2);
       if (!blob) return 'Échec génération';
       const file = new File([blob], `gpx-passages-${displayDate.replace(/\//g, '-')}.png`, { type: 'image/png' });
       // @ts-ignore

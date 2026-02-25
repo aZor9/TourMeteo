@@ -11,6 +11,28 @@ export interface PassageWeather {
   apparentTemperature?: number;
 }
 
+/** Clothing item recommendation */
+export interface ClothingItem {
+  emoji: string;
+  label: string;
+}
+
+/** Ride score data emitted by RideScoreComponent */
+export interface RideScoreData {
+  score: number;
+  label: string;
+  emoji: string;
+  clothingItems: ClothingItem[];
+  warnings: string[];
+  tips: string[];
+  avgTemp: number;
+  avgApparentTemp: number;
+  avgWind: number;
+  avgHumidity: number;
+  maxPrecipProb: number;
+  totalPrecip: number;
+}
+
 /** A single passage point along the GPX route */
 export interface Passage {
   city: string;
