@@ -288,12 +288,11 @@ export class GpxUploaderComponent {
 
   // Render the passages data directly to a PNG blob using canvas (no foreignObject)
   async renderDataToPngBlob(passages: typeof this.passages, dateLabel: string, scale = 2): Promise<Blob | null> {
-    // simple layout
     const padding = 20;
-    const rowHeight = 56;
+    const rowHeight = 48;
     const headerHeight = 60;
-    const width = Math.max(520, 750);
-    const height = headerHeight + passages.length * rowHeight + padding * 2;
+    const width = 750;
+    const height = headerHeight + passages.length * rowHeight + padding * 2 + 10;
 
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(width * scale);
@@ -301,63 +300,88 @@ export class GpxUploaderComponent {
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
     ctx.scale(scale, scale);
+
     // background
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
 
     // title/date
     ctx.fillStyle = '#111827';
-    ctx.font = '20px system-ui, Arial';
-    ctx.fillText(`Date: ${dateLabel}`, padding, padding + 18);
+    ctx.font = 'bold 18px system-ui, Arial';
+    ctx.fillText(`📅 ${dateLabel}`, padding, padding + 20);
 
-    // header
-    ctx.fillStyle = '#6b7280';
-    ctx.font = '14px system-ui, Arial';
-    ctx.fillText('Ville', padding, padding + headerHeight - 28);
-    ctx.fillText('Heure', padding + 240, padding + headerHeight - 28);
-    ctx.fillText('Météo', padding + 340, padding + headerHeight - 28);
+    // header row
+    const headerY = padding + 40;
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(padding, headerY, width - padding * 2, 28);
+    ctx.fillStyle = '#64748b';
+    ctx.font = 'bold 12px system-ui, Arial';
+    ctx.fillText('VILLE', padding + 8, headerY + 18);
+    ctx.fillText('HEURE', padding + 220, headerY + 18);
+    ctx.fillText('MÉTÉO', padding + 310, headerY + 18);
+    ctx.fillText('JOUR/NUIT', padding + 620, headerY + 18);
 
-    // rows
-    let y = padding + headerHeight - 8;
-    for (const p of passages) {
-      y += rowHeight - 8;
-      // background row – day/night tint
+    // data rows
+    const startY = headerY + 32;
+    passages.forEach((p, idx) => {
+      const rowTop = startY + idx * rowHeight;
+      const textY = rowTop + rowHeight / 2 + 5; // vertically centered text baseline
+
+      // row background – alternating + day/night tint
       if (p.weather?.isDay !== undefined) {
         ctx.fillStyle = p.weather.isDay ? '#fffbeb' : '#eef2ff';
       } else {
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
       }
-      ctx.fillRect(padding, y - (rowHeight - 16), width - padding * 2, rowHeight - 16);
+      ctx.fillRect(padding, rowTop, width - padding * 2, rowHeight);
+
+      // subtle bottom border
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(padding, rowTop + rowHeight);
+      ctx.lineTo(width - padding, rowTop + rowHeight);
+      ctx.stroke();
 
       // city
       ctx.fillStyle = '#111827';
-      ctx.font = '16px system-ui, Arial';
-      ctx.fillText(p.city, padding + 4, y + 4);
+      ctx.font = 'bold 14px system-ui, Arial';
+      ctx.fillText(p.city, padding + 8, textY);
 
       // time
       ctx.fillStyle = '#374151';
       ctx.font = '14px system-ui, Arial';
       const hh = String(p.time.getHours()).padStart(2, '0');
       const mm = String(p.time.getMinutes()).padStart(2, '0');
-      ctx.fillText(`${hh}:${mm}`, padding + 240, y + 4);
+      ctx.fillText(`${hh}:${mm}`, padding + 220, textY);
 
-      // weather: emoji, temp, wind
-      const desc = this.getWeatherDescription(p.weather?.code);
-      ctx.fillText(desc.emoji, padding + 340, y + 4);
-      const temp = p.weather?.temperature !== undefined ? `${p.weather.temperature}°C` : '';
-      ctx.fillText(temp, padding + 370, y + 4);
-      const wind = p.weather?.wind !== undefined ? `Vent ${p.weather.wind} m/s` : '';
-      const windDir = p.weather?.windDir ? ` (${this.degreesToCardinal(p.weather.windDir)})` : '';
-      ctx.fillText(wind + windDir, padding + 440, y + 4);
+      // weather
+      if (p.weather) {
+        const desc = this.getWeatherDescription(p.weather.code);
+        ctx.font = '14px system-ui, Arial';
+        ctx.fillStyle = '#111827';
+        const tempStr = p.weather.temperature !== undefined ? `${p.weather.temperature}°C` : '';
+        ctx.fillText(`${desc.emoji} ${tempStr}`, padding + 310, textY);
 
-      // jour/nuit label
+        ctx.fillStyle = '#64748b';
+        ctx.font = '12px system-ui, Arial';
+        const windStr = p.weather.wind !== undefined ? `💨 ${p.weather.wind} m/s` : '';
+        const windDir = p.weather.windDir ? ` ${this.degreesToCardinal(p.weather.windDir)}` : '';
+        ctx.fillText(windStr + windDir, padding + 310, textY + 16);
+
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '11px system-ui, Arial';
+        ctx.fillText(desc.desc, padding + 460, textY);
+      }
+
+      // jour/nuit badge
       if (p.weather?.isDay !== undefined) {
         const label = p.weather.isDay ? '☀️ Jour' : '🌙 Nuit';
         ctx.fillStyle = p.weather.isDay ? '#92400e' : '#4338ca';
-        ctx.font = '12px system-ui, Arial';
-        ctx.fillText(label, padding + 600, y + 4);
+        ctx.font = 'bold 12px system-ui, Arial';
+        ctx.fillText(label, padding + 620, textY);
       }
-    }
+    });
 
     return await new Promise<Blob | null>(res => canvas.toBlob(b => res(b), 'image/png'));
   }
