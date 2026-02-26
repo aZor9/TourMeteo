@@ -6,13 +6,15 @@ Application Angular de comparaison météo entre plusieurs villes, heure par heu
 
 - **Recherche multi-villes** : comparer la météo horaire de plusieurs villes sur une même date
 - **Filtres d'affichage** : température, vent, résumé météo (activables/désactivables)
+- **Vue mobile optimisée** : cartes avec emoji météo en fond (opacité élevée), indicateur jour/nuit sous l'heure, affichage des précipitations
 - **Import GPX** : charger un fichier `.gpx` pour calculer la distance totale et estimer les horaires de passage
 - **Carte interactive** : tracé du parcours GPX sur une carte Leaflet avec marqueurs numérotés par ville
 - **Météo par passage** : température, ressenti, vent (vitesse + direction), humidité, probabilité de pluie, quantité de précipitations
 - **Score de sortie vélo** : score 0-100 basé sur les conditions météo, avec recommandation de tenue cycliste, alertes et conseils
 - **Statistiques résumées** : distance totale, durée estimée, heures de départ/arrivée, nombre de villes traversées
-- **Export PNG** : génération d'image PNG (rendu Canvas natif, sans librairie externe)
+- **Export PNG** : image soignée du tableau des passages (rendu Canvas natif, bandeau couleur, indicateur jour/nuit, footer)
 - **Partage** : via l'API Web Share sur navigateurs compatibles ; téléchargement automatique sinon
+- **Page À propos** : sections déroulantes (accordéon), contact intégré
 
 ## Stack technique
 

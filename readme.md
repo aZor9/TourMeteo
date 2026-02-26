@@ -54,13 +54,15 @@ readme.md               ← ce fichier
 - Saisir plusieurs villes séparées par des virgules et une date
 - Affichage d'un tableau météo horaire comparatif (température, vent, weathercode avec emoji)
 - Filtres : température, vent, résumé météo
+- **Vue mobile** : cartes avec emoji météo en fond (opacité élevée), indicateur jour/nuit sous l'heure, affichage des précipitations (probabilité + quantité)
 
 ### Import GPX et export
 - **Import :** charger un fichier `.gpx` pour calculer la distance totale du parcours
 - **Calcul d'itinéraire :** estimation de l'heure de passage à chaque point selon la vitesse moyenne et l'heure de départ renseignées
 - **Reverse-géocodage :** détection automatique de la ville à chaque point d'échantillonnage (Nominatim, throttlé ~1 req/s)
-- **Météo par passage :** température, vent (vitesse + direction cardinale) et emoji weathercode pour l'heure estimée
-- **Export PNG :** génération d'une image PNG du tableau des passages (rendu Canvas, sans librairie externe)
+- **Météo par passage :** température, ressenti, vent (vitesse + direction cardinale), humidité, probabilité de pluie, précipitations et emoji weathercode
+- **Score de sortie vélo :** score 0-100 avec recommandation de tenue cycliste, alertes et conseils
+- **Export PNG :** image soignée du tableau des passages (rendu Canvas natif, bandeau couleur, colonnes espacées, indicateur jour/nuit, footer branding)
 - **Partage :** via l'API Web Share sur les navigateurs compatibles ; fallback téléchargement si non supporté
 
 ### Légende weathercode (Open-Meteo)
@@ -143,11 +145,10 @@ Le rewrite SPA redirige toutes les routes vers `index.html` pour que le router A
 ---
 
 ## Améliorations possibles
-- Carte interactive du parcours GPX
+- Création rapide de trace GPX directement dans l'app
 - Notifications météo (alertes pluie/orage)
 - Accessibilité améliorée (ARIA, contraste)
 - Proxy serveur pour Nominatim (cache + throttle en production)
-- Affichage jour/nuit (couleurs adaptées selon `is_day`)
 
 ---
 
