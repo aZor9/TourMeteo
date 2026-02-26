@@ -5,6 +5,7 @@ interface AccordionSection {
   id: string;
   title: string;
   icon: string;
+  group: 'user' | 'dev';
   open: boolean;
 }
 
@@ -18,13 +19,16 @@ export class AboutComponent {
   title = 'À propos';
 
   sections: AccordionSection[] = [
-    { id: 'features',     title: 'Fonctionnalités',               icon: '🚀', open: true  },
-    { id: 'gpx',          title: 'Import GPX & Export',            icon: '🗺️', open: false },
-    { id: 'apis',         title: 'APIs utilisées',                 icon: '🔌', open: false },
-    { id: 'architecture', title: 'Architecture des composants',    icon: '🏗️', open: false },
-    { id: 'legend',       title: 'Légende des emoji weathercode',  icon: '🌈', open: false },
-    { id: 'notes',        title: 'Remarques & confidentialité',    icon: '🔒', open: false },
-    { id: 'contact',      title: 'Contact',                       icon: '✉️', open: false },
+    // Utilisateurs (non-dev)
+    { id: 'features',     title: 'Fonctionnalités',               icon: '🚀', group: 'user', open: false  },
+    { id: 'gpx',          title: 'Import GPX & Export',            icon: '🗺️', group: 'user', open: false },
+    { id: 'notes',        title: 'Remarques & confidentialité',    icon: '🔒', group: 'user', open: false },
+    { id: 'contact',      title: 'Contact',                       icon: '✉️', group: 'user', open: false },
+    
+    // Développeurs
+    { id: 'legend',       title: 'Légende des emoji weathercode',  icon: '🌈', group: 'dev', open: false },
+    { id: 'apis',         title: 'APIs utilisées',                 icon: '🔌', group: 'dev',  open: false },
+    { id: 'architecture', title: 'Architecture des composants',    icon: '🏗️', group: 'dev',  open: false },
   ];
 
   toggle(section: AccordionSection): void {
