@@ -157,6 +157,10 @@ export class GpxUploaderComponent {
           this.passages.push({ city: 'Inconnu', lat, lon, time, distanceKm: +(meters / 1000).toFixed(1), status: 'error', message: err?.message || 'Reverse geocode failed' });
         }
       }
+
+      // Important: trigger child components relying on OnChanges (e.g. RideScore)
+      // because we mutate the array in place with push().
+      this.passages = [...this.passages];
       this.progressText = `Recherche des villes... (${this.passages.length} passages échantillonnés, ${coordToCity.size} géocodages)`;
       this.cd.detectChanges();
     }
@@ -203,6 +207,9 @@ export class GpxUploaderComponent {
           p.message = (err && err.message) ? err.message : 'Erreur météo';
         }
       }
+
+      // Trigger OnChanges in child components after in-place updates (status/weather)
+      this.passages = [...this.passages];
       this.progressText = `Récupération météo... ${idx + 1}/${this.passages.length}`;
       this.cd.detectChanges();
       await new Promise(res => setTimeout(res, 300));
