@@ -1,83 +1,171 @@
 <div class="px-3 sm:px-0 max-w-3xl mx-auto py-4">
 <section class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm">
-  <header class="mb-4">
+
+  <!-- Header -->
+  <header class="mb-6">
     <h1 class="text-2xl font-bold text-slate-900">{{ title }}</h1>
-    <p class="text-slate-500 mt-1">TourMeteo — une application de comparaison météo entre plusieurs villes, heure par heure, pensée pour les cyclistes et randonneurs.</p>
+    <p class="text-slate-500 mt-1">TourMeteo — application de comparaison météo entre plusieurs villes, heure par heure, pensée pour les cyclistes et randonneurs.</p>
+    <div class="flex items-center gap-3 mt-3 text-sm">
+      <span class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full font-medium">v2.1.0</span>
+      <span class="text-slate-400">Angular 21 · Tailwind CSS · Leaflet</span>
+    </div>
+    <p class="text-slate-500 mt-2 text-sm">
+      GitHub : <a href="https://github.com/aZor9/TourMeteo" class="text-primary hover:underline" target="_blank">github.com/aZor9/TourMeteo</a>
+      · Démo : <a href="https://tour-meteo.vercel.app/" class="text-primary hover:underline" target="_blank">tour-meteo.vercel.app</a>
+    </p>
   </header>
 
-  <div class="mb-4">
-    <p class="text-slate-500">Version: 2.0.0 — Réalisé avec Angular 21, Tailwind CSS et Leaflet.</p>
-    <p class="text-slate-500 mt-1">Lien du répertoire GitHub : <a href="https://github.com/aZor9/TourMeteo" class="text-primary hover:underline">https://github.com/aZor9/TourMeteo</a></p>
+  <!-- Expand / Collapse all -->
+  <div class="flex gap-2 mb-4 text-xs">
+    <button (click)="expandAll()" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">Tout ouvrir</button>
+    <button (click)="collapseAll()" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">Tout fermer</button>
   </div>
 
-  <div class="mb-4">
-    <h2 class="font-semibold text-slate-800">APIs utilisées</h2>
-    <ul class="mt-2 list-disc pl-5 text-slate-700">
-      <li><strong>Géocodage :</strong> Nominatim (OpenStreetMap) — recherche d'emplacements et reverse-géocodage (lat/lon → ville)</li>
-      <li><strong>Météo :</strong> Open-Meteo — données météo horaires (température, température ressentie, vent, direction, précipitations, probabilité de pluie, humidité, weathercode, jour/nuit)</li>
-    </ul>
+  <!-- ─── Accordion sections ─── -->
+  <div class="space-y-2">
+
+    <!-- 0 — Fonctionnalités -->
+    <ng-container *ngFor="let sec of sections; let idx = index">
+
+      <!-- ===== FEATURES ===== -->
+      <div *ngIf="sec.id === 'features'" class="border border-slate-200 rounded-lg overflow-hidden">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
+          <span class="text-lg">{{ sec.icon }}</span>
+          <span class="font-semibold text-slate-800 flex-1">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 space-y-1.5 border-t border-slate-100">
+          <ul class="list-disc pl-5 space-y-1">
+            <li><strong>Recherche multi-villes :</strong> comparer la météo horaire de plusieurs villes sur une même date</li>
+            <li><strong>Filtres d'affichage :</strong> température, vent, résumé météo (activables/désactivables)</li>
+            <li><strong>Vue mobile optimisée :</strong> cartes avec emoji météo en fond, indicateur jour/nuit sous l'heure, affichage des précipitations</li>
+            <li><strong>Import GPX :</strong> charger un fichier <code>.gpx</code> pour calculer la distance totale et prévoir la météo du parcours</li>
+            <li><strong>Carte interactive :</strong> tracé du parcours GPX avec marqueurs numérotés (Leaflet + OpenStreetMap)</li>
+            <li><strong>Météo par passage :</strong> température, ressenti, vent, humidité, probabilité de pluie, précipitations et emoji weathercode</li>
+            <li><strong>Score de sortie vélo :</strong> score /100, recommandation de tenue cycliste, alertes et conseils personnalisés</li>
+            <li><strong>Export PNG :</strong> image du tableau des passages (rendu Canvas natif) avec disposition soignée et indicateur jour/nuit</li>
+            <li><strong>Partage :</strong> via l'API Web Share ou téléchargement automatique</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ===== GPX & EXPORT ===== -->
+      <div *ngIf="sec.id === 'gpx'" class="border border-slate-200 rounded-lg overflow-hidden">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
+          <span class="text-lg">{{ sec.icon }}</span>
+          <span class="font-semibold text-slate-800 flex-1">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 space-y-2 border-t border-slate-100">
+          <p>Importez un fichier <strong>.gpx</strong> via la page <em>GPX</em>. L'application parse les points <code>trkpt</code>, calcule la distance totale (formule de Haversine), puis estime l'heure de passage et la distance cumulative à chaque point selon la vitesse moyenne renseignée.</p>
+          <p>Pour chaque point, un reverse-géocodage Nominatim identifie la ville, puis la météo horaire est récupérée via Open-Meteo. Les doublons consécutifs sont filtrés automatiquement.</p>
+          <p>Le tracé complet est affiché sur une <strong>carte interactive</strong> (Leaflet) avec des marqueurs numérotés.</p>
+          <p>Un <strong>score de sortie vélo</strong> (0-100) est calculé en fonction de la température, du vent, des précipitations, de l'humidité et des conditions spéciales (orage, brouillard). Des recommandations de tenue cycliste, des alertes et des conseils sont générés.</p>
+          <p>Les résultats peuvent être <strong>exportés en image PNG</strong> avec un rendu soigné (bandeau couleur, colonnes bien espacées, indicateur jour/nuit, footer) ou <strong>partagés</strong> via l'API Web Share.</p>
+        </div>
+      </div>
+
+      <!-- ===== APIs ===== -->
+      <div *ngIf="sec.id === 'apis'" class="border border-slate-200 rounded-lg overflow-hidden">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
+          <span class="text-lg">{{ sec.icon }}</span>
+          <span class="font-semibold text-slate-800 flex-1">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 border-t border-slate-100">
+          <ul class="list-disc pl-5 space-y-1">
+            <li><strong>Géocodage :</strong> <a href="https://nominatim.org/" class="text-primary hover:underline" target="_blank">Nominatim</a> (OpenStreetMap) — recherche d'emplacements et reverse-géocodage (lat/lon → ville)</li>
+            <li><strong>Météo :</strong> <a href="https://open-meteo.com/" class="text-primary hover:underline" target="_blank">Open-Meteo</a> — données horaires (température, ressenti, vent, direction, précipitations, probabilité de pluie, humidité, weathercode, jour/nuit)</li>
+          </ul>
+          <p class="mt-2 text-xs text-slate-500">Aucune clé API n'est requise. Les deux services sont gratuits et open-source.</p>
+        </div>
+      </div>
+
+      <!-- ===== Architecture ===== -->
+      <div *ngIf="sec.id === 'architecture'" class="border border-slate-200 rounded-lg overflow-hidden">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
+          <span class="text-lg">{{ sec.icon }}</span>
+          <span class="font-semibold text-slate-800 flex-1">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 border-t border-slate-100">
+          <ul class="list-disc pl-5 space-y-1">
+            <li><strong>GpxUploaderComponent :</strong> orchestrateur principal (upload, parsing GPX, calcul d'itinéraire, récupération météo)</li>
+            <li><strong>GpxMapComponent :</strong> carte Leaflet avec tracé polyline et marqueurs numérotés</li>
+            <li><strong>RideScoreComponent :</strong> calcul et affichage du score de sortie vélo, tenue recommandée, alertes</li>
+            <li><strong>GpxSummaryBarComponent :</strong> barre de statistiques résumées (distance, durée, départ, arrivée)</li>
+            <li><strong>GpxResultsTableComponent :</strong> tableau desktop et cartes mobile des passages météo</li>
+            <li><strong>GpxExportService :</strong> export Canvas → PNG et partage Web Share</li>
+            <li><strong>WeatherSheetComponent :</strong> grille météo horaire par ville (desktop table + mobile cards)</li>
+            <li><strong>SearchTabComponent :</strong> formulaire de recherche et filtres</li>
+            <li><strong>WeatherUtils :</strong> weathercode → emoji, degrés → direction cardinale</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ===== Légende emoji ===== -->
+      <div *ngIf="sec.id === 'legend'" class="border border-slate-200 rounded-lg overflow-hidden">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
+          <span class="text-lg">{{ sec.icon }}</span>
+          <span class="font-semibold text-slate-800 flex-1">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 border-t border-slate-100">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
+            <div>☀️ <strong>Ciel clair</strong> <span class="text-slate-400 text-xs">(0)</span></div>
+            <div>🌤️ <strong>Partiellement nuageux</strong> <span class="text-slate-400 text-xs">(1, 2)</span></div>
+            <div>☁️ <strong>Couvert</strong> <span class="text-slate-400 text-xs">(3)</span></div>
+            <div>🌫️ <strong>Brouillard</strong> <span class="text-slate-400 text-xs">(45, 48)</span></div>
+            <div>🌦️ <strong>Bruine / Averses</strong> <span class="text-slate-400 text-xs">(51, 53, 55, 80–82)</span></div>
+            <div>🌧️ <strong>Pluie / Verglaçante</strong> <span class="text-slate-400 text-xs">(56, 57, 61–67)</span></div>
+            <div>❄️ <strong>Neige</strong> <span class="text-slate-400 text-xs">(71, 73, 75, 77)</span></div>
+            <div>🌨️ <strong>Averses de neige</strong> <span class="text-slate-400 text-xs">(85, 86)</span></div>
+            <div>⛈️ <strong>Orage</strong> <span class="text-slate-400 text-xs">(95, 96, 99)</span></div>
+            <div>❓ <strong>Inconnu</strong> <span class="text-slate-400 text-xs">(autres)</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Remarques ===== -->
+      <div *ngIf="sec.id === 'notes'" class="border border-slate-200 rounded-lg overflow-hidden">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
+          <span class="text-lg">{{ sec.icon }}</span>
+          <span class="font-semibold text-slate-800 flex-1">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 space-y-1.5 border-t border-slate-100">
+          <p>Les données sont obtenues en temps réel depuis les APIs publiques listées ci-dessus.</p>
+          <p>Aucune donnée utilisateur n'est envoyée à des services autres que ceux mentionnés (Open-Meteo et Nominatim).</p>
+          <p>Nominatim applique des limites d'usage (1 requête/seconde). L'application utilise un throttle et un échantillonnage par distance (~2 km) pour respecter ces contraintes.</p>
+          <p>Aucun compte utilisateur, aucun cookie de tracking, aucune donnée personnelle stockée.</p>
+        </div>
+      </div>
+
+      <!-- ===== Contact ===== -->
+      <div *ngIf="sec.id === 'contact'" class="border border-slate-200 rounded-lg overflow-hidden">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
+          <span class="text-lg">{{ sec.icon }}</span>
+          <span class="font-semibold text-slate-800 flex-1">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 space-y-2 border-t border-slate-100">
+          <p>Une idée d'amélioration, un bug à signaler ou simplement envie d'échanger ?</p>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <a href="https://github.com/aZor9/TourMeteo/issues" target="_blank"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 text-white text-sm hover:bg-slate-700 transition-colors">
+              🐛 Ouvrir une issue GitHub
+            </a>
+            <a href="mailto:hugo.lembrez@gmail.com" target="_blank"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm hover:bg-indigo-500 transition-colors">
+              ✉️ Envoyer un email
+            </a>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Créé par Hugo Lembrez</p>
+        </div>
+      </div>
+
+    </ng-container>
   </div>
 
-  <div class="mb-4">
-    <h2 class="font-semibold text-slate-800">Fonctionnalités</h2>
-    <ul class="mt-2 list-disc pl-5 text-slate-700">
-      <li><strong>Recherche multi-villes :</strong> comparer la météo horaire de plusieurs villes sur une même date</li>
-      <li><strong>Filtres d'affichage :</strong> température, vent, résumé météo (activables/désactivables)</li>
-      <li><strong>Import GPX :</strong> charger un fichier <code>.gpx</code> pour calculer la distance totale du parcours</li>
-      <li><strong>Calcul d'itinéraire :</strong> estimation de l'heure de passage et distance cumulative selon la vitesse moyenne et l'heure de départ</li>
-      <li><strong>Reverse-géocodage :</strong> détection automatique de la ville à chaque point (Nominatim, throttlé ~1 req/s, échantillonnage par distance)</li>
-      <li><strong>Carte interactive :</strong> tracé du parcours GPX avec marqueurs numérotés pour chaque ville (Leaflet + OpenStreetMap)</li>
-      <li><strong>Météo par passage :</strong> température, température ressentie, vent (vitesse + direction cardinale), humidité, probabilité de pluie, quantité de précipitations et emoji weathercode</li>
-      <li><strong>Score de sortie vélo :</strong> score sur 100 évaluant les conditions météo, avec recommandation de tenue cycliste (cuissard, maillot, gants, etc.), alertes et conseils</li>
-      <li><strong>Statistiques résumées :</strong> distance totale, durée estimée, heures de départ/arrivée, nombre de villes traversées</li>
-      <li><strong>Export PNG :</strong> génération d'une image PNG du tableau des passages (rendu Canvas natif, sans librairie externe)</li>
-      <li><strong>Partage :</strong> via l'API Web Share sur navigateurs compatibles ; téléchargement automatique sinon</li>
-    </ul>
-  </div>
-
-  <div class="mb-4">
-    <h2 class="font-semibold text-slate-800">Architecture des composants</h2>
-    <ul class="mt-2 list-disc pl-5 text-slate-700">
-      <li><strong>GpxUploaderComponent :</strong> orchestrateur principal (upload, parsing GPX, calcul d'itinéraire, récupération météo)</li>
-      <li><strong>GpxMapComponent :</strong> carte Leaflet avec tracé polyline et marqueurs numérotés</li>
-      <li><strong>RideScoreComponent :</strong> calcul et affichage du score de sortie vélo, tenue recommandée, alertes et conseils</li>
-      <li><strong>GpxSummaryBarComponent :</strong> barre de statistiques résumées (distance, durée, départ, arrivée, villes)</li>
-      <li><strong>GpxResultsTableComponent :</strong> tableau desktop et cartes mobile des passages météo</li>
-      <li><strong>GpxExportService :</strong> service d'export Canvas → PNG et partage Web Share</li>
-      <li><strong>WeatherUtils :</strong> fonctions partagées (weathercode → emoji, degrés → direction cardinale)</li>
-    </ul>
-  </div>
-
-  <div class="mb-4">
-    <h2 class="font-semibold text-slate-800">Légende des emoji (weathercode Open-Meteo)</h2>
-    <ol class="mt-2 list-decimal pl-5 text-slate-700">
-      <li>☀️ Ciel clair (0)</li>
-      <li>🌤️ Partiellement nuageux (1, 2)</li>
-      <li>☁️ Couvert (3)</li>
-      <li>🌫️ Brouillard (45, 48)</li>
-      <li>🌦️ Bruine / Averses (51, 53, 55, 80, 81, 82)</li>
-      <li>🌧️ Pluie / Bruine verglaçante (56, 57, 61, 63, 65, 66, 67)</li>
-      <li>❄️ Neige / Grains de neige (71, 73, 75, 77)</li>
-      <li>🌨️ Averses de neige (85, 86)</li>
-      <li>⛈️ Orage / Orage avec grêle (95, 96, 99)</li>
-      <li>❓ Inconnu (autres codes)</li>
-    </ol>
-  </div>
-
-  <div class="mb-4">
-    <h3 class="font-semibold text-slate-800">Import GPX et export</h3>
-    <p class="text-slate-500 mt-2">Importez un fichier <strong>.gpx</strong> via la page <em>GPX</em>. L'application parse les points <code>trkpt</code>, calcule la distance totale (formule de Haversine), puis estime l'heure de passage et la distance cumulative à chaque point d'échantillonnage selon la vitesse moyenne renseignée.</p>
-    <p class="text-slate-500 mt-1">Pour chaque point, un reverse-géocodage Nominatim identifie la ville, puis la météo horaire est récupérée via Open-Meteo (température, ressenti, vent, humidité, précipitations). Les villes inconnues et les doublons consécutifs sont filtrés automatiquement.</p>
-    <p class="text-slate-500 mt-1">Le tracé complet est affiché sur une carte interactive (Leaflet) avec des marqueurs numérotés pour chaque ville.</p>
-    <p class="text-slate-500 mt-1">Un <strong>score de sortie vélo</strong> (0-100) est calculé automatiquement en fonction de la température, du vent, des précipitations, de l'humidité et des conditions spéciales (orage, brouillard). Des recommandations de tenue cycliste, des alertes et des conseils sont générés.</p>
-    <p class="text-slate-500 mt-1">Les résultats peuvent être <strong>exportés en image PNG</strong> (rendu Canvas natif) ou <strong>partagés</strong> via l'API Web Share.</p>
-  </div>
-
-  <div>
-    <h3 class="font-semibold text-slate-800">Remarques</h3>
-    <p class="text-slate-500 mt-2">Les données sont obtenues en temps réel depuis les APIs publiques listées ci‑dessus.</p>
-    <p class="text-slate-500 mt-1">Aucune donnée utilisateur n'est envoyée à des services autres que ceux mentionnés.</p>
-    <p class="text-slate-500 mt-1">Nominatim applique des limites d'usage (1 requête/seconde). L'application utilise un throttle et un échantillonnage par distance (~2 km) pour respecter ces contraintes.</p>
-  </div>
 </section>
 </div>
