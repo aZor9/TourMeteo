@@ -197,7 +197,7 @@ export class GpxExportService {
     ctx.fillStyle = '#94a3b8';
     ctx.font = '11px system-ui, Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('TourMeteo — Prévisions générées automatiquement', width / 2, footerY + 22);
+    ctx.fillText('Meteo Ride — Prévisions générées automatiquement', width / 2, footerY + 22);
     ctx.textAlign = 'left';
 
     // ── Ride score section ──

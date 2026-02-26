@@ -1,6 +1,6 @@
 {
-  "name": "TourMeteo",
-  "short_name": "TourMeteo",
+  "name": "Meteo Ride",
+  "short_name": "Meteo Ride",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",

@@ -18,6 +18,8 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, TourMeteo');
+    // App is the home page; branding is in the global navbar.
+    // Keep this test stable by checking main UI presence instead of a hardcoded title.
+    expect(compiled.querySelector('app-search-tab')).toBeTruthy();
   });
 });
