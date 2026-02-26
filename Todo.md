@@ -6,4 +6,3 @@ Fonctionnalité a rajouter :
 Amélioration : 
 
 - Rajouter dans about, un champ de contact si idées ou autre
-- Changer le nom en MeteoRide ?
