@@ -17,11 +17,12 @@ export class GpxExportService {
     rideScore: RideScoreData | null = null,
     scale = 2
   ): Promise<Blob | null> {
-    const padding = 28;
-    const rowHeight = 64;
+    const padding = 32;
+    const rowHeight = 72;
     const headerHeight = 60;
     const summaryHeight = 60;
-    const width = 860;
+    const width = 920;
+    const footerHeight = 36;
 
     // Calculate ride score section height
     let scoreBlockHeight = 0;
@@ -35,7 +36,7 @@ export class GpxExportService {
       scoreBlockHeight += 30; // bottom spacing
     }
 
-    const height = headerHeight + summaryHeight + passages.length * rowHeight + scoreBlockHeight + padding * 2 + 10;
+    const height = headerHeight + summaryHeight + passages.length * rowHeight + scoreBlockHeight + padding * 2 + 10 + footerHeight;
 
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(width * scale);
@@ -44,60 +45,68 @@ export class GpxExportService {
     if (!ctx) return null;
     ctx.scale(scale, scale);
 
-    // background
+    // background with subtle gradient effect
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
+    // Top accent bar
+    const grad = ctx.createLinearGradient(0, 0, width, 0);
+    grad.addColorStop(0, '#4F46E5');
+    grad.addColorStop(1, '#7C3AED');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, 5);
 
     // title/date
     ctx.fillStyle = '#111827';
-    ctx.font = 'bold 18px system-ui, Arial';
-    ctx.fillText(`📅 ${dateLabel}`, padding, padding + 20);
+    ctx.font = 'bold 20px system-ui, Arial';
+    ctx.fillText(`📅 ${dateLabel}`, padding, padding + 22);
 
     // summary row
-    const summaryY = padding + 35;
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(padding, summaryY, width - padding * 2, 36);
-    ctx.fillStyle = '#64748b';
+    const summaryY = padding + 38;
+    ctx.fillStyle = '#f1f5f9';
+    ctx.beginPath(); ctx.roundRect(padding, summaryY, width - padding * 2, 38, 8); ctx.fill();
+    ctx.fillStyle = '#475569';
     ctx.font = '12px system-ui, Arial';
     ctx.fillText(
       `📏 ${totalDistanceKm} km   ⏱ ${durationText}   🕐 ${departureTime} → ${arrivalTime}   📍 ${cityCount} villes`,
-      padding + 8, summaryY + 23
+      padding + 12, summaryY + 24
     );
 
     // Column layout
     const colNum = padding + 8;
-    const colCity = padding + 44;
-    const colHour = padding + 240;
-    const colMeteoStart = padding + 320;
+    const colCity = padding + 50;
+    const colHour = padding + 230;
+    const colDayNight = padding + 290;
+    const colMeteoStart = padding + 340;
     const colMeteoEnd = width - padding;
     const colMeteoCenter = (colMeteoStart + colMeteoEnd) / 2;
 
     // header row
-    const headerY = summaryY + 44;
-    ctx.fillStyle = '#f1f5f9';
-    ctx.fillRect(padding, headerY, width - padding * 2, 28);
-    ctx.fillStyle = '#64748b';
+    const headerY = summaryY + 48;
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath(); ctx.roundRect(padding, headerY, width - padding * 2, 30, 6); ctx.fill();
+    ctx.fillStyle = '#475569';
     ctx.font = 'bold 11px system-ui, Arial';
-    ctx.fillText('#', colNum, headerY + 18);
-    ctx.fillText('VILLE', colCity, headerY + 18);
-    ctx.fillText('HEURE', colHour, headerY + 18);
-    ctx.fillText('MÉTÉO', colMeteoStart + 10, headerY + 18);
+    ctx.fillText('#', colNum, headerY + 20);
+    ctx.fillText('VILLE', colCity, headerY + 20);
+    ctx.fillText('HEURE', colHour, headerY + 20);
+    ctx.fillText('', colDayNight, headerY + 20);
+    ctx.fillText('MÉTÉO', colMeteoStart + 10, headerY + 20);
 
     // data rows
-    const startY = headerY + 32;
+    const startY = headerY + 36;
     passages.forEach((p, idx) => {
       const rowTop = startY + idx * rowHeight;
       const textY = rowTop + rowHeight / 2;
 
-      // row background
+      // row background with day/night tint
       if (p.weather?.isDay !== undefined) {
         ctx.fillStyle = p.weather.isDay ? '#fffbeb' : '#eef2ff';
       } else {
-        ctx.fillStyle = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+        ctx.fillStyle = idx % 2 === 0 ? '#ffffff' : '#f9fafb';
       }
       ctx.fillRect(padding, rowTop, width - padding * 2, rowHeight);
 
-      // border
+      // subtle row separator
       ctx.strokeStyle = '#e2e8f0';
       ctx.lineWidth = 0.5;
       ctx.beginPath();
@@ -108,59 +117,88 @@ export class GpxExportService {
       // number badge
       ctx.fillStyle = '#4F46E5';
       ctx.beginPath();
-      ctx.arc(colNum + 10, textY, 12, 0, Math.PI * 2);
+      ctx.arc(colNum + 12, textY, 13, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 12px system-ui, Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(String(idx + 1), colNum + 10, textY + 4);
+      ctx.fillText(String(idx + 1), colNum + 12, textY + 4);
       ctx.textAlign = 'left';
 
       // city name
       ctx.fillStyle = '#111827';
-      ctx.font = 'bold 13px system-ui, Arial';
-      ctx.fillText(p.city, colCity, textY - 4);
+      ctx.font = 'bold 14px system-ui, Arial';
+      ctx.fillText(p.city, colCity, textY - 6);
       // distance under city
       ctx.fillStyle = '#ef4444';
       ctx.font = '11px system-ui, Arial';
-      ctx.fillText(`📍 ${p.distanceKm} km`, colCity, textY + 12);
+      ctx.fillText(`📍 ${p.distanceKm} km`, colCity, textY + 10);
 
       // time
-      ctx.fillStyle = '#374151';
-      ctx.font = '14px system-ui, Arial';
+      ctx.fillStyle = '#1e293b';
+      ctx.font = 'bold 15px system-ui, Arial';
       const hh = String(p.time.getHours()).padStart(2, '0');
       const mm = String(p.time.getMinutes()).padStart(2, '0');
       ctx.fillText(`${hh}:${mm}`, colHour, textY + 2);
 
-      // weather — centered in [colMeteoStart .. colMeteoEnd]
+      // day/night indicator
+      if (p.weather?.isDay !== undefined) {
+        const dayLabel = p.weather.isDay ? '☀️ Jour' : '🌙 Nuit';
+        ctx.fillStyle = p.weather.isDay ? '#d97706' : '#6366f1';
+        ctx.font = '11px system-ui, Arial';
+        ctx.fillText(dayLabel, colDayNight, textY + 2);
+      }
+
+      // weather block — structured layout in [colMeteoStart .. colMeteoEnd]
       if (p.weather) {
         const desc = getWeatherDescription(p.weather.code);
 
-        // Left part: wind + rain details
+        // Large emoji
+        ctx.font = '30px system-ui, Arial';
+        ctx.fillStyle = '#111827';
+        ctx.fillText(desc.emoji, colMeteoStart + 8, textY + 6);
+
+        // Temperature (bold, next to emoji)
+        ctx.font = 'bold 20px system-ui, Arial';
+        ctx.fillStyle = '#111827';
+        ctx.fillText(`${p.weather.temperature}°`, colMeteoStart + 52, textY - 2);
+
+        // Apparent temperature
+        if (p.weather.apparentTemperature !== undefined) {
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '10px system-ui, Arial';
+          ctx.fillText(`Ressenti ${p.weather.apparentTemperature}°`, colMeteoStart + 52, textY + 12);
+        }
+
+        // Weather description (right-center area)
+        const descX = colMeteoCenter + 10;
+        ctx.fillStyle = '#374151';
+        ctx.font = '12px system-ui, Arial';
+        ctx.fillText(desc.desc, descX, textY - 8);
+
+        // Wind info
         ctx.fillStyle = '#64748b';
         ctx.font = '11px system-ui, Arial';
-        const windStr = `💨 ${p.weather.wind} km/h`;
-        const rainStr = `🌂 ${p.weather.precipitationProbability ?? 0}% · ${p.weather.precipitation ?? 0} mm`;
-        ctx.fillText(`${windStr}  ${rainStr}`, colMeteoStart + 10, textY + 14);
+        ctx.fillText(`💨 ${p.weather.wind} km/h`, descX, textY + 6);
 
-        // Right part: emoji + temp + desc (centered in right half)
-        const rightCenter = colMeteoCenter + (colMeteoEnd - colMeteoCenter) / 2;
-
-        ctx.font = '26px system-ui, Arial';
-        ctx.fillStyle = '#111827';
-        ctx.textAlign = 'center';
-        ctx.fillText(desc.emoji, rightCenter - 30, textY + 4);
-
-        ctx.font = 'bold 18px system-ui, Arial';
-        ctx.fillText(`${p.weather.temperature}°`, rightCenter + 16, textY - 2);
-
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '10px system-ui, Arial';
-        const apparentStr = p.weather.apparentTemperature !== undefined ? `Ressenti ${p.weather.apparentTemperature}°` : '';
-        ctx.fillText(`${apparentStr} · ${desc.desc}`, rightCenter, textY + 16);
-        ctx.textAlign = 'left';
+        // Rain details
+        const precProb = p.weather.precipitationProbability ?? 0;
+        const precMm = p.weather.precipitation ?? 0;
+        ctx.fillStyle = precProb > 50 ? '#2563eb' : '#64748b';
+        ctx.font = '11px system-ui, Arial';
+        ctx.fillText(`🌧️ ${precProb}%  ·  ${precMm} mm`, descX, textY + 20);
       }
     });
+
+    // Footer watermark
+    const footerY = height - footerHeight;
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(0, footerY, width, footerHeight);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px system-ui, Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('TourMeteo — Prévisions générées automatiquement', width / 2, footerY + 22);
+    ctx.textAlign = 'left';
 
     // ── Ride score section ──
     if (rideScore && rideScore.score > 0) {
