@@ -70,11 +70,17 @@
              [ngClass]="h.isDay ? 'bg-amber-50/30' : 'bg-indigo-950/5'">
           <!-- Big background emoji -->
           <div *ngIf="showSummary && h.summary !== undefined"
-               class="absolute right-2 top-1/2 -translate-y-1/2 text-6xl opacity-[0.12] pointer-events-none select-none leading-none">
+               class="absolute right-2 top-1/2 -translate-y-1/2 text-6xl opacity-[0.85] pointer-events-none select-none leading-none">
             {{ getWeatherDescription(+h.summary).emoji }}
           </div>
-          <!-- Hour -->
-          <div class="relative z-[1] w-10 text-sm font-bold text-slate-600 shrink-0">{{ h.hour }}h</div>
+          <!-- Hour + Day/Night label -->
+          <div class="relative z-[1] w-14 shrink-0 text-center">
+            <div class="text-sm font-bold text-slate-600">{{ h.hour }}h</div>
+            <div *ngIf="h.isDay !== undefined" class="text-[10px] mt-0.5 rounded-full px-1 py-px"
+                 [ngClass]="h.isDay ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'">
+              {{ h.isDay ? '☀️ Jour' : '🌙 Nuit' }}
+            </div>
+          </div>
           <!-- Data -->
           <div class="relative z-[1] flex-1 min-w-0">
             <div class="flex items-baseline gap-2 flex-wrap">
@@ -84,11 +90,10 @@
             <div *ngIf="showSummary && h.summary !== undefined" class="text-xs text-slate-600 mt-0.5">
               {{ getWeatherDescription(+h.summary).emoji }} {{ getWeatherDescription(+h.summary).desc }}
             </div>
-          </div>
-          <!-- Day/Night badge -->
-          <div *ngIf="h.isDay !== undefined" class="relative z-[1] shrink-0 text-xs px-1.5 py-0.5 rounded-full"
-               [ngClass]="h.isDay ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'">
-            {{ h.isDay ? '☀️' : '🌙' }}
+            <div *ngIf="h.precipitation !== undefined || h.precipitationProbability !== undefined" class="text-xs text-blue-600 mt-0.5">
+              🌧️ {{ h.precipitationProbability ?? 0 }}%
+              <span *ngIf="(h.precipitation ?? 0) > 0" class="text-blue-500"> · {{ h.precipitation }} mm</span>
+            </div>
           </div>
         </div>
       </div>
