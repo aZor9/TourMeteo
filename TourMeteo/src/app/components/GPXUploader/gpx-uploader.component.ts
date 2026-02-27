@@ -59,6 +59,11 @@ export class GpxUploaderComponent {
     return this.featureFlags.isEnabled('history');
   }
 
+  /** True when the 'experimental' (special) feature flag is enabled */
+  get experimentalEnabled(): boolean {
+    return this.featureFlags.isEnabled('experimental');
+  }
+
   constructor(
     private http: HttpClient,
     private cd: ChangeDetectorRef,

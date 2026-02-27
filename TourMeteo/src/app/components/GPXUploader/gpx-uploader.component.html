@@ -72,7 +72,7 @@
             class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:from-blue-800 active:to-indigo-800 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm hover:shadow-md">
             🚴 Voir la météo sur l'itinéraire
           </button>
-          <button *ngIf="passages.length > 0" (click)="refreshWeatherOnly()"
+          <button *ngIf="passages.length > 0 && experimentalEnabled" (click)="refreshWeatherOnly()"
             class="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm hover:shadow-md"
             title="Changer la date/heure et recharger uniquement la météo (pas de re-géocodage)">
             🔄 Rafraîchir météo
@@ -136,7 +136,7 @@
           📋 Détail complet
         </button>
         <span class="hidden sm:inline text-slate-300">|</span>
-        <label class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+        <label *ngIf="experimentalEnabled" class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
           <input type="checkbox" [(ngModel)]="showMap" class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300"> Carte
         </label>
         <label class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
@@ -157,7 +157,7 @@
       </app-gpx-summary-bar>
 
       <!-- Map -->
-      <app-gpx-map *ngIf="showMap" [passages]="passages" [points]="points"></app-gpx-map>
+      <app-gpx-map *ngIf="showMap && experimentalEnabled" [passages]="passages" [points]="points"></app-gpx-map>
 
       <!-- Ride Score -->
       <app-ride-score *ngIf="showScore" [passages]="passages" [totalDistanceKm]="totalDistanceKm" (scoreComputed)="onScoreComputed($event)"></app-ride-score>
