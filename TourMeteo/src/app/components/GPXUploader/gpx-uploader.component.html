@@ -31,6 +31,9 @@
     </label>
   </div>
 
+  <!-- History panel -->
+  <app-history-panel #historyPanel (load)="loadFromHistory($event)"></app-history-panel>
+
   <!-- Main card -->
   <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
@@ -64,10 +67,17 @@
                      class="w-full sm:w-auto border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
             </div>
           </div>
-          <button (click)="computeSchedule()"
-                  class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:from-blue-800 active:to-indigo-800 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm hover:shadow-md">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button (click)="computeSchedule()"
+            class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:from-blue-800 active:to-indigo-800 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm hover:shadow-md">
             🚴 Voir la météo sur l'itinéraire
           </button>
+          <button *ngIf="passages.length > 0" (click)="refreshWeatherOnly()"
+            class="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm hover:shadow-md"
+            title="Changer la date/heure et recharger uniquement la météo (pas de re-géocodage)">
+            🔄 Rafraîchir météo
+          </button>
+        </div>
         </div>
       </div>
     </div>
@@ -107,7 +117,35 @@
           </button>
         </div>
       </div>
-      <div *ngIf="exportMessage" class="text-xs text-slate-500 -mt-3 mb-4">{{ exportMessage }}</div>
+      <div *ngIf="exportMessage || saveMessage" class="flex flex-wrap gap-3 -mt-3 mb-4">
+        <span *ngIf="exportMessage" class="text-xs text-slate-500">{{ exportMessage }}</span>
+        <span *ngIf="saveMessage" class="text-xs text-emerald-600">{{ saveMessage }}</span>
+      </div>
+
+      <!-- View mode filter -->
+      <div class="flex flex-wrap items-center gap-2 mb-4">
+        <span class="text-xs font-medium text-slate-500">Affichage :</span>
+        <button (click)="setViewMode('resume')"
+                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                [ngClass]="viewMode === 'resume' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+          📊 Résumé
+        </button>
+        <button (click)="setViewMode('detail')"
+                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                [ngClass]="viewMode === 'detail' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+          📋 Détail complet
+        </button>
+        <span class="hidden sm:inline text-slate-300">|</span>
+        <label class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+          <input type="checkbox" [(ngModel)]="showMap" class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300"> Carte
+        </label>
+        <label class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+          <input type="checkbox" [(ngModel)]="showScore" class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300"> Score
+        </label>
+        <label class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+          <input type="checkbox" [(ngModel)]="showTable" class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300"> Tableau
+        </label>
+      </div>
 
       <!-- Summary stats -->
       <app-gpx-summary-bar
@@ -119,13 +157,13 @@
       </app-gpx-summary-bar>
 
       <!-- Map -->
-      <app-gpx-map [passages]="passages" [points]="points"></app-gpx-map>
+      <app-gpx-map *ngIf="showMap" [passages]="passages" [points]="points"></app-gpx-map>
 
       <!-- Ride Score -->
-      <app-ride-score [passages]="passages" [totalDistanceKm]="totalDistanceKm" (scoreComputed)="onScoreComputed($event)"></app-ride-score>
+      <app-ride-score *ngIf="showScore" [passages]="passages" [totalDistanceKm]="totalDistanceKm" (scoreComputed)="onScoreComputed($event)"></app-ride-score>
 
       <!-- Weather table -->
-      <app-gpx-results-table [passages]="passages"></app-gpx-results-table>
+      <app-gpx-results-table *ngIf="showTable" [passages]="passages"></app-gpx-results-table>
     </div>
   </div>
 </div>

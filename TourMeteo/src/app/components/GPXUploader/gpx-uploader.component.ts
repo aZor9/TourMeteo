@@ -1,21 +1,24 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { WeatherService } from '../../service/weather.service';
 import { GpxExportService } from '../../service/gpx-export.service';
+import { HistoryService, SavedRoute } from '../../service/history.service';
 import { Passage, RideScoreData } from '../../models/passage.model';
 import { GpxMapComponent } from './gpx-map/gpx-map.component';
 import { RideScoreComponent } from './ride-score/ride-score.component';
 import { GpxSummaryBarComponent } from './gpx-summary-bar/gpx-summary-bar.component';
 import { GpxResultsTableComponent } from './gpx-results-table/gpx-results-table.component';
+import { HistoryPanelComponent } from './history-panel/history-panel.component';
 
 @Component({
   selector: 'app-gpx-uploader',
   standalone: true,
   imports: [
     CommonModule, FormsModule, HttpClientModule,
-    GpxMapComponent, RideScoreComponent, GpxSummaryBarComponent, GpxResultsTableComponent
+    GpxMapComponent, RideScoreComponent, GpxSummaryBarComponent, GpxResultsTableComponent,
+    HistoryPanelComponent
   ],
   templateUrl: './gpx-uploader.component.html'
 })
@@ -36,12 +39,26 @@ export class GpxUploaderComponent {
   arrivalTime = '';
   cityCount = 0;
   rideScoreData: RideScoreData | null = null;
+  saveMessage = '';
+
+  /** Display filter: 'detail' (full table) | 'resume' (summary only) */
+  viewMode: 'detail' | 'resume' = 'resume';
+  /** Sections visibility for filter */
+  showMap = false;
+  showScore = true;
+  showTable = false;
+
+  /** Flag: if loaded from history we can change date without re-geocoding */
+  private loadedFromHistory = false;
+
+  @ViewChild('historyPanel') historyPanel!: HistoryPanelComponent;
 
   constructor(
     private http: HttpClient,
     private cd: ChangeDetectorRef,
     private weatherService: WeatherService,
-    private exportService: GpxExportService
+    private exportService: GpxExportService,
+    private historyService: HistoryService
   ) {
     const today = new Date();
     today.setHours(9, 0, 0, 0);
@@ -232,6 +249,150 @@ export class GpxUploaderComponent {
     }
 
     this.cd.detectChanges();
+
+    // Auto-save to history
+    this.saveToHistory();
+  }
+
+  // ─── History: save ───
+
+  private saveToHistory() {
+    const route: SavedRoute = {
+      id: HistoryService.makeId(this.fileName || 'unnamed', this.departure),
+      fileName: this.fileName || 'Sans nom',
+      displayDate: this.displayDate,
+      savedAt: new Date().toISOString(),
+      totalDistanceKm: this.totalDistanceKm,
+      durationText: this.durationText,
+      departureTime: this.departureTime,
+      arrivalTime: this.arrivalTime,
+      avgSpeed: this.avgSpeed,
+      departure: this.departure,
+      cityCount: this.cityCount,
+      points: this.points,
+      passages: HistoryService.serialisePassages(this.passages)
+    };
+    const result = this.historyService.save(route);
+    if (!result.ok) {
+      this.saveMessage = result.error || 'Erreur sauvegarde';
+    } else {
+      this.saveMessage = '✅ Sauvegardé';
+      setTimeout(() => { this.saveMessage = ''; this.cd.detectChanges(); }, 3000);
+    }
+    this.historyPanel?.refresh();
+    this.cd.detectChanges();
+  }
+
+  // ─── History: load ───
+
+  loadFromHistory(saved: SavedRoute) {
+    this.fileName = saved.fileName;
+    this.totalDistanceKm = saved.totalDistanceKm;
+    this.displayDate = saved.displayDate;
+    this.durationText = saved.durationText;
+    this.departureTime = saved.departureTime;
+    this.arrivalTime = saved.arrivalTime;
+    this.avgSpeed = saved.avgSpeed;
+    this.departure = saved.departure;
+    this.cityCount = saved.cityCount;
+    this.points = saved.points;
+    this.passages = HistoryService.deserialisePassages(saved.passages);
+    this.loading = false;
+    this.progressText = 'Chargé depuis l\'historique';
+    this.loadedFromHistory = true;
+    this.parseMessage = `Points: ${this.points.length}`;
+    this.cd.detectChanges();
+  }
+
+  // ─── Refresh weather only (change date, keep cities) ───
+
+  async refreshWeatherOnly() {
+    if (this.passages.length === 0 || !this.departure) return;
+    const departureDate = new Date(this.departure);
+    if (isNaN(departureDate.getTime())) return;
+
+    this.displayDate = formatDate(departureDate, 'dd/MM/yyyy', 'en-US');
+    this.loading = true;
+    this.progressText = 'Mise à jour de la météo (villes conservées)...';
+
+    // Recompute times based on new departure
+    const totalMeters = this.totalDistanceKm * 1000;
+    for (const p of this.passages) {
+      const hours = (p.distanceKm) / (this.avgSpeed || 1);
+      p.time = new Date(departureDate.getTime() + Math.round(hours * 3600 * 1000));
+      p.status = 'pending';
+      p.weather = undefined;
+    }
+    this.passages = [...this.passages];
+    this.cd.detectChanges();
+
+    // Fetch weather for each passage
+    for (let idx = 0; idx < this.passages.length; idx++) {
+      const p = this.passages[idx];
+      try {
+        const dateStr = formatDate(p.time, 'yyyy-MM-dd', 'en-US');
+        const weather = await this.weatherService.getWeather(p.city, dateStr);
+        const targetHour = p.time.getHours();
+        const found = weather.hourly.find(h => new Date(h.hour).getHours() === targetHour)
+          || weather.hourly.reduce((a, b) =>
+            Math.abs(new Date(a.hour).getTime() - p.time.getTime()) < Math.abs(new Date(b.hour).getTime() - p.time.getTime()) ? a : b
+          );
+        if (found) {
+          p.weather = {
+            temperature: found.temperature, code: found.summary, wind: found.wind,
+            windDir: found.windDir, isDay: found.isDay, precipitation: found.precipitation,
+            precipitationProbability: found.precipitationProbability,
+            humidity: found.humidity, apparentTemperature: found.apparentTemperature
+          };
+          p.status = 'ok';
+        } else {
+          p.status = 'error';
+          p.message = 'Aucune donnée horaire';
+        }
+      } catch (err: any) {
+        p.status = 'error';
+        p.message = (err && err.message) ? err.message : 'Erreur météo';
+      }
+      this.passages = [...this.passages];
+      this.progressText = `Mise à jour météo... ${idx + 1}/${this.passages.length}`;
+      this.cd.detectChanges();
+      await new Promise(res => setTimeout(res, 300));
+    }
+
+    // Recompute summary
+    this.cityCount = this.passages.length;
+    if (this.passages.length > 0) {
+      const dep = this.passages[0].time;
+      const arr = this.passages[this.passages.length - 1].time;
+      this.departureTime = `${String(dep.getHours()).padStart(2, '0')}:${String(dep.getMinutes()).padStart(2, '0')}`;
+      this.arrivalTime = `${String(arr.getHours()).padStart(2, '0')}:${String(arr.getMinutes()).padStart(2, '0')}`;
+      const diffMs = arr.getTime() - dep.getTime();
+      const diffH = Math.floor(diffMs / 3600000);
+      const diffM = Math.round((diffMs % 3600000) / 60000);
+      this.durationText = `${diffH}h${String(diffM).padStart(2, '0')}`;
+    }
+
+    this.loading = false;
+    this.progressText = 'Météo mise à jour ✅';
+    this.cd.detectChanges();
+
+    // Re-save
+    this.saveToHistory();
+  }
+
+  // ─── View mode toggle ───
+
+  setViewMode(mode: 'detail' | 'resume') {
+    this.viewMode = mode;
+    if (mode === 'resume') {
+      this.showMap = false;
+      this.showScore = true;
+      this.showTable = false;
+    } else {
+      this.showMap = true;
+      this.showScore = true;
+      this.showTable = true;
+    }
   }
 
   // ─── Score callback ───
