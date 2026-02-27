@@ -449,9 +449,9 @@ export class GpxUploaderComponent {
   }
 
   private reverseGeocode(lat: number, lon: number): Promise<string> {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`;
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&email=hugo.lembrez@gmail.com`;
     return new Promise((resolve, reject) => {
-      this.http.get<any>(url).subscribe({
+      this.http.get<any>(url, { headers: { 'User-Agent': 'MeteoRide/2.2.0 (https://meteo-ride.vercel.app)' } }).subscribe({
         next: res => {
           const addr = res?.address;
           resolve(addr?.city || addr?.town || addr?.village || addr?.municipality || addr?.county || 'Inconnu');
