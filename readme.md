@@ -2,7 +2,7 @@
 
 Application Angular permettant de comparer la météo heure par heure entre plusieurs villes — outil pensé pour les cyclistes et randonneurs.
 
-**Démo en ligne :** déployé sur [Vercel](https://tour-meteo.vercel.app/) (branche `dev` du repo Github)
+**Démo en ligne :** déployé sur [Vercel](https://meteo-ride.vercel.app/) (branche `dev` du repo Github)
 
 ---
 
@@ -14,14 +14,22 @@ TourMeteo/              ← projet Angular (root directory pour Vercel)
 │   ├── app/
 │   │   ├── components/
 │   │   │   ├── App/              Page d'accueil (recherche multi-villes)
-│   │   │   ├── About/            Page « À propos »
+│   │   │   ├── About/            Page « À propos » + options dev cachées
 │   │   │   ├── GPXUploader/      Import GPX + export PNG / partage
+│   │   │   │   ├── gpx-map/      Carte Leaflet (tracé + marqueurs)
+│   │   │   │   ├── ride-score/   Score vélo + tenue
+│   │   │   │   ├── gpx-summary-bar/  Barre de stats
+│   │   │   │   ├── gpx-results-table/ Tableau + cartes mobile
+│   │   │   │   └── history-panel/     Panneau historique (dev flag)
 │   │   │   ├── SearchTab/        Formulaire de recherche
 │   │   │   ├── WeatherSheet/     Tableau météo horaire
 │   │   │   └── navbar/           Barre de navigation
 │   │   ├── service/
-│   │   │   ├── city.service.ts   Géocodage (Nominatim)
-│   │   │   └── weather.service.ts Météo horaire (Open-Meteo)
+│   │   │   ├── city.service.ts        Géocodage (Nominatim)
+│   │   │   ├── weather.service.ts     Météo horaire (Open-Meteo)
+│   │   │   ├── gpx-export.service.ts  Export PNG + partage
+│   │   │   ├── history.service.ts     Historique localStorage
+│   │   │   └── feature-flag.service.ts Feature flags localStorage
 │   │   ├── app.routes.ts         Routes : /, /about, /gpx
 │   │   ├── app.config.ts         Configuration Angular
 │   │   └── root.component.ts     Composant racine (router-outlet)
@@ -62,8 +70,23 @@ readme.md               ← ce fichier
 - **Reverse-géocodage :** détection automatique de la ville à chaque point d'échantillonnage (Nominatim, throttlé ~1 req/s)
 - **Météo par passage :** température, ressenti, vent (vitesse + direction cardinale), humidité, probabilité de pluie, précipitations et emoji weathercode
 - **Score de sortie vélo :** score 0-100 avec recommandation de tenue cycliste, alertes et conseils
-- **Export PNG :** image soignée du tableau des passages (rendu Canvas natif, bandeau couleur, colonnes espacées, indicateur jour/nuit, footer branding)
+- **Export PNG :** image soignée du tableau des passages avec score vélo + tenue recommandée (rendu Canvas natif)
 - **Partage :** via l'API Web Share sur les navigateurs compatibles ; fallback téléchargement si non supporté
+- **Filtres résultats :** bascule Résumé / Détail, masquer/afficher carte, score ou tableau individuellement
+- **Rafraîchir météo :** changer la date ou l'heure sans re-géocoder les villes (garde les noms en cache)
+
+### Historique local 🔧
+- **Sauvegarde des trajets** en `localStorage` avec rechargement rapide
+- **Gestion du quota** : barre de stockage visuelle, alerte si presque plein, purge possible
+- Fonctionnalité expérimentale, activable dans les options développeur
+
+### Options développeur (feature flags)
+- Panneau caché dans la page À propos : taper 5× sur le badge de version pour le révéler
+- Tour les préférences sont persistées en `localStorage`
+- Permet d'activer/désactiver des fonctionnalités expérimentales (historique, etc.)
+
+### Analytics
+- **Vercel Analytics** et **Speed Insights** intégrés (suivi anonyme)
 
 ### Légende weathercode (Open-Meteo)
 | Emoji | Codes | Description |
@@ -145,10 +168,14 @@ Le rewrite SPA redirige toutes les routes vers `index.html` pour que le router A
 ---
 
 ## Améliorations possibles
-- Création rapide de trace GPX directement dans l'app
+- Création rapide de trace GPX directement dans l'app (mode preview)
+- Mode "Run" (pas que vélo) — choix unité de vitesse (km/h, min/km, mph)
 - Notifications météo (alertes pluie/orage)
 - Accessibilité améliorée (ARIA, contraste)
 - Proxy serveur pour Nominatim (cache + throttle en production)
+- Intégration Strava API (segments, données de performance)
+- Données vent avancées (Windy, Meteomatics)
+- Profil d'altitude (OpenElevation)
 
 ---
 
@@ -161,5 +188,5 @@ Le rewrite SPA redirige toutes les routes vers `index.html` pour que le router A
 
 ## Contact / Crédits
 - Repo : https://github.com/aZor9/TourMeteo
-- Site : https://tour-meteo.vercel.app/ 
+- Site : https://meteo-ride.vercel.app/ 
 - Créateur : Hugo Lembrez
