@@ -11,6 +11,7 @@ import { RideScoreComponent } from './ride-score/ride-score.component';
 import { GpxSummaryBarComponent } from './gpx-summary-bar/gpx-summary-bar.component';
 import { GpxResultsTableComponent } from './gpx-results-table/gpx-results-table.component';
 import { HistoryPanelComponent } from './history-panel/history-panel.component';
+import { FeatureFlagService } from '../../service/feature-flag.service';
 
 @Component({
   selector: 'app-gpx-uploader',
@@ -53,12 +54,18 @@ export class GpxUploaderComponent {
 
   @ViewChild('historyPanel') historyPanel!: HistoryPanelComponent;
 
+  /** True when the 'history' feature flag is enabled in dev options */
+  get historyEnabled(): boolean {
+    return this.featureFlags.isEnabled('history');
+  }
+
   constructor(
     private http: HttpClient,
     private cd: ChangeDetectorRef,
     private weatherService: WeatherService,
     private exportService: GpxExportService,
-    private historyService: HistoryService
+    private historyService: HistoryService,
+    private featureFlags: FeatureFlagService
   ) {
     const today = new Date();
     today.setHours(9, 0, 0, 0);
@@ -250,8 +257,10 @@ export class GpxUploaderComponent {
 
     this.cd.detectChanges();
 
-    // Auto-save to history
-    this.saveToHistory();
+    // Auto-save to history (if enabled)
+    if (this.historyEnabled) {
+      this.saveToHistory();
+    }
   }
 
   // ─── History: save ───
@@ -376,8 +385,10 @@ export class GpxUploaderComponent {
     this.progressText = 'Météo mise à jour ✅';
     this.cd.detectChanges();
 
-    // Re-save
-    this.saveToHistory();
+    // Re-save (if history enabled)
+    if (this.historyEnabled) {
+      this.saveToHistory();
+    }
   }
 
   // ─── View mode toggle ───

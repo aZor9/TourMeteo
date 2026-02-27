@@ -6,12 +6,14 @@
     <h1 class="text-2xl font-bold text-slate-900">{{ title }}</h1>
     <p class="text-slate-500 mt-1">Meteo Ride — application de comparaison météo entre plusieurs villes, heure par heure, pensée pour les cyclistes et randonneurs.</p>
     <div class="flex items-center gap-3 mt-3 text-sm">
-      <span class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full font-medium">v2.1.0</span>
+      <span (click)="onVersionTap()" class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full font-medium cursor-default select-none" title="Version">v2.2.0</span>
       <span class="text-slate-400">Angular 21 · Tailwind CSS · Leaflet</span>
+      <span *ngIf="devTapCount >= 3 && devTapCount < 5" class="text-xs text-slate-300 animate-pulse">{{ 5 - devTapCount }} tap(s)...</span>
+      <span *ngIf="showDevOptions" class="text-xs text-emerald-500 font-medium">🔓 Mode dev activé</span>
     </div>
     <p class="text-slate-500 mt-2 text-sm">
       GitHub : <a href="https://github.com/aZor9/TourMeteo" class="text-primary hover:underline" target="_blank">Dépôt GitHub</a>
-      · Démo : <a href="https://tour-meteo.vercel.app/" class="text-primary hover:underline" target="_blank">Voir la démo</a>
+      · Démo : <a href="https://meteo-ride.vercel.app/" class="text-primary hover:underline" target="_blank">Voir la démo</a>
     </p>
   </header>
 
@@ -60,8 +62,11 @@
             <li><strong>Carte interactive :</strong> tracé du parcours GPX avec marqueurs numérotés (Leaflet + OpenStreetMap)</li>
             <li><strong>Météo par passage :</strong> température, ressenti, vent, humidité, probabilité de pluie, précipitations et emoji weathercode</li>
             <li><strong>Score de sortie vélo :</strong> score /100, recommandation de tenue cycliste, alertes et conseils personnalisés</li>
-            <li><strong>Export PNG :</strong> image du tableau des passages (rendu Canvas natif) avec disposition soignée et indicateur jour/nuit</li>
+            <li><strong>Export PNG :</strong> image du tableau des passages avec score vélo et tenue recommandée (rendu Canvas natif)</li>
             <li><strong>Partage :</strong> via l'API Web Share ou téléchargement automatique</li>
+            <li><strong>Filtres résultats :</strong> basculer entre vue résumé et détail complet, masquer/afficher carte, score ou tableau individuellement</li>
+            <li><strong>Rafraîchir météo :</strong> changer la date/heure sans re-géocoder les villes (garde les noms de villes en cache)</li>
+            <li><strong>Historique <span class="text-xs text-amber-500">(🔧 dev)</span> :</strong> sauvegarde locale des trajets, rechargement rapide, gestion du stockage</li>
           </ul>
         </div>
       </div>
@@ -112,7 +117,10 @@
             <li><strong>RideScoreComponent :</strong> calcul et affichage du score de sortie vélo, tenue recommandée, alertes</li>
             <li><strong>GpxSummaryBarComponent :</strong> barre de statistiques résumées (distance, durée, départ, arrivée)</li>
             <li><strong>GpxResultsTableComponent :</strong> tableau desktop et cartes mobile des passages météo</li>
-            <li><strong>GpxExportService :</strong> export Canvas → PNG et partage Web Share</li>
+            <li><strong>GpxExportService :</strong> export Canvas → PNG (avec score vélo) et partage Web Share</li>
+            <li><strong>HistoryService :</strong> sauvegarde/chargement des trajets en localStorage, gestion quota</li>
+            <li><strong>FeatureFlagService :</strong> feature flags persistées en localStorage (options dev cachées)</li>
+            <li><strong>HistoryPanelComponent :</strong> panneau historique avec barre de stockage, suppression, chargement</li>
             <li><strong>WeatherSheetComponent :</strong> grille météo horaire par ville (desktop table + mobile cards)</li>
             <li><strong>SearchTabComponent :</strong> formulaire de recherche et filtres</li>
             <li><strong>WeatherUtils :</strong> weathercode → emoji, degrés → direction cardinale</li>
@@ -178,6 +186,45 @@
             </a>
           </div>
           <p class="text-xs text-slate-400 mt-1">Créé par Hugo Lembrez</p>
+        </div>
+      </div>
+
+      <!-- ===== Options développeur (hidden until 5 taps on version) ===== -->
+      <div *ngIf="sec.id === 'devtools' && showDevOptions" class="border border-amber-300 rounded-lg overflow-hidden bg-amber-50/30">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-amber-50 hover:bg-amber-100/80 transition-colors text-left">
+          <span class="text-lg">{{ sec.icon }}</span>
+          <span class="font-semibold text-amber-800 flex-1">{{ sec.title }}</span>
+          <span class="text-[10px] tracking-wide uppercase bg-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">caché</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-amber-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div *ngIf="sec.open" class="px-4 py-4 text-sm text-slate-700 border-t border-amber-200 space-y-4">
+          <p class="text-xs text-amber-600">Ces options activent des fonctionnalités expérimentales. Les préférences sont enregistrées en localStorage.</p>
+
+          <!-- Toggle: Historique -->
+          <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-slate-200 shadow-sm">
+            <div class="flex flex-col">
+              <span class="font-medium text-slate-800">📂 Historique des trajets</span>
+              <span class="text-xs text-slate-500">Sauvegarder les trajets et les recharger depuis l'écran d'upload</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" [checked]="flags.history" (change)="toggleFlag('history')" class="sr-only peer">
+              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+            </label>
+          </div>
+
+          <!-- Toggle: Experimental -->
+          <!-- <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-slate-200 shadow-sm">
+            <div class="flex flex-col">
+              <span class="font-medium text-slate-800">🧪 Fonctionnalités expérimentales</span>
+              <span class="text-xs text-slate-500">Active de futures fonctionnalités en cours de développement</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" [checked]="flags.experimental" (change)="toggleFlag('experimental')" class="sr-only peer">
+              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+            </label>
+          </div> -->
+
+          <p class="text-[11px] text-slate-400">💡 Astuce : tape 5× sur le badge de version pour afficher ce panneau.</p>
         </div>
       </div>
 

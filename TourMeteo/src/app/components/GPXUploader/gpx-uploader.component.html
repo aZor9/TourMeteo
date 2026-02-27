@@ -31,8 +31,8 @@
     </label>
   </div>
 
-  <!-- History panel -->
-  <app-history-panel #historyPanel (load)="loadFromHistory($event)"></app-history-panel>
+  <!-- History panel (gated behind dev feature flag) -->
+  <app-history-panel *ngIf="historyEnabled" #historyPanel (load)="loadFromHistory($event)"></app-history-panel>
 
   <!-- Main card -->
   <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -117,9 +117,9 @@
           </button>
         </div>
       </div>
-      <div *ngIf="exportMessage || saveMessage" class="flex flex-wrap gap-3 -mt-3 mb-4">
+      <div *ngIf="exportMessage || (saveMessage && historyEnabled)" class="flex flex-wrap gap-3 -mt-3 mb-4">
         <span *ngIf="exportMessage" class="text-xs text-slate-500">{{ exportMessage }}</span>
-        <span *ngIf="saveMessage" class="text-xs text-emerald-600">{{ saveMessage }}</span>
+        <span *ngIf="saveMessage && historyEnabled" class="text-xs text-emerald-600">{{ saveMessage }}</span>
       </div>
 
       <!-- View mode filter -->
