@@ -73,17 +73,17 @@ readme.md               ← ce fichier
 - **Export PNG :** image soignée du tableau des passages avec score vélo + tenue recommandée (rendu Canvas natif)
 - **Partage :** via l'API Web Share sur les navigateurs compatibles ; fallback téléchargement si non supporté
 - **Filtres résultats :** bascule Résumé / Détail, masquer/afficher carte, score ou tableau individuellement
-- **Rafraîchir météo :** changer la date ou l'heure sans re-géocoder les villes (garde les noms en cache)
+- **Rafraîchir météo 🔧 :** changer la date ou l'heure sans re-géocoder les villes (fonctionnalité dev, activer dans options développeur)
 
-### Historique local 🔧
-- **Sauvegarde des trajets** en `localStorage` avec rechargement rapide
-- **Gestion du quota** : barre de stockage visuelle, alerte si presque plein, purge possible
-- Fonctionnalité expérimentale, activable dans les options développeur
+### Historique local & Carte interactive ✨
+- **Historique des trajets** : sauvegarde en `localStorage` avec rechargement rapide, gestion du quota
+- **Carte interactive** : tracé du parcours GPX sur une carte Leaflet avec marqueurs numérotés
+- Fonctionnalités supplémentaires, activables dans la section « Fonctionnalités » de la page À propos
 
 ### Options développeur (feature flags)
 - Panneau caché dans la page À propos : taper 5× sur le badge de version pour le révéler
-- Tour les préférences sont persistées en `localStorage`
-- Permet d'activer/désactiver des fonctionnalités expérimentales (historique, etc.)
+- **Rafraîchir météo** : changer la date/heure sans re-géocoder les villes (fonctionnalité spéciale dev)
+- Toutes les préférences sont persistées en `localStorage`
 
 ### Analytics
 - **Vercel Analytics** et **Speed Insights** intégrés (suivi anonyme)

@@ -15,9 +15,10 @@ Application Angular de comparaison météo entre plusieurs villes, heure par heu
 - **Export PNG** : image du tableau des passages avec score vélo + tenue recommandée (rendu Canvas natif)
 - **Partage** : via l'API Web Share ou téléchargement automatique
 - **Filtres résultats** : bascule Résumé / Détail, masquer/afficher carte, score ou tableau
-- **Rafraîchir météo** : changer la date sans re-géocoder les villes
-- **Historique local** 🔧 : sauvegarde des trajets en localStorage (fonctionnalité expérimentale, activer dans options dev)
-- **Feature Flags** : options dev cachées (tap 5× sur le badge de version dans À propos)
+- **Historique local** ✨ : sauvegarde des trajets en localStorage (fonctionnalité supplémentaire, activer dans À propos > Fonctionnalités)
+- **Carte interactive** ✨ : tracé GPX sur carte Leaflet (fonctionnalité supplémentaire, activer dans À propos > Fonctionnalités)
+- **Rafraîchir météo** 🔧 : changer la date sans re-géocoder les villes (fonctionnalité dev, activer dans options développeur)
+- **Feature Flags** : toggles publics (historique, carte) + options dev cachées (tap 5× sur le badge de version dans À propos)
 - **Vercel Analytics** : suivi anonyme des performances
 - **Page À propos** : sections déroulantes (accordéon), contact intégré
 
