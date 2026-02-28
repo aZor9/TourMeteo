@@ -31,7 +31,7 @@
     </label>
   </div>
 
-  <!-- History panel (gated behind dev feature flag) -->
+  <!-- History panel -->
   <app-history-panel *ngIf="historyEnabled" #historyPanel (load)="loadFromHistory($event)"></app-history-panel>
 
   <!-- Main card -->
@@ -117,7 +117,7 @@
           </button>
         </div>
       </div>
-      <div *ngIf="exportMessage || (saveMessage && historyEnabled)" class="flex flex-wrap gap-3 -mt-3 mb-4">
+      <div *ngIf="exportMessage || saveMessage" class="flex flex-wrap gap-3 -mt-3 mb-4">
         <span *ngIf="exportMessage" class="text-xs text-slate-500">{{ exportMessage }}</span>
         <span *ngIf="saveMessage && historyEnabled" class="text-xs text-emerald-600">{{ saveMessage }}</span>
       </div>
@@ -136,7 +136,7 @@
           📋 Détail complet
         </button>
         <span class="hidden sm:inline text-slate-300">|</span>
-        <label *ngIf="experimentalEnabled" class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+        <label *ngIf="mapEnabled" class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
           <input type="checkbox" [(ngModel)]="showMap" class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300"> Carte
         </label>
         <label class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
@@ -157,7 +157,7 @@
       </app-gpx-summary-bar>
 
       <!-- Map -->
-      <app-gpx-map *ngIf="showMap && experimentalEnabled" [passages]="passages" [points]="points"></app-gpx-map>
+      <app-gpx-map *ngIf="showMap && mapEnabled" [passages]="passages" [points]="points"></app-gpx-map>
 
       <!-- Ride Score -->
       <app-ride-score *ngIf="showScore" [passages]="passages" [totalDistanceKm]="totalDistanceKm" (scoreComputed)="onScoreComputed($event)"></app-ride-score>

@@ -5,13 +5,13 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { WeatherService } from '../../service/weather.service';
 import { GpxExportService } from '../../service/gpx-export.service';
 import { HistoryService, SavedRoute } from '../../service/history.service';
+import { FeatureFlagService } from '../../service/feature-flag.service';
 import { Passage, RideScoreData } from '../../models/passage.model';
 import { GpxMapComponent } from './gpx-map/gpx-map.component';
 import { RideScoreComponent } from './ride-score/ride-score.component';
 import { GpxSummaryBarComponent } from './gpx-summary-bar/gpx-summary-bar.component';
 import { GpxResultsTableComponent } from './gpx-results-table/gpx-results-table.component';
 import { HistoryPanelComponent } from './history-panel/history-panel.component';
-import { FeatureFlagService } from '../../service/feature-flag.service';
 
 @Component({
   selector: 'app-gpx-uploader',
@@ -52,17 +52,12 @@ export class GpxUploaderComponent {
   /** Flag: if loaded from history we can change date without re-geocoding */
   private loadedFromHistory = false;
 
+  /** Feature flag getters */
+  get historyEnabled(): boolean { return this.featureFlags.isEnabled('history'); }
+  get mapEnabled(): boolean { return this.featureFlags.isEnabled('map'); }
+  get experimentalEnabled(): boolean { return this.featureFlags.isEnabled('experimental'); }
+
   @ViewChild('historyPanel') historyPanel!: HistoryPanelComponent;
-
-  /** True when the 'history' feature flag is enabled in dev options */
-  get historyEnabled(): boolean {
-    return this.featureFlags.isEnabled('history');
-  }
-
-  /** True when the 'experimental' (special) feature flag is enabled */
-  get experimentalEnabled(): boolean {
-    return this.featureFlags.isEnabled('experimental');
-  }
 
   constructor(
     private http: HttpClient,
@@ -262,10 +257,8 @@ export class GpxUploaderComponent {
 
     this.cd.detectChanges();
 
-    // Auto-save to history (if enabled)
-    if (this.historyEnabled) {
-      this.saveToHistory();
-    }
+    // Auto-save to history
+    if (this.historyEnabled) this.saveToHistory();
   }
 
   // ─── History: save ───
@@ -390,10 +383,8 @@ export class GpxUploaderComponent {
     this.progressText = 'Météo mise à jour ✅';
     this.cd.detectChanges();
 
-    // Re-save (if history enabled)
-    if (this.historyEnabled) {
-      this.saveToHistory();
-    }
+    // Re-save
+    if (this.historyEnabled) this.saveToHistory();
   }
 
   // ─── View mode toggle ───
@@ -405,7 +396,7 @@ export class GpxUploaderComponent {
       this.showScore = true;
       this.showTable = false;
     } else {
-      this.showMap = true;
+      this.showMap = this.mapEnabled;
       this.showScore = true;
       this.showTable = true;
     }

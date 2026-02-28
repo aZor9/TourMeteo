@@ -5,12 +5,15 @@ const STORAGE_KEY = 'tourmeteo_flags';
 export interface FeatureFlags {
   /** Show history panel + save/load routes */
   history: boolean;
-  /** Show special features: map, refresh weather, etc. */
+  /** Show interactive map (Leaflet) */
+  map: boolean;
+  /** Show experimental dev features: refresh weather, etc. */
   experimental: boolean;
 }
 
 const DEFAULTS: FeatureFlags = {
   history: false,
+  map: false,
   experimental: false
 };
 

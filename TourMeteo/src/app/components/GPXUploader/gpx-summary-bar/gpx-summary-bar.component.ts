@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-4">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
       <div class="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
         <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Distance</div>
         <div class="text-lg font-bold text-slate-800">{{ totalDistanceKm }} km</div>
@@ -16,12 +16,8 @@ import { CommonModule } from '@angular/common';
         <div class="text-lg font-bold text-slate-800">{{ durationText }}</div>
       </div>
       <div class="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
-        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Départ</div>
-        <div class="text-lg font-bold text-slate-800">{{ departureTime }}</div>
-      </div>
-      <div class="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
-        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Arrivée</div>
-        <div class="text-lg font-bold text-slate-800">{{ arrivalTime }}</div>
+        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Horaires</div>
+        <div class="text-lg font-bold text-slate-800">{{ departureTime }} → {{ arrivalTime }}</div>
       </div>
       <div class="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
         <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Villes</div>

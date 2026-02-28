@@ -34,9 +34,8 @@
                   <span *ngIf="p.weather?.windDir"> {{ degreesToCardinal(p.weather?.windDir) }}</span>
                 </span>
                 <span *ngIf="p.weather?.humidity !== undefined">💧 {{ p.weather?.humidity }}%</span>
-                <span>🌂 {{ p.weather?.precipitationProbability ?? 0 }}%
+                <span *ngIf="(p.weather?.precipitationProbability ?? 0) > 0">🌂 {{ p.weather?.precipitationProbability }}%
                   <span *ngIf="(p.weather?.precipitation ?? 0) > 0"> · {{ p.weather?.precipitation }} mm</span>
-                  <span *ngIf="(p.weather?.precipitation ?? 0) === 0"> · 0 mm</span>
                 </span>
               </div>
             </div>
@@ -73,9 +72,10 @@
             <span *ngIf="p.weather?.windDir"> {{ degreesToCardinal(p.weather?.windDir) }}</span>
           </span>
           <span *ngIf="p.weather?.humidity !== undefined">💧 {{ p.weather?.humidity }}%</span>
-          <span>🌂 {{ p.weather?.precipitationProbability ?? 0 }}%
+        </div>
+        <div *ngIf="p.status === 'ok' && (p.weather?.precipitationProbability ?? 0) > 0" class="text-xs text-slate-500 mt-0.5">
+          <span>🌂 {{ p.weather?.precipitationProbability }}%
             <span *ngIf="(p.weather?.precipitation ?? 0) > 0"> · {{ p.weather?.precipitation }} mm</span>
-            <span *ngIf="(p.weather?.precipitation ?? 0) === 0"> · 0 mm</span>
           </span>
         </div>
       </div>
