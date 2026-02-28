@@ -239,15 +239,57 @@
             </label>
           </div>
 
-          <!-- Toggle: Fonctionnalités expérimentales (placeholder) -->
-          <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-slate-200 shadow-sm opacity-60">
+          <!-- Séparateur : fonctionnalités futures -->
+          <div class="pt-2 border-t border-amber-200">
+            <h4 class="text-[11px] font-semibold text-amber-600 uppercase tracking-wide mb-3">🚧 Fonctionnalités futures (en développement)</h4>
+          </div>
+
+          <!-- Toggle: Course à pied -->
+          <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-slate-200 shadow-sm">
             <div class="flex flex-col">
-              <span class="font-medium text-slate-800">🧪 Fonctionnalités expérimentales</span>
-              <span class="text-xs text-slate-500">Futures fonctionnalités en cours de développement (bientôt)</span>
+              <span class="font-medium text-slate-800">🏃 Page Course à pied</span>
+              <span class="text-xs text-slate-500">Météo horaire pour une sortie running : ville, date, durée ou distance + allure (min/km), conseils nutrition & vêtements</span>
             </div>
-            <div class="w-11 h-6 bg-slate-200 rounded-full relative shadow-inner">
-              <div class="absolute top-0.5 left-[2px] bg-white rounded-full h-5 w-5"></div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" [checked]="flags.running" (change)="toggleFlag('running')" class="sr-only peer">
+              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+            </label>
+          </div>
+
+          <!-- Toggle: Plan nutrition vélo -->
+          <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-slate-200 shadow-sm">
+            <div class="flex flex-col">
+              <span class="font-medium text-slate-800">🍌 Plan nutrition effort (vélo)</span>
+              <span class="text-xs text-slate-500">Recommandation de ravitaillement sur le parcours en fonction de la durée, avec cible de glucides/h optionnelle</span>
             </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" [checked]="flags.nutrition" (change)="toggleFlag('nutrition')" class="sr-only peer">
+              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+            </label>
+          </div>
+
+          <!-- Toggle: Créateur de parcours GPX -->
+          <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-slate-200 shadow-sm">
+            <div class="flex flex-col">
+              <span class="font-medium text-slate-800">🛤️ Créateur de parcours GPX</span>
+              <span class="text-xs text-slate-500">Générer un tracé vélo/running avec dénivelé, pistes cyclables, routes les plus utilisées. Filtres : exclure routes &gt;90 km/h, gravier, sentiers ; favoriser pistes cyclables (±5 %)</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" [checked]="flags.routeCreator" (change)="toggleFlag('routeCreator')" class="sr-only peer">
+              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+            </label>
+          </div>
+
+          <!-- Toggle: Meilleur horaire de départ -->
+          <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-slate-200 shadow-sm">
+            <div class="flex flex-col">
+              <span class="font-medium text-slate-800">⏰ Meilleur horaire de départ</span>
+              <span class="text-xs text-slate-500">Analyser la météo toute la journée sur un GPX et recommander l'heure de départ optimale (vent, soleil, pluie)</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" [checked]="flags.bestDeparture" (change)="toggleFlag('bestDeparture')" class="sr-only peer">
+              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+            </label>
           </div>
 
           <p class="text-[11px] text-slate-400">💡 Astuce : tape 5× sur le badge de version pour afficher ce panneau.</p>

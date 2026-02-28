@@ -1,0 +1,256 @@
+<div class="px-3 sm:px-6 py-6 max-w-4xl mx-auto">
+
+  <!-- Header -->
+  <div class="flex items-center gap-3 mb-6">
+    <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-md">
+      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+      </svg>
+    </div>
+    <div>
+      <h2 class="text-xl font-bold text-slate-800 leading-tight">Course à pied</h2>
+      <p class="text-xs text-slate-400">Météo & conseils pour votre sortie running</p>
+    </div>
+  </div>
+
+  <!-- Form card -->
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+    <div class="p-5 sm:p-6 space-y-5">
+
+      <!-- City + Date -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Ville</label>
+          <input type="text" [(ngModel)]="city" placeholder="Ex : Lyon"
+                 class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Date</label>
+          <input type="date" [(ngModel)]="date"
+                 class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
+        </div>
+      </div>
+
+      <!-- Start time -->
+      <div class="max-w-[200px]">
+        <label class="block text-xs font-medium text-slate-500 mb-1">Heure de départ</label>
+        <input type="time" [(ngModel)]="startTime"
+               class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
+      </div>
+
+      <!-- Mode selector -->
+      <div>
+        <label class="block text-xs font-medium text-slate-500 mb-2">Type de saisie</label>
+        <div class="flex gap-2">
+          <button (click)="inputMode = 'duration'"
+                  class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  [ngClass]="inputMode === 'duration' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+            ⏱️ Durée
+          </button>
+          <button (click)="inputMode = 'distance'"
+                  class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  [ngClass]="inputMode === 'distance' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+            📏 Distance + Allure
+          </button>
+        </div>
+      </div>
+
+      <!-- Duration inputs -->
+      <div *ngIf="inputMode === 'duration'" class="flex gap-3 items-end">
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Heures</label>
+          <input type="number" [(ngModel)]="durationH" min="0" max="12"
+                 class="w-20 border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Minutes</label>
+          <input type="number" [(ngModel)]="durationM" min="0" max="59"
+                 class="w-20 border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
+        </div>
+        <div class="text-sm text-slate-400 pb-2.5" *ngIf="computedDistanceKm > 0">
+          ≈ {{ computedDistanceKm }} km
+        </div>
+      </div>
+
+      <!-- Distance + Pace inputs -->
+      <div *ngIf="inputMode === 'distance'" class="flex flex-wrap gap-3 items-end">
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Distance (km)</label>
+          <input type="number" [(ngModel)]="distanceKm" min="0.5" step="0.5"
+                 class="w-24 border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Allure (min/km)</label>
+          <div class="flex items-center gap-1">
+            <input type="number" [(ngModel)]="paceMin" min="2" max="15"
+                   class="w-16 border border-slate-200 rounded-xl px-2 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-center" />
+            <span class="text-slate-400">:</span>
+            <input type="number" [(ngModel)]="paceSec" min="0" max="59"
+                   class="w-16 border border-slate-200 rounded-xl px-2 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-center" />
+            <span class="text-xs text-slate-400">min/km</span>
+          </div>
+        </div>
+        <div class="text-sm text-slate-400 pb-2.5" *ngIf="computedDurationMin > 0">
+          ≈ {{ durationText }}
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button (click)="compute()" [disabled]="loading"
+              class="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 active:from-emerald-800 active:to-green-800 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm hover:shadow-md disabled:opacity-50">
+        🏃 Voir la météo de ma sortie
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="flex items-center gap-3 mx-5 sm:mx-6 mb-4 px-4 py-3 bg-slate-50 rounded-xl">
+      <svg class="animate-spin h-5 w-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      <span class="text-sm text-slate-600 font-medium">Chargement météo...</span>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error" class="mx-5 sm:mx-6 mb-4 px-4 py-3 bg-red-50 rounded-xl text-sm text-red-600 border border-red-100">
+      ⚠️ {{ error }}
+    </div>
+  </div>
+
+  <!-- ═══════ RESULTS ═══════ -->
+  <div *ngIf="hours.length > 0" class="space-y-4">
+
+    <!-- Summary header -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div>
+          <h3 class="text-lg font-bold text-slate-800">🏃 {{ resolvedCity }}</h3>
+          <p class="text-sm text-slate-500">{{ displayDate }} · Départ {{ startTime }} · {{ durationText }} · {{ computedDistanceKm }} km</p>
+        </div>
+      </div>
+
+      <!-- Summary bar -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-slate-50 rounded-lg px-3 py-2 text-center">
+          <div class="text-xs text-slate-400">Distance</div>
+          <div class="text-lg font-bold text-slate-800">{{ computedDistanceKm }} <span class="text-sm font-normal text-slate-400">km</span></div>
+        </div>
+        <div class="bg-slate-50 rounded-lg px-3 py-2 text-center">
+          <div class="text-xs text-slate-400">Durée</div>
+          <div class="text-lg font-bold text-slate-800">{{ durationText }}</div>
+        </div>
+        <div class="bg-slate-50 rounded-lg px-3 py-2 text-center">
+          <div class="text-xs text-slate-400">Horaires</div>
+          <div class="text-lg font-bold text-slate-800">{{ hours[0].displayHour }} → {{ hours[hours.length - 1].displayHour }}</div>
+        </div>
+        <div class="bg-slate-50 rounded-lg px-3 py-2 text-center">
+          <div class="text-xs text-slate-400">Allure</div>
+          <div class="text-lg font-bold text-slate-800">{{ paceMin }}:{{ (paceSec < 10 ? '0' : '') + paceSec }} <span class="text-sm font-normal text-slate-400">min/km</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Run Score -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Score de sortie running</div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-bold" [ngClass]="runScoreColor">{{ runScore }}/100</span>
+            <span class="text-lg font-semibold" [ngClass]="runScoreColor">{{ runScoreEmoji }} {{ runScoreLabel }}</span>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+          <span>🌡️ {{ avgTemp }}° <span class="text-slate-400">(ressenti {{ avgApparentTemp }}°)</span></span>
+          <span>💨 {{ avgWind }} km/h moy.</span>
+          <span>💧 {{ avgHumidity }}%</span>
+          <span>🌂 {{ maxPrecipProb }}% max</span>
+          <span *ngIf="totalPrecip > 0">🌧️ {{ totalPrecip }} mm</span>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="px-5 sm:px-6 pt-3 pb-1">
+        <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+          <div class="h-full rounded-full transition-all duration-700"
+               [style.width.%]="runScore"
+               [ngClass]="{
+                 'bg-green-500': runScore >= 85,
+                 'bg-lime-500': runScore >= 70 && runScore < 85,
+                 'bg-amber-400': runScore >= 50 && runScore < 70,
+                 'bg-orange-500': runScore >= 30 && runScore < 50,
+                 'bg-red-500': runScore < 30
+               }"></div>
+        </div>
+      </div>
+
+      <!-- Warnings -->
+      <div *ngIf="warnings.length > 0" class="px-5 sm:px-6 pt-3">
+        <div *ngFor="let w of warnings" class="flex items-start gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-2">
+          <span class="flex-shrink-0">⚠️</span><span>{{ w }}</span>
+        </div>
+      </div>
+
+      <!-- Clothing -->
+      <div class="px-5 sm:px-6 py-4">
+        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">🏃 Tenue recommandée</div>
+        <div class="flex flex-wrap gap-2">
+          <div *ngFor="let item of clothingItems"
+               class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700">
+            <span class="text-lg">{{ item.emoji }}</span><span>{{ item.label }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tips -->
+      <div *ngIf="tips.length > 0" class="px-5 sm:px-6 pb-4">
+        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">💡 Conseils</div>
+        <ul class="space-y-1.5">
+          <li *ngFor="let tip of tips" class="text-sm text-slate-600 bg-blue-50/50 rounded-lg px-3 py-2">{{ tip }}</li>
+        </ul>
+      </div>
+
+      <!-- Nutrition Tips -->
+      <div *ngIf="nutritionTips.length > 0" class="px-5 sm:px-6 pb-4">
+        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">🍌 Nutrition</div>
+        <ul class="space-y-1.5">
+          <li *ngFor="let nt of nutritionTips" class="text-sm text-slate-600 bg-amber-50/50 rounded-lg px-3 py-2">{{ nt }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Hourly weather cards -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-5 sm:px-6 py-4 border-b border-slate-100">
+        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Météo heure par heure</div>
+      </div>
+      <div class="p-4 sm:p-5">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div *ngFor="let h of hours"
+               class="relative bg-slate-50 rounded-xl p-3 border border-slate-100 text-center overflow-hidden">
+            <!-- Weather emoji background -->
+            <div class="absolute inset-0 flex items-center justify-center text-6xl opacity-10 pointer-events-none select-none">
+              {{ weatherEmoji(h.code) }}
+            </div>
+            <div class="relative z-10">
+              <div class="text-sm font-bold text-slate-800 mb-1">{{ h.displayHour }}</div>
+              <div class="text-2xl mb-1">{{ weatherEmoji(h.code) }}</div>
+              <div class="text-xs text-slate-500 mb-2">{{ weatherDesc(h.code) }}</div>
+              <div class="space-y-0.5 text-xs text-slate-600">
+                <div>🌡️ {{ h.temperature }}° <span class="text-slate-400">({{ h.apparentTemperature }}°)</span></div>
+                <div>💨 {{ h.wind }} km/h</div>
+                <div *ngIf="h.humidity">💧 {{ h.humidity }}%</div>
+                <div *ngIf="h.precipitationProbability > 0">🌂 {{ h.precipitationProbability }}%</div>
+                <div *ngIf="h.precipitation > 0">🌧️ {{ h.precipitation }} mm</div>
+              </div>
+              <div class="mt-1 text-[10px]" [ngClass]="h.isDay ? 'text-amber-500' : 'text-indigo-400'">
+                {{ h.isDay ? '☀️ Jour' : '🌙 Nuit' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

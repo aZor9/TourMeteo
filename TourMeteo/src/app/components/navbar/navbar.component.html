@@ -18,6 +18,18 @@
          class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
         GPX
       </a>
+      <a *ngIf="showRunning" routerLink="/run" routerLinkActive="bg-emerald-50 text-emerald-700"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+        🏃 Running
+      </a>
+      <a *ngIf="showRouteCreator" routerLink="/route-creator" routerLinkActive="bg-violet-50 text-violet-700"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+        🛤️ Parcours
+      </a>
+      <a *ngIf="showBestDeparture" routerLink="/best-departure" routerLinkActive="bg-amber-50 text-amber-700"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+        ⏰ Départ
+      </a>
       <a routerLink="/about" routerLinkActive="bg-blue-50 text-blue-700"
          class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
         À propos
@@ -39,7 +51,7 @@
   </div>
 
   <!-- Mobile menu dropdown -->
-  <div *ngIf="mobileMenuOpen" class="sm:hidden border-t border-slate-200 bg-white/95 backdrop-blur-md px-4 pb-3 space-y-1">
+  <div *ngIf="mobileMenuOpen" class="sm:hidden border-t border-slate-200 bg-white/95 backdrop-blur-md px-4 pt-2 pb-3 space-y-1">
     <a routerLink="/" (click)="mobileMenuOpen = false" routerLinkActive="bg-blue-50 text-blue-700" [routerLinkActiveOptions]="{exact: true}"
        class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
       Accueil
@@ -47,6 +59,18 @@
     <a routerLink="/gpx" (click)="mobileMenuOpen = false" routerLinkActive="bg-blue-50 text-blue-700"
        class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
       GPX
+    </a>
+    <a *ngIf="showRunning" routerLink="/run" (click)="mobileMenuOpen = false" routerLinkActive="bg-emerald-50 text-emerald-700"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+      🏃 Course à pied
+    </a>
+    <a *ngIf="showRouteCreator" routerLink="/route-creator" (click)="mobileMenuOpen = false" routerLinkActive="bg-violet-50 text-violet-700"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+      🛤️ Créateur de parcours
+    </a>
+    <a *ngIf="showBestDeparture" routerLink="/best-departure" (click)="mobileMenuOpen = false" routerLinkActive="bg-amber-50 text-amber-700"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+      ⏰ Meilleur horaire
     </a>
     <a routerLink="/about" (click)="mobileMenuOpen = false" routerLinkActive="bg-blue-50 text-blue-700"
        class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">

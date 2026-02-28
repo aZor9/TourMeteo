@@ -9,12 +9,24 @@ export interface FeatureFlags {
   map: boolean;
   /** Show experimental dev features: refresh weather, etc. */
   experimental: boolean;
+  /** Show running weather page */
+  running: boolean;
+  /** Show nutrition plan in GPX page */
+  nutrition: boolean;
+  /** Show GPX route creator page */
+  routeCreator: boolean;
+  /** Show best departure time analyzer page */
+  bestDeparture: boolean;
 }
 
 const DEFAULTS: FeatureFlags = {
   history: false,
   map: false,
-  experimental: false
+  experimental: false,
+  running: false,
+  nutrition: false,
+  routeCreator: false,
+  bestDeparture: false
 };
 
 @Injectable({ providedIn: 'root' })

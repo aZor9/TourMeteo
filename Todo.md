@@ -1,6 +1,9 @@
 Fonctionnalités prioritaires:
 
-- Créer une "trace GPX rapide" (mode preview) pour générer un tracé simple et voir la météo sans importer un GPX complet.
+- 🏃 Page Course à pied : ville, date, heure, durée ou distance + allure (min/km), météo horaire sur la durée de la sortie, conseils running (nutrition, vêtements) similaire au score vélo.
+- 🍌 Plan nutrition pendant effort (page vélo) : ravitaillement recommandé en fonction de la durée, cible de glucides/h optionnelle.
+- 🛤️ Créateur de parcours GPX (vélo/run) : prise en compte du dénivelé, routes les plus utilisées, pistes cyclables. Options cochables : exclure routes >90 km/h, gravier, sentiers ; favoriser pistes cyclables (±5 % de la sortie). Données OSM Overpass.
+- ⏰ Meilleur horaire de départ : analyser la météo toute la journée sur un GPX + vitesse moyenne, recommander l'heure optimale (vent, soleil, pluie).
 - Ajouter un mode "Run" (pas que vélo) — choix de l'unité de vitesse (km/h, min/km, mph) en configuration.
 
 

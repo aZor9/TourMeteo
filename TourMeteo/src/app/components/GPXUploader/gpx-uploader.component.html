@@ -162,6 +162,13 @@
       <!-- Ride Score -->
       <app-ride-score *ngIf="showScore" [passages]="passages" [totalDistanceKm]="totalDistanceKm" (scoreComputed)="onScoreComputed($event)"></app-ride-score>
 
+      <!-- Nutrition Plan -->
+      <app-nutrition-plan *ngIf="nutritionEnabled && passages.length >= 2"
+        [passages]="passages"
+        [totalDistanceKm]="totalDistanceKm"
+        [durationText]="durationText">
+      </app-nutrition-plan>
+
       <!-- Weather table -->
       <app-gpx-results-table *ngIf="showTable" [passages]="passages"></app-gpx-results-table>
     </div>

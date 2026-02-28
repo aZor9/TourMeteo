@@ -12,6 +12,7 @@ import { RideScoreComponent } from './ride-score/ride-score.component';
 import { GpxSummaryBarComponent } from './gpx-summary-bar/gpx-summary-bar.component';
 import { GpxResultsTableComponent } from './gpx-results-table/gpx-results-table.component';
 import { HistoryPanelComponent } from './history-panel/history-panel.component';
+import { NutritionPlanComponent } from './nutrition-plan/nutrition-plan.component';
 
 @Component({
   selector: 'app-gpx-uploader',
@@ -19,7 +20,7 @@ import { HistoryPanelComponent } from './history-panel/history-panel.component';
   imports: [
     CommonModule, FormsModule, HttpClientModule,
     GpxMapComponent, RideScoreComponent, GpxSummaryBarComponent, GpxResultsTableComponent,
-    HistoryPanelComponent
+    HistoryPanelComponent, NutritionPlanComponent
   ],
   templateUrl: './gpx-uploader.component.html'
 })
@@ -56,6 +57,7 @@ export class GpxUploaderComponent {
   get historyEnabled(): boolean { return this.featureFlags.isEnabled('history'); }
   get mapEnabled(): boolean { return this.featureFlags.isEnabled('map'); }
   get experimentalEnabled(): boolean { return this.featureFlags.isEnabled('experimental'); }
+  get nutritionEnabled(): boolean { return this.featureFlags.isEnabled('nutrition'); }
 
   @ViewChild('historyPanel') historyPanel!: HistoryPanelComponent;
 

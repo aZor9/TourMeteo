@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { FeatureFlagService } from '../../service/feature-flag.service';
 
 @Component({
   selector: 'app-navbar',
@@ -10,4 +11,10 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 })
 export class NavbarComponent {
   mobileMenuOpen = false;
+
+  constructor(private ff: FeatureFlagService) {}
+
+  get showRunning(): boolean { return this.ff.isEnabled('running'); }
+  get showRouteCreator(): boolean { return this.ff.isEnabled('routeCreator'); }
+  get showBestDeparture(): boolean { return this.ff.isEnabled('bestDeparture'); }
 }
