@@ -28,6 +28,9 @@ export class NutritionPlanComponent implements OnChanges {
   targetCarbsPerHour = 60;
   showCustomTarget = false;
 
+  /** Nutrition mode: gels (default), bars (solid food), mixed */
+  nutritionMode: 'gels' | 'bars' | 'mixed' = 'gels';
+
   slots: NutritionSlot[] = [];
   totalCarbs = 0;
   totalHydration = 0;
@@ -79,13 +82,30 @@ export class NutritionPlanComponent implements OnChanges {
     const intervalMin = 30;
     const totalMinutes = Math.round(this.durationHours * 60);
 
-    // Nutrition types rotation
-    const nutritionTypes = [
+    // Nutrition types rotation — varies by mode
+    const gelTypes = [
       { emoji: '🥤', label: 'Gorgée de boisson isotonique', carbs: 15 },
       { emoji: '🍬', label: 'Gel énergétique', carbs: 25 },
       { emoji: '🥤', label: 'Gorgée de boisson isotonique', carbs: 15 },
       { emoji: '🍌', label: 'Barre / banane', carbs: 30 },
     ];
+    const barTypes = [
+      { emoji: '🥤', label: 'Gorgée de boisson isotonique', carbs: 15 },
+      { emoji: '🍫', label: 'Barre chocolatée / pâte de fruit', carbs: 25 },
+      { emoji: '🥤', label: 'Gorgée de boisson isotonique', carbs: 15 },
+      { emoji: '🥜', label: 'Barre céréales / fruits secs', carbs: 30 },
+    ];
+    const mixedTypes = [
+      { emoji: '🥤', label: 'Gorgée de boisson isotonique', carbs: 15 },
+      { emoji: '🍬', label: 'Gel énergétique', carbs: 25 },
+      { emoji: '🥤', label: 'Gorgée de boisson isotonique', carbs: 15 },
+      { emoji: '🍫', label: 'Barre chocolatée / pâte de fruit', carbs: 25 },
+      { emoji: '🥤', label: 'Gorgée de boisson isotonique', carbs: 15 },
+      { emoji: '🍌', label: 'Banane / barre céréales', carbs: 30 },
+    ];
+    const nutritionTypes = this.nutritionMode === 'bars' ? barTypes
+                         : this.nutritionMode === 'mixed' ? mixedTypes
+                         : gelTypes;
 
     // First 30 min: just water
     this.slots.push({
@@ -140,8 +160,9 @@ export class NutritionPlanComponent implements OnChanges {
 
     // Summary
     const bidons = Math.ceil(this.totalHydration / 750);
-    const gels = Math.ceil(this.totalCarbs / 25);
-    this.summary = `~${this.totalCarbs}g de glucides · ~${(this.totalHydration / 1000).toFixed(1)}L d'eau · ${bidons} bidon${bidons > 1 ? 's' : ''} de 750ml · ~${gels} gel${gels > 1 ? 's' : ''} équivalent`;
+    const modeLabel = this.nutritionMode === 'bars' ? 'barres' : this.nutritionMode === 'mixed' ? 'gels + barres' : 'gels';
+    const equivCount = Math.ceil(this.totalCarbs / 25);
+    this.summary = `~${this.totalCarbs}g de glucides · ~${(this.totalHydration / 1000).toFixed(1)}L d'eau · ${bidons} bidon${bidons > 1 ? 's' : ''} de 750ml · ~${equivCount} ${modeLabel} équivalent`;
 
     // Add hot weather warning
     if (isVeryHot) {

@@ -10,6 +10,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 interface DepartureOption {
   hour: number;
   displayHour: string;
+  dateLabel: string;
+  dateIso: string;
   score: number;
   scoreLabel: string;
   scoreColor: string;
@@ -43,6 +45,7 @@ export class BestDepartureComponent {
   avgSpeedKmh = 25;
   minHour = 6;
   maxHour = 20;
+  numDays = 1;
   manualCity = '';
   manualDate = '';
 
@@ -165,21 +168,16 @@ export class BestDepartureComponent {
     this.cd.detectChanges();
 
     try {
-      let weatherCity: any;
       let routeBearing = 0;
+      let cityName = '';
 
       if (this.computeMode === 'gpx') {
-        // Use GPX midpoint city
         const mid = this.gpxPoints[Math.floor(this.gpxPoints.length / 2)];
         this.routeLat = mid.lat;
         this.routeLon = mid.lon;
-        const cityName = await this.reverseGeocode(mid.lat, mid.lon);
-        const date = this.manualDate;
-        weatherCity = await this.weatherService.getWeather(cityName, date);
-        this.routeCity = weatherCity.city;
-        this.routeDate = date;
+        cityName = await this.reverseGeocode(mid.lat, mid.lon);
+        this.routeCity = cityName;
 
-        // Calculate general route bearing (start→end)
         if (this.gpxPoints.length >= 2) {
           const first = this.gpxPoints[0];
           const last = this.gpxPoints[this.gpxPoints.length - 1];
@@ -190,82 +188,95 @@ export class BestDepartureComponent {
         this.routeLat = parseFloat(coords.lat);
         this.routeLon = parseFloat(coords.lon);
         await this.delay(1100);
-        weatherCity = await this.weatherService.getWeather(this.manualCity, this.manualDate);
-        this.routeCity = weatherCity.city;
-        this.routeDate = this.manualDate;
+        cityName = this.manualCity;
+        this.routeCity = cityName;
       }
-
-      this.progressText = 'Analyse des créneaux horaires...';
-      this.cd.detectChanges();
 
       const durationH = this.computeMode === 'gpx'
         ? Math.ceil(this.durationHours)
-        : 2; // default 2h for manual mode
+        : 2;
 
-      // For each departure hour
-      for (let h = this.minHour; h <= this.maxHour; h++) {
-        const endH = Math.min(23, h + durationH);
-        const relevantHours = weatherCity.hourly.filter((hw: any) => {
-          const hDate = new Date(hw.hour);
-          return hDate.getHours() >= h && hDate.getHours() <= endH;
-        });
+      const days = Math.max(1, Math.min(7, this.numDays));
+      const baseDate = new Date(this.manualDate + 'T00:00:00');
+      const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
-        if (relevantHours.length === 0) continue;
+      for (let d = 0; d < days; d++) {
+        const dayDate = new Date(baseDate);
+        dayDate.setDate(dayDate.getDate() + d);
+        const dateIso = dayDate.toISOString().slice(0, 10);
+        const dayLabel = `${dayNames[dayDate.getDay()]} ${dayDate.getDate()}/${dayDate.getMonth() + 1}`;
 
-        const avgTemp = relevantHours.reduce((s: number, x: any) => s + x.temperature, 0) / relevantHours.length;
-        const avgApparent = relevantHours.reduce((s: number, x: any) => s + (x.apparentTemperature ?? x.temperature), 0) / relevantHours.length;
-        const avgWind = relevantHours.reduce((s: number, x: any) => s + x.wind, 0) / relevantHours.length;
-        const avgHumidity = relevantHours.reduce((s: number, x: any) => s + (x.humidity ?? 50), 0) / relevantHours.length;
-        const maxPrecipProb = Math.max(...relevantHours.map((x: any) => x.precipitationProbability ?? 0));
-        const totalPrecip = relevantHours.reduce((s: number, x: any) => s + (x.precipitation ?? 0), 0);
-        const sunCount = relevantHours.filter((x: any) => x.isDay).length;
-        const sunPercent = Math.round((sunCount / relevantHours.length) * 100);
+        this.progressText = days > 1
+          ? `Météo jour ${d + 1}/${days} (${dayLabel})...`
+          : 'Analyse des créneaux horaires...';
+        this.cd.detectChanges();
 
-        // Calculate headwind percentage
-        let headwindPercent = 0;
-        if (routeBearing > 0) {
-          let headwindCount = 0;
-          for (const hw of relevantHours) {
-            const windDir = hw.windDir ?? 0;
-            const diff = Math.abs(windDir - routeBearing);
-            const angleDiff = diff > 180 ? 360 - diff : diff;
-            if (angleDiff > 90) headwindCount++; // tailwind
+        const weatherCity = await this.weatherService.getWeather(cityName, dateIso);
+        if (d === 0) this.routeDate = dateIso;
+
+        for (let h = this.minHour; h <= this.maxHour; h++) {
+          const endH = Math.min(23, h + durationH);
+          const relevantHours = weatherCity.hourly.filter((hw: any) => {
+            const hDate = new Date(hw.hour);
+            return hDate.getHours() >= h && hDate.getHours() <= endH;
+          });
+
+          if (relevantHours.length === 0) continue;
+
+          const avgTemp = relevantHours.reduce((s: number, x: any) => s + x.temperature, 0) / relevantHours.length;
+          const avgApparent = relevantHours.reduce((s: number, x: any) => s + (x.apparentTemperature ?? x.temperature), 0) / relevantHours.length;
+          const avgWind = relevantHours.reduce((s: number, x: any) => s + x.wind, 0) / relevantHours.length;
+          const avgHumidity = relevantHours.reduce((s: number, x: any) => s + (x.humidity ?? 50), 0) / relevantHours.length;
+          const maxPrecipProb = Math.max(...relevantHours.map((x: any) => x.precipitationProbability ?? 0));
+          const totalPrecip = relevantHours.reduce((s: number, x: any) => s + (x.precipitation ?? 0), 0);
+          const sunCount = relevantHours.filter((x: any) => x.isDay).length;
+          const sunPercent = Math.round((sunCount / relevantHours.length) * 100);
+
+          let headwindPercent = 0;
+          if (routeBearing > 0) {
+            let headwindCount = 0;
+            for (const hw of relevantHours) {
+              const windDir = hw.windDir ?? 0;
+              const diff = Math.abs(windDir - routeBearing);
+              const angleDiff = diff > 180 ? 360 - diff : diff;
+              if (angleDiff > 90) headwindCount++;
+            }
+            headwindPercent = Math.round(((relevantHours.length - headwindCount) / relevantHours.length) * 100);
           }
-          headwindPercent = Math.round(((relevantHours.length - headwindCount) / relevantHours.length) * 100);
+
+          const score = this.computeScore(avgTemp, avgApparent, avgWind, maxPrecipProb, totalPrecip, avgHumidity, sunPercent, headwindPercent);
+          const { label, color, emoji } = this.scoreLabel(score);
+
+          const warnings: string[] = [];
+          if (avgTemp < 2) warnings.push('🥶 Températures glaciales');
+          else if (avgTemp < 8) warnings.push('🧊 Froid — couvrez-vous bien');
+          if (avgTemp > 33) warnings.push('🔥 Chaleur extrême — risque insolation');
+          else if (avgTemp > 28) warnings.push('☀️ Chaleur — hydratation renforcée');
+          if (maxPrecipProb > 70) warnings.push('🌧️ Forte probabilité de pluie');
+          if (avgWind > 40) warnings.push('💨 Vent très fort');
+          if (h >= 18) warnings.push('🌙 Sortie en soirée / nuit');
+
+          this.options.push({
+            hour: h,
+            displayHour: `${String(h).padStart(2, '0')}:00`,
+            dateLabel: dayLabel,
+            dateIso,
+            score: Math.round(score),
+            scoreLabel: label,
+            scoreColor: color,
+            scoreEmoji: emoji,
+            avgTemp: +avgTemp.toFixed(1),
+            avgApparentTemp: +avgApparent.toFixed(1),
+            avgWind: +avgWind.toFixed(0),
+            maxPrecipProb,
+            totalPrecip: +totalPrecip.toFixed(1),
+            avgHumidity: +avgHumidity.toFixed(0),
+            headwindPercent,
+            sunPercent,
+            warnings,
+            isBest: false
+          });
         }
-
-        // Compute score
-        const score = this.computeScore(avgTemp, avgApparent, avgWind, maxPrecipProb, totalPrecip, avgHumidity, sunPercent, headwindPercent);
-        const { label, color, emoji } = this.scoreLabel(score);
-
-        // Warnings
-        const warnings: string[] = [];
-        if (avgTemp < 2) warnings.push('🥶 Températures glaciales');
-        else if (avgTemp < 8) warnings.push('🧊 Froid — couvrez-vous bien');
-        if (avgTemp > 33) warnings.push('🔥 Chaleur extrême — risque insolation');
-        else if (avgTemp > 28) warnings.push('☀️ Chaleur — hydratation renforcée');
-        if (maxPrecipProb > 70) warnings.push('🌧️ Forte probabilité de pluie');
-        if (avgWind > 40) warnings.push('💨 Vent très fort');
-        if (h >= 18) warnings.push('🌙 Sortie en soirée / nuit');
-
-        this.options.push({
-          hour: h,
-          displayHour: `${String(h).padStart(2, '0')}:00`,
-          score: Math.round(score),
-          scoreLabel: label,
-          scoreColor: color,
-          scoreEmoji: emoji,
-          avgTemp: +avgTemp.toFixed(1),
-          avgApparentTemp: +avgApparent.toFixed(1),
-          avgWind: +avgWind.toFixed(0),
-          maxPrecipProb,
-          totalPrecip: +totalPrecip.toFixed(1),
-          avgHumidity: +avgHumidity.toFixed(0),
-          headwindPercent,
-          sunPercent,
-          warnings,
-          isBest: false
-        });
       }
 
       // Find best option
@@ -344,6 +355,15 @@ export class BestDepartureComponent {
     if (score >= 40) return { label: 'Correct', color: 'text-amber-500', emoji: '🟡' };
     if (score >= 25) return { label: 'Médiocre', color: 'text-orange-500', emoji: '⚠️' };
     return { label: 'Déconseillé', color: 'text-red-500', emoji: '🛑' };
+  }
+
+  /** Unique dates for multi-day display */
+  get uniqueDays(): string[] {
+    return [...new Set(this.options.map(o => o.dateLabel))];
+  }
+
+  optionsForDay(day: string): DepartureOption[] {
+    return this.options.filter(o => o.dateLabel === day);
   }
 
   // ─── Helpers ───

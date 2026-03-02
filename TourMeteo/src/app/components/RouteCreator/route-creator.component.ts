@@ -92,7 +92,8 @@ export class RouteCreatorComponent implements AfterViewInit, OnDestroy {
   /* ═══════════════ Map init ═══════════════ */
 
   private async initMap() {
-    this.L = await import('leaflet');
+    const mod = await import('leaflet');
+    this.L = (mod as any).default || mod;
     const el = document.getElementById('route-map');
     if (!el) return;
 

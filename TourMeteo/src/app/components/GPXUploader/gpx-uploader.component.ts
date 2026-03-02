@@ -210,7 +210,7 @@ export class GpxUploaderComponent {
       if (p.status === 'pending') {
         try {
           const dateStr = formatDate(p.time, 'yyyy-MM-dd', 'en-US');
-          const weather = await this.weatherService.getWeather(p.city, dateStr);
+          const weather = await this.weatherService.getWeatherByCoords(p.lat, p.lon, p.city, dateStr);
           const targetHour = p.time.getHours();
           const found = weather.hourly.find(h => new Date(h.hour).getHours() === targetHour)
             || weather.hourly.reduce((a, b) =>
@@ -340,7 +340,7 @@ export class GpxUploaderComponent {
       const p = this.passages[idx];
       try {
         const dateStr = formatDate(p.time, 'yyyy-MM-dd', 'en-US');
-        const weather = await this.weatherService.getWeather(p.city, dateStr);
+        const weather = await this.weatherService.getWeatherByCoords(p.lat, p.lon, p.city, dateStr);
         const targetHour = p.time.getHours();
         const found = weather.hourly.find(h => new Date(h.hour).getHours() === targetHour)
           || weather.hourly.reduce((a, b) =>

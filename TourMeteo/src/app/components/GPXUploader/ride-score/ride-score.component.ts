@@ -69,28 +69,44 @@ export class RideScoreComponent implements OnChanges {
     const minTemp = Math.min(...temps);
     const maxTemp = Math.max(...temps);
     const minApparent = Math.min(...apparents);
+    const maxApparent = Math.max(...apparents);
+    const maxWind = Math.max(...winds);
     const hasStorm = codes.some(c => c >= 95);
     const hasFog = codes.some(c => c === 45 || c === 48);
+    const rainyPassages = okPassages.filter(p => (p.weather!.precipitation ?? 0) > 0.1).length;
+    const rainyRatio = rainyPassages / okPassages.length;
 
     // --- Score calculation (0-100) ---
     let score = 100;
 
+    // Temperature penalties
     if (this.avgTemp < 5) score -= 30;
     else if (this.avgTemp < 10) score -= 15;
     else if (this.avgTemp < 15) score -= 5;
     else if (this.avgTemp > 35) score -= 25;
     else if (this.avgTemp > 30) score -= 10;
 
-    if (this.avgWind > 50) score -= 30;
-    else if (this.avgWind > 40) score -= 20;
-    else if (this.avgWind > 30) score -= 10;
-    else if (this.avgWind > 20) score -= 5;
+    // Wind penalties (based on max wind, not average — gusts matter most)
+    if (maxWind > 60) score -= 40;
+    else if (maxWind > 50) score -= 30;
+    else if (maxWind > 40) score -= 22;
+    else if (maxWind > 30) score -= 14;
+    else if (maxWind > 20) score -= 6;
 
-    if (this.totalPrecip > 5) score -= 25;
-    else if (this.totalPrecip > 2) score -= 15;
-    else if (this.totalPrecip > 0.5) score -= 8;
-    if (this.maxPrecipProb > 70) score -= 10;
-    else if (this.maxPrecipProb > 40) score -= 5;
+    // Precipitation amount penalties (heavier)
+    if (this.totalPrecip > 10) score -= 40;
+    else if (this.totalPrecip > 5) score -= 30;
+    else if (this.totalPrecip > 2) score -= 20;
+    else if (this.totalPrecip > 0.5) score -= 10;
+
+    // Precipitation probability penalties (heavier)
+    if (this.maxPrecipProb > 80) score -= 20;
+    else if (this.maxPrecipProb > 60) score -= 12;
+    else if (this.maxPrecipProb > 40) score -= 6;
+
+    // Rainy hours ratio penalty — long stretches of rain are much worse
+    if (rainyRatio > 0.6) score -= 15;
+    else if (rainyRatio > 0.3) score -= 8;
 
     if (hasStorm) score -= 20;
     if (hasFog) score -= 5;
@@ -129,11 +145,24 @@ export class RideScoreComponent implements OnChanges {
     if (minApparent < 5) this.clothingItems.push({ emoji: '🎧', label: 'Sous-casque / cache-oreilles' });
     if (codes.some(c => c === 0 || c === 1)) this.clothingItems.push({ emoji: '🕶️', label: 'Lunettes de soleil' });
 
+    // Contextual notes: when full warm gear but it may get warmer
+    const apparentRange = maxApparent - minApparent;
+    if (minApparent < 14 && maxApparent >= 20) {
+      this.clothingItems.push({ emoji: '🌤️', label: 'Il fera chaud par moments — prévoyez de retirer des couches' });
+    } else if (minApparent < 14 && maxApparent >= 16 && apparentRange > 5) {
+      this.clothingItems.push({ emoji: '♨️', label: `Écart de ressenti (${minApparent.toFixed(0)}° → ${maxApparent.toFixed(0)}°) — adaptez votre tenue en route` });
+    }
+    if (minApparent >= 10 && minApparent < 15 && maxApparent >= 18) {
+      this.clothingItems.push({ emoji: '🎒', label: 'Gardez le gilet en poche plutôt que porté — sortez-le si besoin' });
+    }
+
     // --- Warnings ---
     this.rideWarnings = [];
     if (hasStorm) this.rideWarnings.push('⛈️ Orages prévus — sortie fortement déconseillée');
-    if (this.hasStrongWind) this.rideWarnings.push(`💨 Vent fort (max ${Math.round(Math.max(...winds))} km/h) — prudence dans les descentes`);
+    if (this.hasStrongWind) this.rideWarnings.push(`💨 Vent fort (max ${Math.round(maxWind)} km/h) — prudence dans les descentes`);
     if (this.totalPrecip > 5) this.rideWarnings.push(`🌧️ Pluie abondante (${this.totalPrecip} mm) — routes glissantes`);
+    else if (this.totalPrecip > 2) this.rideWarnings.push(`🌧️ Pluie modérée (${this.totalPrecip} mm) — chaussée humide`);
+    if (rainyRatio > 0.5) this.rideWarnings.push(`☔ Pluie sur plus de la moitié du parcours (${Math.round(rainyRatio * 100)}%) — conditions difficiles`);
     if (minTemp < 2) this.rideWarnings.push('🧊 Risque de verglas — attention aux plaques de gel');
     if (hasFog) this.rideWarnings.push('🌫️ Brouillard — visibilité réduite, allumez vos feux');
     if (this.avgTemp > 32) this.rideWarnings.push('🥵 Forte chaleur — hydratez-vous régulièrement');

@@ -18,7 +18,11 @@ export class WeatherService {
   async getWeather(city: string, date: string): Promise<WeatherCity> {
     // obtenir latitude/longitude (CityService retourne maintenant une Promise)
     const { lat, lon } = await this.cityService.getLatLon(city);
+    return this.getWeatherByCoords(+lat, +lon, city, date);
+  }
 
+  // Renvoie les données météo directement par coordonnées (évite le géocodage)
+  async getWeatherByCoords(lat: number, lon: number, cityName: string, date: string): Promise<WeatherCity> {
     const url = `${this.weatherApiUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,winddirection_10m,weathercode,is_day,precipitation,precipitation_probability,relative_humidity_2m,apparent_temperature&start_date=${date}&end_date=${date}`;
 
     // wrapper simple en Promise pour convertir l'Observable Http en Promise
@@ -40,6 +44,6 @@ export class WeatherService {
       apparentTemperature: response.hourly.apparent_temperature ? response.hourly.apparent_temperature[i] : undefined
     }));
 
-    return { city, hourly };
+    return { city: cityName, hourly };
   }
 }
