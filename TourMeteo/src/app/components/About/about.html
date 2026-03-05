@@ -92,6 +92,17 @@
                   <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-blue-500 peer-focus:ring-2 peer-focus:ring-blue-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
                 </label>
               </div>
+              <!-- Toggle: Rafraîchir météo -->
+              <div class="flex items-center justify-between bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
+                <div class="flex flex-col">
+                  <span class="font-medium text-slate-800">🔄 Rafraîchir météo</span>
+                  <span class="text-xs text-slate-500">Changer la date/heure sans re-géocoder les villes (GPX)</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" [checked]="flags.experimental" (change)="toggleFlag('experimental')" class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-blue-500 peer-focus:ring-2 peer-focus:ring-blue-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+                </label>
+              </div>
             </div>
             <p class="text-[11px] text-slate-400 mt-2">Ces préférences sont enregistrées localement.</p>
           </div>
@@ -226,18 +237,6 @@
         </button>
         <div *ngIf="sec.open" class="px-4 py-4 text-sm text-slate-700 border-t border-amber-200 space-y-4">
           <p class="text-xs text-amber-600">Ces options activent des fonctionnalités en cours de développement. Les préférences sont enregistrées en localStorage.</p>
-
-          <!-- Toggle: Rafraîchir météo (fonctionnalité spéciale dev) -->
-          <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-slate-200 shadow-sm">
-            <div class="flex flex-col">
-              <span class="font-medium text-slate-800">🔄 Rafraîchir météo</span>
-              <span class="text-xs text-slate-500">Changer la date/heure sans re-géocoder les villes</span>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" [checked]="flags.experimental" (change)="toggleFlag('experimental')" class="sr-only peer">
-              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
-            </label>
-          </div>
 
           <!-- Séparateur : fonctionnalités futures -->
           <div class="pt-2 border-t border-amber-200">
