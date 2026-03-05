@@ -371,9 +371,9 @@ export class BestDepartureComponent {
   // ─── Helpers ───
 
   private async reverseGeocode(lat: number, lon: number): Promise<string> {
-    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`, {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&email=hugo.lembrez@gmail.com`, {
       headers: {
-        'User-Agent': 'MeteoRide/1.0 (Angular weather app)',
+        'User-Agent': 'MeteoRide/2.2.0 (https://meteo-ride.vercel.app)',
         'Accept': 'application/json'
       }
     });

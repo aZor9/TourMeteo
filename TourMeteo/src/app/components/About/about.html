@@ -133,11 +133,18 @@
           <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
         <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 border-t border-slate-100">
-          <ul class="list-disc pl-5 space-y-1">
-            <li><strong>Géocodage :</strong> <a href="https://nominatim.org/" class="text-primary hover:underline" target="_blank"> Nominatim</a> (OpenStreetMap) — recherche d'emplacements et reverse-géocodage (lat/lon → ville)</li>
-            <li><strong>Météo :</strong> <a href="https://open-meteo.com/" class="text-primary hover:underline" target="_blank"> Open-Meteo</a> — données horaires (température, ressenti, vent, direction, précipitations, probabilité de pluie, humidité, weathercode, jour/nuit)</li>
+          <ul class="list-disc pl-5 space-y-2">
+            <li><strong>Géocodage :</strong> <a href="https://nominatim.org/" class="text-primary hover:underline" target="_blank"> Nominatim</a> (OpenStreetMap, ODbL) — recherche d'emplacements et reverse-géocodage (lat/lon → ville). <span class="text-xs text-slate-400">Politique : 1 req/s max, email identifiant requis.</span></li>
+            <li><strong>Météo :</strong> <a href="https://open-meteo.com/" class="text-primary hover:underline" target="_blank"> Open-Meteo</a> (CC BY 4.0) — données horaires (température, ressenti, vent, précipitations, humidité, weathercode) + API élévation en fallback.</li>
           </ul>
-          <p class="mt-2 text-xs text-slate-500">Aucune clé API n'est requise. Les deux services sont gratuits et open-source.</p>
+          <p class="mt-4">Services complémentaires (fonctionnalités experimentales) :</p>
+          <ul class="list-disc pl-5 space-y-2 mt-2">
+            <li><strong>Routage :</strong> <a href="https://brouter.de/" class="text-primary hover:underline" target="_blank"> BRouter</a> (MIT, données OSM) — calcul d'itinéraire vélo/running évitant gravier et propriétés privées (profils <code>fastbike</code> / <code>trekking</code>). Fallback : <a href="https://project-osrm.org/" class="text-primary hover:underline" target="_blank">OSRM</a> (BSD, serveur démo).</li>
+            <li><strong>Analyse voirie :</strong> <a href="https://overpass-api.de/" class="text-primary hover:underline" target="_blank"> Overpass API</a> (données OSM, ODbL) — types de routes, pistes cyclables, état de surface le long du parcours.</li>
+            <li><strong>Élévation :</strong> <a href="https://open-elevation.com/" class="text-primary hover:underline" target="_blank"> Open Elevation</a> (open-source) — profil altimétrique. Fallback : Open-Meteo Elevation.</li>
+            <li><strong>Tuiles carte :</strong> <a href="https://carto.com/attributions" class="text-primary hover:underline" target="_blank"> CARTO Voyager</a> (CC BY 3.0) pour le créateur de parcours · <a href="https://www.openstreetmap.org/copyright" class="text-primary hover:underline" target="_blank">OpenStreetMap</a> (ODbL) pour la carte GPX.</li>
+          </ul>
+          <p class="mt-2 text-xs text-slate-500">Aucune clé API n'est requise. Tous les services sont gratuits et open-source. Les données cartographiques sont © OpenStreetMap contributors (ODbL).</p>
         </div>
       </div>
 
@@ -197,10 +204,10 @@
           <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
         <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 space-y-1.5 border-t border-slate-100">
-          <p>Les données sont obtenues en temps réel depuis les APIs publiques listées ci-dessus.</p>
-          <p>Aucune donnée utilisateur n'est envoyée à des services autres que ceux mentionnés (Open-Meteo et Nominatim).</p>
-          <p>Nominatim applique des limites d'usage (1 requête/seconde). L'application utilise un throttle et un échantillonnage par distance (~2 km) pour respecter ces contraintes.</p>
-          <p>Aucun compte utilisateur, aucun cookie de tracking, aucune donnée personnelle stockée.</p>
+          <p>Les données sont obtenues en temps réel depuis les APIs publiques listées dans la section « APIs & données ».</p>
+          <p>Les coordonnées GPS (latitude/longitude) sont envoyées aux services tiers suivants pour fonctionner : Nominatim, Open-Meteo, BRouter, OSRM, Overpass, Open Elevation et CARTO (tuiles). Aucune autre donnée personnelle n'est transmise.</p>
+          <p>Nominatim applique des limites d'usage (1 requête/seconde). L'application utilise un throttle et un échantillonnage par distance (~2 km) pour respecter ces contraintes. Le serveur OSRM est un serveur de démonstration (fallback uniquement).</p>
+          <p>Aucun compte utilisateur, aucun cookie de tracking, aucune donnée personnelle stockée. Les préférences et l'historique restent en <code>localStorage</code> sur votre appareil.</p>
         </div>
       </div>
 
