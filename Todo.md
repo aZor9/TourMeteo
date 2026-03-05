@@ -30,3 +30,8 @@ Nouvelle api qu'on peut intégrer :
 🌡️ 5. API météo "ressenti sportif" : Meteostat : Historique météo précise / Analyse comparative passée
 🛰️ 6. API solaire (ultra niche) : Sunrise-Sunset.org : Heure lever/coucher soleil précise / Crépuscule / Golden hour
 => Sécurité & Planification
+
+
+Faire une page ou un nouveau site
+Qui se connecte à strava pour faire un résumé et analyse des data (remplace strava premium)
+Ou regarder si ça existe déjà
