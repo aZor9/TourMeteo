@@ -70,10 +70,22 @@
       <!-- Manual mode -->
       <div *ngIf="computeMode === 'manual'" class="space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
+          <div class="relative">
             <label class="block text-xs font-medium text-slate-500 mb-1">Ville</label>
             <input type="text" [(ngModel)]="manualCity" placeholder="Ex : Lyon"
+                   (input)="citySuggestions = recentCities.search(manualCity); showSuggestions = citySuggestions.length > 0"
+                   (focus)="citySuggestions = recentCities.getAll(); showSuggestions = citySuggestions.length > 0"
+                   (blur)="$event; showSuggestions = false"
+                   autocomplete="off"
                    class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all" />
+            <div *ngIf="showSuggestions && citySuggestions.length > 0"
+                 class="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+              <button *ngFor="let s of citySuggestions" type="button"
+                      (mousedown)="manualCity = s; showSuggestions = false"
+                      class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition-colors">
+                📍 {{ s }}
+              </button>
+            </div>
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-500 mb-1">Date</label>
@@ -191,6 +203,8 @@
               </div>
               <div class="text-[10px] text-slate-500 font-medium shrink-0" [ngClass]="opt.isBest ? 'text-amber-600 font-bold' : ''">{{ opt.displayHour }}</div>
             </div>
+            <!-- Spacer to prevent last bar from being flush against the edge -->
+            <div class="shrink-0 w-6" aria-hidden="true"></div>
           </div>
         </div>
       </div>
@@ -206,7 +220,8 @@
               <th class="px-3 py-2 text-center font-medium">Temp.</th>
               <th class="px-3 py-2 text-center font-medium">Ressenti</th>
               <th class="px-3 py-2 text-center font-medium">Vent</th>
-              <th class="px-3 py-2 text-center font-medium">Pluie</th>
+              <th class="px-3 py-2 text-center font-medium">Pluie %</th>
+              <th class="px-3 py-2 text-center font-medium">Précip.</th>
               <th class="px-3 py-2 text-center font-medium">Humidité</th>
               <th class="px-3 py-2 text-center font-medium hidden sm:table-cell">Soleil</th>
               <th class="px-3 py-2 text-left font-medium hidden sm:table-cell">Alertes</th>
@@ -225,6 +240,7 @@
               <td class="px-3 py-2 text-center text-slate-600">{{ opt.avgApparentTemp }}°</td>
               <td class="px-3 py-2 text-center text-slate-600">{{ opt.avgWind }} km/h</td>
               <td class="px-3 py-2 text-center" [ngClass]="opt.maxPrecipProb > 50 ? 'text-blue-600 font-medium' : 'text-slate-600'">{{ opt.maxPrecipProb }}%</td>
+              <td class="px-3 py-2 text-center" [ngClass]="opt.totalPrecip > 0.5 ? 'text-blue-600 font-medium' : 'text-slate-600'">{{ opt.totalPrecip }} mm</td>
               <td class="px-3 py-2 text-center text-slate-600">{{ opt.avgHumidity }}%</td>
               <td class="px-3 py-2 text-center hidden sm:table-cell text-amber-500">{{ opt.sunPercent }}%</td>
               <td class="px-3 py-2 hidden sm:table-cell">
@@ -234,15 +250,6 @@
           </tbody>
         </table>
       </div>
-    </div>
-
-    <!-- Windy wind map -->
-    <div *ngIf="safeWindyUrl" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <div class="px-5 sm:px-6 py-3 border-b border-slate-100">
-        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">🌬️ Carte des vents (Windy)</div>
-      </div>
-      <iframe [src]="safeWindyUrl" class="w-full" style="height: 350px; border: none;"></iframe>
-      <div class="px-5 sm:px-6 py-2 text-[10px] text-slate-400 border-t border-slate-100">Données vent ECMWF via <a href="https://www.windy.com" target="_blank" class="text-blue-500 hover:underline">Windy.com</a></div>
     </div>
 
     <!-- Tips -->

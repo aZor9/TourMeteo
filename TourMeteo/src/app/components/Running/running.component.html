@@ -19,10 +19,22 @@
 
       <!-- City + Date -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
+        <div class="relative">
           <label class="block text-xs font-medium text-slate-500 mb-1">Ville</label>
           <input type="text" [(ngModel)]="city" placeholder="Ex : Lyon"
+                 (input)="citySuggestions = recentCities.search(city); showSuggestions = citySuggestions.length > 0"
+                 (focus)="citySuggestions = recentCities.getAll(); showSuggestions = citySuggestions.length > 0"
+                 (blur)="$event; showSuggestions = false"
+                 autocomplete="off"
                  class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
+          <div *ngIf="showSuggestions && citySuggestions.length > 0"
+               class="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+            <button *ngFor="let s of citySuggestions" type="button"
+                    (mousedown)="city = s; showSuggestions = false"
+                    class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
+              📍 {{ s }}
+            </button>
+          </div>
         </div>
         <div>
           <label class="block text-xs font-medium text-slate-500 mb-1">Date</label>
@@ -56,19 +68,34 @@
       </div>
 
       <!-- Duration inputs -->
-      <div *ngIf="inputMode === 'duration'" class="flex gap-3 items-end">
-        <div>
-          <label class="block text-xs font-medium text-slate-500 mb-1">Heures</label>
-          <input type="number" [(ngModel)]="durationH" min="0" max="12"
-                 class="w-20 border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
+      <div *ngIf="inputMode === 'duration'" class="space-y-3">
+        <div class="flex gap-3 items-end">
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Heures</label>
+            <input type="number" [(ngModel)]="durationH" min="0" max="12"
+                   class="w-20 border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Minutes</label>
+            <input type="number" [(ngModel)]="durationM" min="0" max="59"
+                   class="w-20 border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
+          </div>
         </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-500 mb-1">Minutes</label>
-          <input type="number" [(ngModel)]="durationM" min="0" max="59"
-                 class="w-20 border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
-        </div>
-        <div class="text-sm text-slate-400 pb-2.5" *ngIf="computedDistanceKm > 0">
-          ≈ {{ computedDistanceKm }} km
+        <div class="flex flex-wrap gap-3 items-end">
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Allure (min/km)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" [(ngModel)]="paceMin" min="2" max="15"
+                     class="w-16 border border-slate-200 rounded-xl px-2 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-center" />
+              <span class="text-slate-400">:</span>
+              <input type="number" [(ngModel)]="paceSec" min="0" max="59"
+                     class="w-16 border border-slate-200 rounded-xl px-2 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-center" />
+              <span class="text-xs text-slate-400">min/km</span>
+            </div>
+          </div>
+          <div class="text-sm text-slate-400 pb-2.5" *ngIf="computedDistanceKm > 0">
+            ≈ {{ computedDistanceKm }} km
+          </div>
         </div>
       </div>
 

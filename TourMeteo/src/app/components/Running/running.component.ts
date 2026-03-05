@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { WeatherService } from '../../service/weather.service';
 import { getWeatherDescription, degreesToCardinal } from '../../utils/weather-utils';
+import { RecentCitiesService } from '../../service/recent-cities.service';
 
 export interface RunHourWeather {
   hour: string;
@@ -44,6 +45,10 @@ export class RunningComponent {
   loading = false;
   error = '';
 
+  // ─── City suggestions ───
+  citySuggestions: string[] = [];
+  showSuggestions = false;
+
   // ─── Results ───
   hours: RunHourWeather[] = [];
   totalDurationMin = 0;
@@ -69,7 +74,8 @@ export class RunningComponent {
 
   constructor(
     private cd: ChangeDetectorRef,
-    private weatherService: WeatherService
+    private weatherService: WeatherService,
+    public recentCities: RecentCitiesService
   ) {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -107,6 +113,8 @@ export class RunningComponent {
   async compute() {
     if (!this.city || !this.date || !this.startTime) return;
 
+    this.recentCities.add(this.city);
+    this.showSuggestions = false;
     this.loading = true;
     this.error = '';
     this.hours = [];

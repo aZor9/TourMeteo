@@ -5,7 +5,7 @@ import { WeatherService } from '../../service/weather.service';
 import { CityService } from '../../service/city.service';
 import { getWeatherDescription, degreesToCardinal } from '../../utils/weather-utils';
 import { HttpClientModule } from '@angular/common/http';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { RecentCitiesService } from '../../service/recent-cities.service';
 
 interface DepartureOption {
   hour: number;
@@ -68,11 +68,15 @@ export class BestDepartureComponent {
   routeLat = 0;
   routeLon = 0;
 
+  // ─── City suggestions ───
+  citySuggestions: string[] = [];
+  showSuggestions = false;
+
   constructor(
     private cd: ChangeDetectorRef,
     private weatherService: WeatherService,
     private cityService: CityService,
-    private sanitizer: DomSanitizer
+    public recentCities: RecentCitiesService
   ) {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -141,17 +145,6 @@ export class BestDepartureComponent {
     return h > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${m} min`;
   }
 
-  get windyEmbedUrl(): string {
-    if (!this.routeLat || !this.routeLon) return '';
-    return `https://embed.windy.com/embed.html?type=map&location=coordinates&metricWind=km%2Fh&metricTemp=%C2%B0C&zoom=9&overlay=wind&product=ecmwf&level=surface&lat=${this.routeLat}&lon=${this.routeLon}`;
-  }
-
-  get safeWindyUrl(): SafeResourceUrl | null {
-    const url = this.windyEmbedUrl;
-    if (!url) return null;
-    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
-  }
-
   get canCompute(): boolean {
     if (this.computeMode === 'gpx') return this.gpxPoints.length > 0 && this.avgSpeedKmh > 0;
     return !!this.manualCity && !!this.manualDate;
@@ -164,6 +157,7 @@ export class BestDepartureComponent {
     this.error = '';
     this.options = [];
     this.bestOption = null;
+    this.showSuggestions = false;
     this.progressText = 'Récupération de la météo...';
     this.cd.detectChanges();
 
@@ -190,6 +184,7 @@ export class BestDepartureComponent {
         await this.delay(1100);
         cityName = this.manualCity;
         this.routeCity = cityName;
+        this.recentCities.add(cityName);
       }
 
       const durationH = this.computeMode === 'gpx'
@@ -227,8 +222,15 @@ export class BestDepartureComponent {
           const avgApparent = relevantHours.reduce((s: number, x: any) => s + (x.apparentTemperature ?? x.temperature), 0) / relevantHours.length;
           const avgWind = relevantHours.reduce((s: number, x: any) => s + x.wind, 0) / relevantHours.length;
           const avgHumidity = relevantHours.reduce((s: number, x: any) => s + (x.humidity ?? 50), 0) / relevantHours.length;
-          const maxPrecipProb = Math.max(...relevantHours.map((x: any) => x.precipitationProbability ?? 0));
+          const apiMaxPrecipProb = Math.max(...relevantHours.map((x: any) => x.precipitationProbability ?? 0));
           const totalPrecip = relevantHours.reduce((s: number, x: any) => s + (x.precipitation ?? 0), 0);
+
+          // Fallback: use weather codes to estimate rain when API probability is 0
+          const codes = relevantHours.map((x: any) => x.summary ?? 0);
+          const rainyCodeCount = codes.filter((c: number) => c >= 51 && c !== 45 && c !== 48).length;
+          const codeBasedProb = relevantHours.length > 0 ? Math.round((rainyCodeCount / relevantHours.length) * 100) : 0;
+          const maxPrecipProb = Math.max(apiMaxPrecipProb, codeBasedProb, totalPrecip > 0.5 ? 40 : 0);
+
           const sunCount = relevantHours.filter((x: any) => x.isDay).length;
           const sunPercent = Math.round((sunCount / relevantHours.length) * 100);
 

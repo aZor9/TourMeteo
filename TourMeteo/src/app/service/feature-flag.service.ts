@@ -17,6 +17,8 @@ export interface FeatureFlags {
   routeCreator: boolean;
   /** Show best departure time analyzer page */
   bestDeparture: boolean;
+  /** Save & suggest recent search cities (localStorage) */
+  recentCities: boolean;
 }
 
 const DEFAULTS: FeatureFlags = {
@@ -26,7 +28,8 @@ const DEFAULTS: FeatureFlags = {
   running: false,
   nutrition: false,
   routeCreator: false,
-  bestDeparture: false
+  bestDeparture: false,
+  recentCities: false
 };
 
 @Injectable({ providedIn: 'root' })
