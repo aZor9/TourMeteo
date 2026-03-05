@@ -21,6 +21,7 @@ interface RouteStats {
   elevationProfile: number[];
   cycleLanePercent: number;
   roadTypes: { label: string; percent: number; color: string }[];
+  surfaceTypes: { label: string; percent: number; color: string }[];
 }
 
 interface RoutePoint {
@@ -46,6 +47,9 @@ export class RouteCreatorComponent implements AfterViewInit, OnDestroy {
   /* ── Targets (optional) ── */
   targetDistanceKm: number | null = null;
   targetElevationUp: number | null = null;
+
+  /* ── Map state ── */
+  mapReady = false;
 
   /* ── Preferences ── */
   mode: 'bike' | 'run' = 'bike';
@@ -97,11 +101,24 @@ export class RouteCreatorComponent implements AfterViewInit, OnDestroy {
     const el = document.getElementById('route-map');
     if (!el) return;
 
-    this.mapInstance = this.L.map('route-map').setView([46.8, 2.3], 6);
-    this.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap',
-      maxZoom: 18
+    this.mapInstance = this.L.map('route-map', { preferCanvas: true }).setView([46.8, 2.3], 6);
+
+    // CartoDB Positron: faster CDN + cleaner look than default OSM
+    const tileLayer = this.L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '© <a href="https://carto.com/">CARTO</a> © <a href="https://osm.org/">OSM</a>',
+      maxZoom: 19,
+      subdomains: 'abcd'
     }).addTo(this.mapInstance);
+
+    // Mark map as ready once first tiles load
+    tileLayer.once('load', () => {
+      this.mapReady = true;
+      this.cd.detectChanges();
+    });
+    // Fallback: mark ready after 3s even if event doesn't fire
+    setTimeout(() => {
+      if (!this.mapReady) { this.mapReady = true; this.cd.detectChanges(); }
+    }, 3000);
 
     this.mapInstance.on('click', (e: any) => {
       this.addWaypointFromMap(e.latlng.lat, e.latlng.lng);
@@ -223,60 +240,88 @@ export class RouteCreatorComponent implements AfterViewInit, OnDestroy {
   /* ═══════════════ Generate route ═══════════════ */
 
   async generateRoute() {
-    if (this.waypoints.length < 2) return;
+    const isLoop = this.waypoints.length === 1 && !!this.targetDistanceKm && this.targetDistanceKm > 0;
+    if (!isLoop && this.waypoints.length < 2) return;
 
     this.loading = true;
     this.error = '';
-    this.progressText = 'Calcul de l\'itinéraire (OSRM)…';
     this.routePoints = [];
     this.stats = null;
     this.cd.detectChanges();
 
     try {
-      const profile = this.mode === 'bike' ? 'bike' : 'foot';
-      const coords  = this.waypoints.map(w => `${w.lon},${w.lat}`).join(';');
-      const url = `https://router.project-osrm.org/route/v1/${profile}/${coords}?overview=full&geometries=geojson&steps=true`;
-      const rd  = await this.httpGet(url);
-
-      if (!rd || rd.code !== 'Ok') throw new Error('Itinéraire introuvable — rapprochez les points');
-
-      const route = rd.routes?.[0];
-      if (!route?.geometry?.coordinates) throw new Error('Aucun itinéraire trouvé');
-
-      this.routePoints = route.geometry.coordinates.map((c: number[]) => ({ lat: c[1], lon: c[0] }));
-      const distanceKm = +(route.distance / 1000).toFixed(1);
-      const sec = route.duration;
-      const h = Math.floor(sec / 3600);
-      const m = Math.round((sec % 3600) / 60);
-
-      /* ── Elevation ── */
-      this.progressText = 'Calcul du dénivelé (Open Elevation)…';
-      this.cd.detectChanges();
-
-      let elevUp = 0, elevDown = 0, elevProfile: number[] = [];
-      try {
-        const ed = await this.fetchElevationProfile(this.routePoints);
-        elevUp = ed.up; elevDown = ed.down; elevProfile = ed.profile;
-      } catch {
-        try {
-          const fb = await this.fetchElevationOpenMeteo(this.routePoints);
-          elevUp = fb.up; elevDown = fb.down; elevProfile = fb.profile;
-        } catch {}
+      // Build waypoints list (loop or direct)
+      let routeWaypoints: { lat: number; lon: number }[];
+      if (isLoop) {
+        this.progressText = 'Génération de la boucle…';
+        this.cd.detectChanges();
+        routeWaypoints = this.buildLoopWaypoints();
+      } else {
+        routeWaypoints = this.waypoints;
       }
 
-      /* ── Overpass (bike only) ── */
-      let cyclePct = -1;
-      let roadTypes: RouteStats['roadTypes'] = [];
-      if (this.mode === 'bike') {
-        this.progressText = 'Analyse infrastructure cyclable (Overpass)…';
+      let distanceKm: number;
+      let durationSec: number;
+      let elevUp = 0, elevDown = 0, elevProfile: number[] = [];
+
+      // 1) Try BRouter first (avoids gravel & private roads)
+      try {
+        this.progressText = 'Calcul de l\'itinéraire (BRouter)…';
+        this.cd.detectChanges();
+        const br = await this.fetchBRouterRoute(routeWaypoints);
+        this.routePoints = br.routePoints;
+        distanceKm  = br.distanceKm;
+        durationSec = br.durationSec;
+        elevUp      = br.elevUp;
+        elevDown    = br.elevDown;
+        elevProfile = br.elevProfile;
+      } catch {
+        // 2) Fallback: OSRM
+        this.progressText = 'Calcul de l\'itinéraire (OSRM)…';
+        this.cd.detectChanges();
+        const osrmProfile = this.mode === 'bike' ? 'bike' : 'foot';
+        const coords = routeWaypoints.map((p: any) => `${p.lon},${p.lat}`).join(';');
+        const url = `https://router.project-osrm.org/route/v1/${osrmProfile}/${coords}?overview=full&geometries=geojson&steps=true`;
+        const rd = await this.httpGet(url);
+
+        if (!rd || rd.code !== 'Ok') throw new Error('Itinéraire introuvable — rapprochez les points');
+        const route = rd.routes?.[0];
+        if (!route?.geometry?.coordinates) throw new Error('Aucun itinéraire trouvé');
+
+        this.routePoints = route.geometry.coordinates.map((c: number[]) => ({ lat: c[1], lon: c[0] }));
+        distanceKm  = +(route.distance / 1000).toFixed(1);
+        durationSec = route.duration;
+
+        // Separate elevation (OSRM doesn't provide it)
+        this.progressText = 'Calcul du dénivelé…';
         this.cd.detectChanges();
         try {
-          const ov = await this.queryOverpass(distanceKm);
-          cyclePct  = ov.cycleLanePercent;
-          roadTypes = ov.roadTypes;
+          const ed = await this.fetchElevationProfile(this.routePoints);
+          elevUp = ed.up; elevDown = ed.down; elevProfile = ed.profile;
         } catch {
-          roadTypes = [{ label: 'Données non disponibles', percent: 100, color: 'bg-slate-300' }];
+          try {
+            const fb = await this.fetchElevationOpenMeteo(this.routePoints);
+            elevUp = fb.up; elevDown = fb.down; elevProfile = fb.profile;
+          } catch {}
         }
+      }
+
+      const h = Math.floor(durationSec / 3600);
+      const m = Math.round((durationSec % 3600) / 60);
+
+      /* ── Overpass (road analysis) ── */
+      let cyclePct = -1;
+      let roadTypes: RouteStats['roadTypes'] = [];
+      let surfaceTypes: RouteStats['surfaceTypes'] = [];
+      this.progressText = 'Analyse des voies (Overpass)…';
+      this.cd.detectChanges();
+      try {
+        const ov = await this.queryOverpass(distanceKm);
+        cyclePct  = ov.cycleLanePercent;
+        roadTypes = ov.roadTypes;
+        surfaceTypes = ov.surfaceTypes;
+      } catch {
+        roadTypes = [{ label: 'Données non disponibles', percent: 100, color: 'bg-slate-300' }];
       }
 
       this.stats = {
@@ -286,7 +331,8 @@ export class RouteCreatorComponent implements AfterViewInit, OnDestroy {
         elevationDown: elevDown,
         elevationProfile: elevProfile,
         cycleLanePercent: cyclePct,
-        roadTypes
+        roadTypes,
+        surfaceTypes
       };
 
       this.drawRoute();
@@ -300,6 +346,61 @@ export class RouteCreatorComponent implements AfterViewInit, OnDestroy {
       this.progressText = '';
       this.cd.detectChanges();
     }
+  }
+
+  /* ── BRouter routing (paved roads, no gravel, no private) ── */
+
+  private async fetchBRouterRoute(points: { lat: number; lon: number }[]): Promise<{
+    routePoints: RoutePoint[]; distanceKm: number; durationSec: number;
+    elevUp: number; elevDown: number; elevProfile: number[];
+  }> {
+    // fastbike = road cycling (avoids gravel/unpaved/private)
+    // trekking = hiking/running (prefers trails, still avoids private)
+    const profile = this.mode === 'bike' ? 'fastbike' : 'trekking';
+    const lonlats = points.map((p: any) => `${p.lon},${p.lat}`).join('|');
+    const url = `https://brouter.de/brouter?lonlats=${lonlats}&profile=${profile}&alternativeidx=0&format=geojson`;
+    const data = await this.httpGet(url);
+
+    const feature = data?.features?.[0];
+    if (!feature?.geometry?.coordinates?.length) throw new Error('BRouter: aucun itinéraire');
+
+    const coords: number[][] = feature.geometry.coordinates;
+    const routePoints = coords.map((c: number[]) => ({ lat: c[1], lon: c[0] }));
+
+    const props = feature.properties || {};
+    const distanceKm  = +((parseFloat(props['track-length'] || '0')) / 1000).toFixed(1);
+    const durationSec = parseFloat(props['total-time'] || '0');
+    const elevUp      = Math.round(parseFloat(props['filtered ascend'] || '0'));
+    const elevDown    = Math.round(parseFloat(props['filtered descend'] || '0'));
+
+    // Elevation profile from 3rd coordinate (altitude)
+    const step = Math.max(1, Math.floor(coords.length / 80));
+    const elevProfile = coords
+      .filter((_: any, i: number) => i % step === 0 || i === coords.length - 1)
+      .map((c: number[]) => Math.round(c[2] || 0));
+
+    return { routePoints, distanceKm, durationSec, elevUp, elevDown, elevProfile };
+  }
+
+  /* ── Loop waypoints builder ── */
+
+  private buildLoopWaypoints(): { lat: number; lon: number }[] {
+    const origin = this.waypoints[0];
+    const targetKm = this.targetDistanceKm!;
+
+    // Approximate radius: road distance ≈ 1.3× straight-line
+    const radiusKm = (targetKm / (2 * Math.PI)) * 0.55;
+    const latDeg = radiusKm / 111;
+    const lonDeg = radiusKm / (111 * Math.cos(origin.lat * Math.PI / 180));
+
+    // 4 intermediate points (NE, SE, SW, NW)
+    const angles = [45, 135, 225, 315];
+    const intermediates = angles.map(a => {
+      const rad = a * Math.PI / 180;
+      return { lat: origin.lat + latDeg * Math.cos(rad), lon: origin.lon + lonDeg * Math.sin(rad) };
+    });
+
+    return [origin, ...intermediates, origin];
   }
 
   /* ═══════════════ Elevation — Open Elevation API ═══════════════ */
@@ -344,27 +445,32 @@ export class RouteCreatorComponent implements AfterViewInit, OnDestroy {
   /* ═══════════════ Overpass ═══════════════ */
 
   private async queryOverpass(distKm: number)
-    : Promise<{ cycleLanePercent: number; roadTypes: RouteStats['roadTypes'] }> {
-    const lats = this.waypoints.map(w => w.lat);
-    const lons = this.waypoints.map(w => w.lon);
-    const pad  = Math.max(0.05, distKm * 0.005);
+    : Promise<{ cycleLanePercent: number; roadTypes: RouteStats['roadTypes']; surfaceTypes: RouteStats['surfaceTypes'] }> {
+    // Use route points for bbox when available (more accurate, especially for loops)
+    const pts = this.routePoints.length > 0 ? this.routePoints : this.waypoints;
+    const lats = pts.map((p: any) => p.lat);
+    const lons = pts.map((p: any) => p.lon);
+    const pad  = Math.max(0.02, distKm * 0.003);
     const bbox = `${Math.min(...lats) - pad},${Math.min(...lons) - pad},${Math.max(...lats) + pad},${Math.max(...lons) + pad}`;
 
-    const q = `[out:json][timeout:15];(way["highway"="cycleway"](${bbox});way["cycleway"](${bbox});way["bicycle"="designated"](${bbox});way["highway"="residential"](${bbox});way["highway"="tertiary"](${bbox});way["highway"="secondary"](${bbox});way["highway"="primary"](${bbox});way["highway"="trunk"](${bbox}););out count;`;
+    const q = `[out:json][timeout:20];(way["highway"="cycleway"](${bbox});way["cycleway"](${bbox});way["bicycle"="designated"](${bbox});way["highway"="residential"](${bbox});way["highway"="tertiary"](${bbox});way["highway"="secondary"](${bbox});way["highway"="primary"](${bbox});way["highway"="trunk"](${bbox});way["highway"="path"](${bbox});way["highway"="footway"](${bbox});way["highway"="track"](${bbox}););out tags;`;
 
     const resp = await this.httpPost(
       'https://overpass-api.de/api/interpreter',
       `data=${encodeURIComponent(q)}`
     );
 
-    const tot = resp?.elements?.length || 0;
+    const elements = resp?.elements || [];
+    const tot = elements.length;
     if (!tot) return {
       cycleLanePercent: 0,
-      roadTypes: [{ label: 'Données insuffisantes', percent: 100, color: 'bg-slate-300' }]
+      roadTypes: [{ label: 'Données insuffisantes', percent: 100, color: 'bg-slate-300' }],
+      surfaceTypes: []
     };
 
+    // Road types
     let cyc = 0, res = 0, main = 0;
-    for (const el of resp.elements || []) {
+    for (const el of elements) {
       const hw = el.tags?.highway, cw = el.tags?.cycleway, bic = el.tags?.bicycle;
       if (hw === 'cycleway' || bic === 'designated' || cw) cyc++;
       else if (hw === 'residential' || hw === 'living_street') res++;
@@ -373,12 +479,37 @@ export class RouteCreatorComponent implements AfterViewInit, OnDestroy {
     const cP = Math.round(cyc / tot * 100);
     const rP = Math.round(res / tot * 100);
     const mP = Math.max(0, 100 - cP - rP);
+
+    // Surface analysis
+    const PAVED = ['asphalt','concrete','paved','paving_stones','sett','concrete:plates','concrete:lanes','metal'];
+    const GRAVEL = ['gravel','fine_gravel','compacted','pebblestone'];
+    const UNPAVED = ['unpaved','dirt','earth','grass','ground','mud','sand','wood','woodchips'];
+    let paved = 0, gravel = 0, unpaved = 0, unknown = 0;
+    for (const el of elements) {
+      const s = (el.tags?.surface || '').toLowerCase();
+      if (!s) { unknown++; continue; }
+      if (PAVED.includes(s)) paved++;
+      else if (GRAVEL.includes(s)) gravel++;
+      else if (UNPAVED.includes(s)) unpaved++;
+      else unknown++;
+    }
+    const pP = Math.round(paved / tot * 100);
+    const gP = Math.round(gravel / tot * 100);
+    const uP = Math.round(unpaved / tot * 100);
+    const kP = Math.max(0, 100 - pP - gP - uP);
+
     return {
       cycleLanePercent: cP,
       roadTypes: [
         { label: 'Pistes cyclables', percent: cP, color: 'bg-green-500' },
         { label: 'Résidentielles',   percent: rP, color: 'bg-blue-400' },
         { label: 'Routes principales', percent: mP, color: 'bg-amber-400' },
+      ].filter(r => r.percent > 0),
+      surfaceTypes: [
+        { label: 'Asphalte / Pavé', percent: pP, color: 'bg-slate-600' },
+        { label: 'Gravier / Compacté', percent: gP, color: 'bg-amber-500' },
+        { label: 'Non revêtu', percent: uP, color: 'bg-orange-600' },
+        { label: 'Inconnu', percent: kP, color: 'bg-slate-300' },
       ].filter(r => r.percent > 0)
     };
   }
@@ -433,6 +564,15 @@ ${pts}
   }
 
   /* ═══════════════ Template helpers ═══════════════ */
+
+  get canGenerate(): boolean {
+    if (this.waypoints.length >= 2) return true;
+    return this.waypoints.length === 1 && !!this.targetDistanceKm && this.targetDistanceKm > 0;
+  }
+
+  get isLoopMode(): boolean {
+    return this.waypoints.length === 1 && !!this.targetDistanceKm && this.targetDistanceKm > 0;
+  }
 
   get elevMin(): number {
     return this.stats?.elevationProfile?.length ? Math.min(...this.stats.elevationProfile) : 0;
