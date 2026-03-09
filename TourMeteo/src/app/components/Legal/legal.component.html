@@ -1,0 +1,178 @@
+<div class="px-3 sm:px-0 max-w-3xl mx-auto py-8">
+
+  <!-- Back link -->
+  <a routerLink="/about" class="inline-flex items-center gap-1.5 text-sm mb-6 hover:opacity-75 transition-opacity" style="color:#1B5A96;">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+    </svg>
+    Retour à la page À propos
+  </a>
+
+  <article class="bg-white rounded-2xl border p-6 sm:p-10 shadow-sm space-y-8" style="border-color:#DDD4C0;">
+
+    <!-- Title -->
+    <header>
+      <h1 class="text-3xl font-bold mb-2" style="color:#1A1917;">Mentions légales & RGPD</h1>
+      <p class="text-sm" style="color:#A09589;">Dernière mise à jour : mars {{ year }}</p>
+    </header>
+
+    <!-- Séparateur -->
+    <hr style="border-color:#EDE8DB;">
+
+    <!-- 1. Éditeur -->
+    <section>
+      <h2 class="text-lg font-semibold mb-3" style="color:#1A1917;">1. Éditeur du site</h2>
+      <div class="rounded-xl p-4 space-y-1 text-sm" style="background:#FAF9F6; color:#3D3733; border:1px solid #EDE8DB;">
+        <p><strong>Nom :</strong> Hugo Lembrez</p>
+        <p><strong>Qualité :</strong> Éditeur à titre personnel, non commercial</p>
+        <p><strong>Contact :</strong>
+          <a href="https://github.com/aZor9/TourMeteo/issues" target="_blank" rel="noopener" class="underline hover:opacity-75 ml-1" style="color:#1B5A96;">GitHub Issues</a>
+        </p>
+        <p class="text-xs pt-1" style="color:#A09589;">Ce site est un projet open-source à caractère informatif et utilitaire. Aucune donnée n'est vendue ou monétisée.</p>
+      </div>
+    </section>
+
+    <!-- 2. Hébergement -->
+    <section>
+      <h2 class="text-lg font-semibold mb-3" style="color:#1A1917;">2. Hébergement</h2>
+      <div class="rounded-xl p-4 space-y-1 text-sm" style="background:#FAF9F6; color:#3D3733; border:1px solid #EDE8DB;">
+        <p><strong>Hébergeur :</strong> Vercel Inc.</p>
+        <p><strong>Adresse :</strong> 340 Pine Street, Suite 701, San Francisco, CA 94104, États-Unis</p>
+        <p><strong>Site :</strong>
+          <a href="https://vercel.com" target="_blank" rel="noopener" class="underline hover:opacity-75 ml-1" style="color:#1B5A96;">vercel.com</a>
+        </p>
+        <p><strong>Politique de confidentialité :</strong>
+          <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener" class="underline hover:opacity-75 ml-1" style="color:#1B5A96;">vercel.com/legal/privacy-policy</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- 3. Propriété intellectuelle -->
+    <section>
+      <h2 class="text-lg font-semibold mb-3" style="color:#1A1917;">3. Propriété intellectuelle</h2>
+      <div class="text-sm space-y-2" style="color:#3D3733;">
+        <p>Le code source de Meteo Ride est disponible sous licence open-source sur
+          <a href="https://github.com/aZor9/TourMeteo" target="_blank" rel="noopener" class="underline hover:opacity-75" style="color:#1B5A96;">GitHub</a>.
+          Vous êtes libre de le consulter, le modifier et le redistribuer dans le respect des termes de la licence.</p>
+        <p>Les données météorologiques sont fournies par <strong>Open-Meteo</strong> (CC BY 4.0) et les données cartographiques par <strong>OpenStreetMap</strong> (ODbL) / <strong>CARTO</strong> (CC BY 3.0).</p>
+      </div>
+    </section>
+
+    <!-- Séparateur -->
+    <hr style="border-color:#EDE8DB;">
+
+    <!-- 4. Protection des données (RGPD) -->
+    <section>
+      <h2 class="text-xl font-bold mb-1" style="color:#1A1917;">Protection des données personnelles (RGPD)</h2>
+      <p class="text-sm mb-4" style="color:#72675C;">Règlement (UE) 2016/679 du Parlement européen et du Conseil du 27 avril 2016</p>
+
+      <div class="space-y-5 text-sm" style="color:#3D3733;">
+
+        <!-- 4.1 -->
+        <div>
+          <h3 class="font-semibold mb-1.5" style="color:#1A1917;">4.1 Données collectées</h3>
+          <div class="rounded-xl p-4 border flex items-start gap-3" style="background:#E8F2FB20; border-color:#C5D9EE;">
+            <svg class="w-5 h-5 mt-0.5 flex-shrink-0" style="color:#1B5A96;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div>
+              <p class="font-medium" style="color:#1B5A96;">Aucune donnée personnelle n'est collectée par Meteo Ride.</p>
+              <p class="mt-1" style="color:#3D3733;">Il n'existe ni compte utilisateur, ni formulaire d'inscription, ni cookie de tracking, ni outil d'analyse d'audience sur ce service.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4.2 -->
+        <div>
+          <h3 class="font-semibold mb-1.5" style="color:#1A1917;">4.2 Stockage local (localStorage)</h3>
+          <p>Les seules données enregistrées le sont <strong>localement dans votre navigateur</strong> via l'API <code>localStorage</code>, exclusivement sur votre appareil :</p>
+          <ul class="list-disc pl-5 mt-2 space-y-1">
+            <li><strong>Préférences utilisateur</strong> — feature flags (carte interactive, historique, etc.)</li>
+            <li><strong>Historique de trajets</strong> — si la fonctionnalité est activée : noms de fichiers GPX, paramètres de trajet, résultats météo calculés</li>
+          </ul>
+          <p class="mt-2">Ces données ne quittent jamais votre appareil. Vous pouvez les supprimer à tout moment via les paramètres de votre navigateur (section « Stockage du site » ou « Cookies et données du site »).</p>
+        </div>
+
+        <!-- 4.3 -->
+        <div>
+          <h3 class="font-semibold mb-1.5" style="color:#1A1917;">4.3 Données transmises aux services tiers</h3>
+          <p class="mb-2">Pour fonctionner, l'application transmet à des services tiers open-source les informations strictement nécessaires :</p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs rounded-xl overflow-hidden" style="border-collapse: collapse;">
+              <thead>
+                <tr style="background:#EDE8DB; color:#72675C;">
+                  <th class="px-3 py-2 text-left font-semibold">Service</th>
+                  <th class="px-3 py-2 text-left font-semibold">Données transmises</th>
+                  <th class="px-3 py-2 text-left font-semibold">Finalité</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid #EDE8DB;">
+                  <td class="px-3 py-2"><strong>Nominatim / OSM</strong></td>
+                  <td class="px-3 py-2">Nom de ville ou coordonnées GPS</td>
+                  <td class="px-3 py-2">Géocodage / reverse-géocodage</td>
+                </tr>
+                <tr style="background:#FAF9F6; border-bottom:1px solid #EDE8DB;">
+                  <td class="px-3 py-2"><strong>Open-Meteo</strong></td>
+                  <td class="px-3 py-2">Latitude, longitude, date, heure</td>
+                  <td class="px-3 py-2">Récupération des données météo</td>
+                </tr>
+                <tr style="border-bottom:1px solid #EDE8DB;">
+                  <td class="px-3 py-2"><strong>CARTO / OSM</strong></td>
+                  <td class="px-3 py-2">Coordonnées de la zone affichée</td>
+                  <td class="px-3 py-2">Affichage des tuiles de carte</td>
+                </tr>
+                <tr style="background:#FAF9F6;">
+                  <td class="px-3 py-2"><strong>BRouter / OSRM</strong> <span class="text-[10px] opacity-60">(expérimental)</span></td>
+                  <td class="px-3 py-2">Points de départ/arrivée GPS</td>
+                  <td class="px-3 py-2">Calcul d'itinéraire vélo</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="mt-2 text-xs" style="color:#A09589;">Ces services sont soumis à leurs propres politiques de confidentialité. Consultez notamment celle de
+            <a href="https://nominatim.org/release-docs/latest/api/Overview/" target="_blank" rel="noopener" class="underline hover:opacity-75" style="color:#1B5A96;">Nominatim</a> et d'
+            <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener" class="underline hover:opacity-75" style="color:#1B5A96;">Open-Meteo</a>.</p>
+        </div>
+
+        <!-- 4.4 -->
+        <div>
+          <h3 class="font-semibold mb-1.5" style="color:#1A1917;">4.4 Cookies</h3>
+          <p>Meteo Ride <strong>n'utilise aucun cookie</strong>. Aucun traceur, aucun cookie de session, aucun cookie analytique ou publicitaire n'est déposé sur votre appareil.</p>
+        </div>
+
+        <!-- 4.5 -->
+        <div>
+          <h3 class="font-semibold mb-1.5" style="color:#1A1917;">4.5 Durée de conservation</h3>
+          <p>Les données stockées en <code>localStorage</code> sont conservées jusqu'à ce que vous les supprimiez manuellement depuis votre navigateur. Elles ne sont associées à aucun identifiant et ne peuvent pas être récupérées par l'éditeur.</p>
+        </div>
+
+        <!-- 4.6 -->
+        <div>
+          <h3 class="font-semibold mb-1.5" style="color:#1A1917;">4.6 Vos droits (articles 15 à 22 du RGPD)</h3>
+          <p>Conformément au RGPD, vous disposez de droits sur vos données personnelles : accès, rectification, effacement, limitation du traitement, portabilité et opposition.</p>
+          <p class="mt-1">Étant donné qu'aucune donnée personnelle n'est collectée côté serveur, il n'y a, en pratique, aucun traitement à exercer auprès de l'éditeur. Si vous souhaitez supprimer vos données locales, rendez-vous dans les paramètres de votre navigateur → « Données du site ».</p>
+          <p class="mt-1">Pour toute question, contactez l'éditeur via
+            <a href="https://forms.gle/tP4UxuvYDDPnj3298" target="_blank" rel="noopener" class="underline hover:opacity-75" style="color:#1B5A96;">ce formulaire</a>.
+          </p>
+        </div>
+
+        <!-- 4.7 -->
+        <div>
+          <h3 class="font-semibold mb-1.5" style="color:#1A1917;">4.7 Autorité de contrôle</h3>
+          <p>Si vous estimez que vos droits ne sont pas respectés, vous pouvez faire une réclamation :
+            <a href="https://forms.gle/tP4UxuvYDDPnj3298" target="_blank" rel="noopener" class="underline hover:opacity-75 ml-1" style="color:#1B5A96;">Envoyer un message</a>.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="pt-4 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2" style="border-color:#EDE8DB;">
+      <p class="text-xs" style="color:#A09589;">Meteo Ride · Créé par Hugo Lembrez · Assisté par l'IA · {{ year }}</p>
+      <a routerLink="/about" class="text-xs underline hover:opacity-75" style="color:#A09589;">← Retour à la page À propos</a>
+    </footer>
+
+  </article>
+</div>

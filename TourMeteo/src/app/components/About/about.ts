@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { FeatureFlagService, FeatureFlags } from '../../service/feature-flag.service';
 
 interface AccordionSection {
@@ -14,7 +15,7 @@ interface AccordionSection {
 @Component({
   selector: 'app-about',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './about.html'
 })
 export class AboutComponent {
@@ -29,15 +30,21 @@ export class AboutComponent {
     // Utilisateurs (non-dev)
     { id: 'features',     title: 'Fonctionnalités',               icon: '🚀', group: 'user', open: false  },
     { id: 'gpx',          title: 'Import GPX & Export',            icon: '🗺️', group: 'user', open: false },
-    { id: 'notes',        title: 'Remarques & confidentialité',    icon: '🔒', group: 'user', open: false },
+    { id: 'notes',        title: 'Confidentialité',               icon: '🔒', group: 'user', open: false },
+    { id: 'legal',        title: 'Mentions légales & RGPD',       icon: '⚖️', group: 'user', open: false },
     { id: 'contact',      title: 'Contact',                       icon: '✉️', group: 'user', open: false },
 
-    // Développeurs
+    // Développeurs — masqués sauf si mode dev activé
     { id: 'legend',       title: 'Légende des emoji weathercode',  icon: '🌈', group: 'dev', open: false },
     { id: 'apis',         title: 'APIs utilisées',                 icon: '🔌', group: 'dev',  open: false },
     { id: 'architecture', title: 'Architecture des composants',    icon: '🏗️', group: 'dev',  open: false },
     { id: 'devtools',     title: 'Options développeur',            icon: '🔧', group: 'dev',  open: false },
   ];
+
+  /** Returns only the sections that should be displayed */
+  get visibleSections(): AccordionSection[] {
+    return this.sections.filter(s => s.group === 'user' || this.showDevOptions);
+  }
 
   constructor(private featureFlags: FeatureFlagService) {
     this.flags = this.featureFlags.getAll();
@@ -48,7 +55,7 @@ export class AboutComponent {
   }
 
   expandAll(): void {
-    this.sections.forEach(s => s.open = true);
+    this.visibleSections.forEach(s => s.open = true);
   }
 
   collapseAll(): void {

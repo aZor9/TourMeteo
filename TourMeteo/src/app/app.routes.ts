@@ -5,6 +5,7 @@ import { GpxUploaderComponent } from './components/GPXUploader/gpx-uploader.comp
 import { RunningComponent } from './components/Running/running.component';
 import { RouteCreatorComponent } from './components/RouteCreator/route-creator.component';
 import { BestDepartureComponent } from './components/BestDeparture/best-departure.component';
+import { LegalComponent } from './components/Legal/legal.component';
 
 export const routes: Routes = [
 	{ path: '', component: App },
@@ -13,4 +14,5 @@ export const routes: Routes = [
 	{ path: 'run', component: RunningComponent },
 	{ path: 'route-creator', component: RouteCreatorComponent },
 	{ path: 'best-departure', component: BestDepartureComponent },
+	{ path: 'legal', component: LegalComponent },
 ];

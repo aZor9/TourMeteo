@@ -1,171 +1,236 @@
-<div class="px-3 sm:px-0 max-w-3xl mx-auto py-4">
-<section class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+﻿<div class="px-3 sm:px-0 max-w-3xl mx-auto py-6">
+<section class="bg-white rounded-2xl border p-4 sm:p-7 shadow-sm" style="border-color:#DDD4C0;">
 
   <!-- Header -->
   <header class="mb-6">
-    <h1 class="text-2xl font-bold text-slate-900">{{ title }}</h1>
-    <p class="text-slate-500 mt-1">Meteo Ride — application de comparaison météo entre plusieurs villes, heure par heure, pensée pour les cyclistes et randonneurs.</p>
-    <div class="flex items-center gap-3 mt-3 text-sm">
-      <span (click)="onVersionTap()" class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full font-medium cursor-default select-none" title="Version">v2.2.0</span>
-      <span class="text-slate-400">Angular 21 · Tailwind CSS · Leaflet</span>
-      <span *ngIf="devTapCount >= 3 && devTapCount < 5" class="text-xs text-slate-300 animate-pulse">{{ 5 - devTapCount }} tap(s)...</span>
-      <span *ngIf="showDevOptions" class="text-xs text-emerald-500 font-medium">🔓 Mode dev activé</span>
+    <h1 class="text-2xl font-bold" style="color:#1A1917;">{{ title }}</h1>
+    <p class="mt-1 text-sm" style="color:#72675C;">Meteo Ride — application de comparaison météo entre plusieurs villes, heure par heure, pensée pour les cyclistes et randonneurs.</p>
+    <div class="flex flex-wrap items-center gap-2 mt-3 text-sm">
+      <span (click)="onVersionTap()" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold cursor-default select-none text-xs" style="background:#E8F2FB; color:#1B5A96;" title="Version">v2.2.1</span>
+      <span class="text-xs" style="color:#A09589;">Angular 21 · Tailwind CSS · Leaflet</span>
+      <span *ngIf="devTapCount >= 3 && devTapCount < 5" class="text-xs animate-pulse" style="color:#DDD4C0;">{{ 5 - devTapCount }} tap(s)…</span>
+      <span *ngIf="showDevOptions" class="text-xs font-semibold" style="color:#22874C;">🔓 Mode dev activé</span>
     </div>
-    <p class="text-slate-500 mt-2 text-sm">
-      GitHub : <a href="https://github.com/aZor9/TourMeteo" class="text-primary hover:underline" target="_blank">Dépôt GitHub</a>
-      · Démo : <a href="https://meteo-ride.vercel.app/" class="text-primary hover:underline" target="_blank">Voir la démo</a>
+    <p class="mt-2 text-sm" style="color:#72675C;">
+      GitHub : <a href="https://github.com/aZor9/TourMeteo" class="hover:opacity-75 hover:underline" style="color:#1B5A96;" target="_blank" rel="noopener">Dépôt GitHub</a>
+      <!-- · Mon site : <a href="https://hugo-lembrez.fr" class="hover:opacity-75 hover:underline" style="color:#1B5A96;" target="_blank" rel="noopener">Voir mon site portfolio</a> -->
     </p>
   </header>
 
   <!-- Expand / Collapse all -->
-  <div class="flex gap-2 mb-4 text-xs">
-    <button (click)="expandAll()" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">Tout ouvrir</button>
-    <button (click)="collapseAll()" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">Tout fermer</button>
+  <div class="flex gap-2 mb-5">
+    <button (click)="expandAll()" class="btn btn-sm btn-secondary">Tout ouvrir</button>
+    <button (click)="collapseAll()" class="btn btn-sm btn-secondary">Tout fermer</button>
   </div>
 
-  <!-- ─── Accordion sections ─── -->
+  <!-- Accordion sections -->
   <div class="space-y-2">
+    <ng-container *ngFor="let sec of visibleSections; let idx = index">
 
-    <!-- 0 — Fonctionnalités -->
-    <ng-container *ngFor="let sec of sections; let idx = index">
-
-      <!-- Group header (User / Dev) -->
-      <div *ngIf="idx === 0 || sections[idx - 1].group !== sec.group" class="pt-3">
+      <!-- Group header -->
+      <div *ngIf="idx === 0 || visibleSections[idx - 1].group !== sec.group" class="pt-3">
         <div class="flex items-center gap-2">
-          <div class="h-px bg-slate-200 flex-1"></div>
-          <h2 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-            {{ sec.group === 'user' ? 'Utilisateurs' : 'Développeurs' }}
+          <div class="h-px flex-1" style="background:#DDD4C0;"></div>
+          <h2 class="text-[11px] font-semibold uppercase tracking-wider" style="color:#A09589;">
+            {{ sec.group === 'user' ? 'Informations' : 'Développeurs' }}
           </h2>
-          <div class="h-px bg-slate-200 flex-1"></div>
+          <div class="h-px flex-1" style="background:#DDD4C0;"></div>
         </div>
-        <p *ngIf="sec.group === 'user'" class="text-xs text-slate-500 mt-1">
-          Infos principales et guide d'utilisation.
-        </p>
-        <p *ngIf="sec.group === 'dev'" class="text-xs text-slate-500 mt-1">
-          Détails techniques (stack, APIs, architecture).
-        </p>
+        <p *ngIf="sec.group === 'dev'" class="text-xs mt-1" style="color:#A09589;">Détails techniques — stack, APIs, architecture.</p>
       </div>
 
-      <!-- ===== FEATURES ===== -->
-      <div *ngIf="sec.id === 'features'" class="border border-slate-200 rounded-lg overflow-hidden">
-        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
+      <!-- FEATURES -->
+      <div *ngIf="sec.id === 'features'" class="rounded-xl overflow-hidden border" style="border-color:#DDD4C0;">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-warm" style="background:#FAF9F6;">
           <span class="text-lg">{{ sec.icon }}</span>
-          <span class="font-semibold text-slate-800 flex-1">{{ sec.title }}</span>
-          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <span class="font-semibold flex-1" style="color:#1A1917;">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 transition-transform duration-200" style="color:#A09589;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 space-y-4 border-t border-slate-100">
+        <div *ngIf="sec.open" class="px-4 py-3 text-sm space-y-4 border-t" style="color:#3D3733; border-color:#EDE8DB;">
           <ul class="list-disc pl-5 space-y-1">
             <li><strong>Recherche multi-villes :</strong> comparer la météo horaire de plusieurs villes sur une même date</li>
             <li><strong>Filtres d'affichage :</strong> température, vent, résumé météo (activables/désactivables)</li>
-            <li><strong>Vue mobile optimisée :</strong> cartes avec emoji météo en fond, indicateur jour/nuit sous l'heure, affichage des précipitations</li>
+            <li><strong>Vue mobile optimisée :</strong> cartes avec emoji météo en fond, indicateur jour/nuit, précipitations</li>
             <li><strong>Import GPX :</strong> charger un fichier <code>.gpx</code> pour calculer la distance totale et prévoir la météo du parcours</li>
             <li><strong>Météo par passage :</strong> température, ressenti, vent, humidité, probabilité de pluie, précipitations et emoji weathercode</li>
             <li><strong>Score de sortie vélo :</strong> score /100, recommandation de tenue cycliste, alertes et conseils personnalisés</li>
-            <li><strong>Export PNG :</strong> image du tableau des passages avec score vélo et tenue recommandée (rendu Canvas natif)</li>
+            <li><strong>Export PNG :</strong> image du tableau des passages avec score vélo et tenue recommandée</li>
             <li><strong>Partage :</strong> via l'API Web Share ou téléchargement automatique</li>
-            <li><strong>Filtres résultats :</strong> basculer entre vue résumé et détail complet, masquer/afficher carte, score ou tableau individuellement</li>
           </ul>
-
-          <!-- Fonctionnalités supplémentaires (toggles publics) -->
-          <div class="mt-3 pt-3 border-t border-slate-100">
-            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">✨ Fonctionnalités supplémentaires</h4>
+          <div class="mt-3 pt-3 border-t" style="border-color:#EDE8DB;">
+            <h4 class="text-xs font-semibold uppercase tracking-wide mb-3" style="color:#A09589;">✨ Fonctionnalités supplémentaires</h4>
             <div class="space-y-2">
-              <!-- Toggle: Historique -->
-              <div class="flex items-center justify-between bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
+              <div class="flex items-center justify-between rounded-xl px-4 py-3 border" style="background:#FAF9F6; border-color:#DDD4C0;">
                 <div class="flex flex-col">
-                  <span class="font-medium text-slate-800">📂 Historique des trajets</span>
-                  <span class="text-xs text-slate-500">Sauvegarde locale des parcours, rechargement rapide, gestion du stockage</span>
+                  <span class="font-medium" style="color:#1A1917;">📂 Historique des trajets</span>
+                  <span class="text-xs" style="color:#72675C;">Sauvegarde locale des parcours, rechargement rapide, gestion du stockage</span>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" [checked]="flags.history" (change)="toggleFlag('history')" class="sr-only peer">
-                  <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-blue-500 peer-focus:ring-2 peer-focus:ring-blue-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+                  <div class="w-11 h-6 rounded-full transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner" [style.background]="flags.history ? '#1B5A96' : '#DDD4C0'"></div>
                 </label>
               </div>
-              <!-- Toggle: Carte -->
-              <div class="flex items-center justify-between bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
+              <div class="flex items-center justify-between rounded-xl px-4 py-3 border" style="background:#FAF9F6; border-color:#DDD4C0;">
                 <div class="flex flex-col">
-                  <span class="font-medium text-slate-800">🗺️ Carte interactive</span>
-                  <span class="text-xs text-slate-500">Tracé du parcours GPX sur une carte avec marqueurs numérotés (Leaflet)</span>
+                  <span class="font-medium" style="color:#1A1917;">🗺️ Carte interactive</span>
+                  <span class="text-xs" style="color:#72675C;">Tracé du parcours GPX sur une carte avec marqueurs numérotés (Leaflet)</span>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" [checked]="flags.map" (change)="toggleFlag('map')" class="sr-only peer">
-                  <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-blue-500 peer-focus:ring-2 peer-focus:ring-blue-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+                  <div class="w-11 h-6 rounded-full transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner" [style.background]="flags.map ? '#1B5A96' : '#DDD4C0'"></div>
                 </label>
               </div>
-              <!-- Toggle: Rafraîchir météo -->
-              <div class="flex items-center justify-between bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
+              <div class="flex items-center justify-between rounded-xl px-4 py-3 border" style="background:#FAF9F6; border-color:#DDD4C0;">
                 <div class="flex flex-col">
-                  <span class="font-medium text-slate-800">🔄 Rafraîchir météo</span>
-                  <span class="text-xs text-slate-500">Changer la date/heure sans re-géocoder les villes (GPX)</span>
+                  <span class="font-medium" style="color:#1A1917;">🔄 Rafraîchir météo</span>
+                  <span class="text-xs" style="color:#72675C;">Changer la date/heure sans re-géocoder les villes (GPX)</span>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" [checked]="flags.experimental" (change)="toggleFlag('experimental')" class="sr-only peer">
-                  <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-blue-500 peer-focus:ring-2 peer-focus:ring-blue-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+                  <div class="w-11 h-6 rounded-full transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner" [style.background]="flags.experimental ? '#1B5A96' : '#DDD4C0'"></div>
                 </label>
               </div>
             </div>
-            <p class="text-[11px] text-slate-400 mt-2">Ces préférences sont enregistrées localement.</p>
+            <p class="text-[11px] mt-2" style="color:#A09589;">Ces préférences sont enregistrées localement.</p>
           </div>
         </div>
       </div>
 
-      <!-- ===== GPX & EXPORT ===== -->
-      <div *ngIf="sec.id === 'gpx'" class="border border-slate-200 rounded-lg overflow-hidden">
-        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
+      <!-- GPX & EXPORT -->
+      <div *ngIf="sec.id === 'gpx'" class="rounded-xl overflow-hidden border" style="border-color:#DDD4C0;">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-warm" style="background:#FAF9F6;">
           <span class="text-lg">{{ sec.icon }}</span>
-          <span class="font-semibold text-slate-800 flex-1">{{ sec.title }}</span>
-          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <span class="font-semibold flex-1" style="color:#1A1917;">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 transition-transform duration-200" style="color:#A09589;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 space-y-2 border-t border-slate-100">
-          <p>Importez un fichier <strong>.gpx</strong> via la page <em>GPX</em>. L'application parse les points <code>trkpt</code>, calcule la distance totale (formule de Haversine), puis estime l'heure de passage et la distance cumulative à chaque point selon la vitesse moyenne renseignée.</p>
+        <div *ngIf="sec.open" class="px-4 py-3 text-sm space-y-2 border-t" style="color:#3D3733; border-color:#EDE8DB;">
+          <p>Importez un fichier <strong>.gpx</strong> via la page <em>GPX</em>. L'application parse les points <code>trkpt</code>, calcule la distance totale (formule de Haversine), puis estime l'heure de passage à chaque point selon la vitesse moyenne renseignée.</p>
           <p>Pour chaque point, un reverse-géocodage Nominatim identifie la ville, puis la météo horaire est récupérée via Open-Meteo. Les doublons consécutifs sont filtrés automatiquement.</p>
-          <p>Le tracé complet est affiché sur une <strong>carte interactive</strong> (Leaflet) avec des marqueurs numérotés.</p>
-          <p>Un <strong>score de sortie vélo</strong> (0-100) est calculé en fonction de la température, du vent, des précipitations, de l'humidité et des conditions spéciales (orage, brouillard). Des recommandations de tenue cycliste, des alertes et des conseils sont générés.</p>
-          <p>Les résultats peuvent être <strong>exportés en image PNG</strong> avec un rendu soigné (bandeau couleur, colonnes bien espacées, indicateur jour/nuit, footer) ou <strong>partagés</strong> via l'API Web Share.</p>
+          <p>Le tracé est affiché sur une <strong>carte interactive</strong> (Leaflet) avec des marqueurs numérotés.</p>
+          <p>Un <strong>score de sortie vélo</strong> (0-100) est calculé en fonction de la température, du vent, des précipitations et des conditions spéciales. Des recommandations de tenue et des conseils sont générés.</p>
+          <p>Les résultats peuvent être <strong>exportés en image PNG</strong> ou <strong>partagés</strong> via l'API Web Share.</p>
         </div>
       </div>
 
-      <!-- ===== APIs ===== -->
-      <div *ngIf="sec.id === 'apis'" class="border border-slate-200 rounded-lg overflow-hidden">
-        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
+      <!-- Confidentialité -->
+      <div *ngIf="sec.id === 'notes'" class="rounded-xl overflow-hidden border" style="border-color:#DDD4C0;">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-warm" style="background:#FAF9F6;">
           <span class="text-lg">{{ sec.icon }}</span>
-          <span class="font-semibold text-slate-800 flex-1">{{ sec.title }}</span>
-          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <span class="font-semibold flex-1" style="color:#1A1917;">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 transition-transform duration-200" style="color:#A09589;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 border-t border-slate-100">
+        <div *ngIf="sec.open" class="px-4 py-3 text-sm space-y-1.5 border-t" style="color:#3D3733; border-color:#EDE8DB;">
+          <p>Les données sont obtenues en temps réel depuis les APIs publiques listées en section développeur.</p>
+          <p>Les coordonnées GPS (latitude/longitude) sont envoyées aux services tiers suivants : Nominatim, Open-Meteo, BRouter, OSRM, Overpass, Open Elevation et CARTO (tuiles). Aucune autre donnée personnelle n'est transmise.</p>
+          <p>Nominatim applique des limites d'usage (1 requête/seconde). L'application utilise un throttle et un échantillonnage par distance (~2 km) pour respecter ces contraintes.</p>
+          <p><strong>Aucun compte utilisateur, aucun cookie de tracking, aucune donnée personnelle stockée côté serveur.</strong> Les préférences et l'historique restent en <code>localStorage</code> sur votre appareil.</p>
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div *ngIf="sec.id === 'contact'" class="rounded-xl overflow-hidden border" style="border-color:#DDD4C0;">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-warm" style="background:#FAF9F6;">
+          <span class="text-lg">{{ sec.icon }}</span>
+          <span class="font-semibold flex-1" style="color:#1A1917;">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 transition-transform duration-200" style="color:#A09589;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div *ngIf="sec.open" class="px-4 py-3 text-sm space-y-3 border-t" style="color:#3D3733; border-color:#EDE8DB;">
+          <p>Une idée d'amélioration, un bug à signaler ou simplement envie d'échanger ?</p>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <a href="https://github.com/aZor9/TourMeteo/issues" target="_blank" rel="noopener" class="btn btn-secondary">🐛 Signaler un bug</a>
+            <a href="https://forms.gle/tP4UxuvYDDPnj3298" target="_blank" rel="noopener" class="btn btn-primary">📝 Laisser un feedback</a>
+          </div>
+          <p class="text-xs" style="color:#A09589;">Créé par <a href="https://hugo-lembrez.fr" target="_blank" rel="noopener" class="hover:underline">Hugo Lembrez</a>, assisté par l'IA</p>
+        </div>
+      </div>
+
+      <!-- Mentions légales & RGPD -->
+      <div *ngIf="sec.id === 'legal'" class="rounded-xl overflow-hidden border" style="border-color:#DDD4C0;">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-warm" style="background:#FAF9F6;">
+          <span class="text-lg">{{ sec.icon }}</span>
+          <span class="font-semibold flex-1" style="color:#1A1917;">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 transition-transform duration-200" style="color:#A09589;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div *ngIf="sec.open" class="px-4 py-4 text-sm space-y-4 border-t" style="color:#3D3733; border-color:#EDE8DB;">
+          <div>
+            <h4 class="font-semibold mb-1" style="color:#1A1917;">Éditeur</h4>
+            <p>Ce site est édité à titre personnel par <strong><a href="https://hugo-lembrez.fr" target="_blank" rel="noopener" class="hover:underline">Hugo Lembrez</a></strong>. Il ne s'agit pas d'un service commercial. Aucune donnée n'est vendue ou monétisée.</p>
+            <p>Site personnel de Hugo Lembrez : <a href="https://hugo-lembrez.fr" target="_blank" rel="noopener" class="underline">https://hugo-lembrez.fr</a></p>
+          </div>
+          <div>
+            <h4 class="font-semibold mb-1" style="color:#1A1917;">Hébergement</h4>
+            <p>L'application est hébergée par <strong>Vercel Inc.</strong> — 340 Pine Street, Suite 701, San Francisco, CA 94104, États-Unis.<br>
+               <a href="https://vercel.com/legal/privacy-policy" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">Politique de confidentialité de Vercel →</a></p>
+          </div>
+          <div>
+            <h4 class="font-semibold mb-1" style="color:#1A1917;">Données personnelles (RGPD)</h4>
+            <p class="mb-2"><strong>Aucune donnée personnelle n'est collectée, stockée ou partagée</strong> par cet éditeur.</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li>Pas de compte utilisateur, pas de formulaire d'inscription.</li>
+              <li>Pas de cookie de tracking ou de mesure d'audience.</li>
+              <li>Les préférences et l'historique de trajets sont enregistrés <strong>uniquement en local</strong> dans le <code>localStorage</code> de votre navigateur. Vous pouvez les effacer à tout moment depuis les paramètres de votre navigateur.</li>
+              <li>Vos coordonnées GPS (latitude/longitude) sont transmises aux APIs tierces (Nominatim, Open-Meteo…) pour obtenir la météo. Aucune de ces coordonnées n'est conservée par cet éditeur.</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-semibold mb-1" style="color:#1A1917;">Services tiers</h4>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><strong>Nominatim / OpenStreetMap</strong> — géocodage (ODbL)</li>
+              <li><strong>Open-Meteo</strong> — données météorologiques (CC BY 4.0)</li>
+              <li><strong>BRouter / OSRM</strong> — calcul d'itinéraire (expérimental)</li>
+              <li><strong>CARTO / OpenStreetMap</strong> — tuiles cartographiques</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-semibold mb-1" style="color:#1A1917;">Droits RGPD</h4>
+            <p>Aucune donnée vous identifiant n'étant collectée, il n'y a pas de traitement à exercer. Pour toute question, contactez l'éditeur via <a href="https://github.com/aZor9/TourMeteo/issues" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">GitHub Issues</a>.</p>
+          </div>
+          <div class="border-t pt-3" style="border-color:#EDE8DB;">
+            <a routerLink="/legal" class="btn btn-ghost btn-sm">Voir la page mentions légales complète →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- APIs utilisées (dev only) -->
+      <div *ngIf="sec.id === 'apis'" class="rounded-xl overflow-hidden border" style="border-color:#DDD4C0;">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-warm" style="background:#FAF9F6;">
+          <span class="text-lg">{{ sec.icon }}</span>
+          <span class="font-semibold flex-1" style="color:#1A1917;">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 transition-transform duration-200" style="color:#A09589;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div *ngIf="sec.open" class="px-4 py-3 text-sm border-t" style="color:#3D3733; border-color:#EDE8DB;">
           <ul class="list-disc pl-5 space-y-2">
-            <li><strong>Géocodage :</strong> <a href="https://nominatim.org/" class="text-primary hover:underline" target="_blank"> Nominatim</a> (OpenStreetMap, ODbL) — recherche d'emplacements et reverse-géocodage (lat/lon → ville). <span class="text-xs text-slate-400">Politique : 1 req/s max, email identifiant requis.</span></li>
-            <li><strong>Météo :</strong> <a href="https://open-meteo.com/" class="text-primary hover:underline" target="_blank"> Open-Meteo</a> (CC BY 4.0) — données horaires (température, ressenti, vent, précipitations, humidité, weathercode) + API élévation en fallback.</li>
+            <li><strong>Géocodage :</strong> <a href="https://nominatim.org/" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">Nominatim</a> (OpenStreetMap, ODbL) — recherche et reverse-géocodage. <span class="text-xs" style="color:#A09589;">Politique : 1 req/s max.</span></li>
+            <li><strong>Météo :</strong> <a href="https://open-meteo.com/" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0) — données horaires (température, ressenti, vent, précipitations, humidité, weathercode).</li>
           </ul>
-          <p class="mt-4">Services complémentaires (fonctionnalités experimentales) :</p>
+          <p class="mt-4">Services complémentaires (expérimental) :</p>
           <ul class="list-disc pl-5 space-y-2 mt-2">
-            <li><strong>Routage :</strong> <a href="https://brouter.de/" class="text-primary hover:underline" target="_blank"> BRouter</a> (MIT, données OSM) — calcul d'itinéraire vélo/running évitant gravier et propriétés privées (profils <code>fastbike</code> / <code>trekking</code>). Fallback : <a href="https://project-osrm.org/" class="text-primary hover:underline" target="_blank">OSRM</a> (BSD, serveur démo).</li>
-            <li><strong>Analyse voirie :</strong> <a href="https://overpass-api.de/" class="text-primary hover:underline" target="_blank"> Overpass API</a> (données OSM, ODbL) — types de routes, pistes cyclables, état de surface le long du parcours.</li>
-            <li><strong>Élévation :</strong> <a href="https://open-elevation.com/" class="text-primary hover:underline" target="_blank"> Open Elevation</a> (open-source) — profil altimétrique. Fallback : Open-Meteo Elevation.</li>
-            <li><strong>Tuiles carte :</strong> <a href="https://carto.com/attributions" class="text-primary hover:underline" target="_blank"> CARTO Voyager</a> (CC BY 3.0) pour le créateur de parcours · <a href="https://www.openstreetmap.org/copyright" class="text-primary hover:underline" target="_blank">OpenStreetMap</a> (ODbL) pour la carte GPX.</li>
+            <li><strong>Routage :</strong> <a href="https://brouter.de/" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">BRouter</a> (MIT) / <a href="https://project-osrm.org/" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">OSRM</a> (BSD)</li>
+            <li><strong>Analyse voirie :</strong> <a href="https://overpass-api.de/" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">Overpass API</a> (OSM, ODbL)</li>
+            <li><strong>Élévation :</strong> <a href="https://open-elevation.com/" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">Open Elevation</a> / fallback Open-Meteo</li>
+            <li><strong>Tuiles :</strong> <a href="https://carto.com/attributions" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">CARTO Voyager</a> (CC BY 3.0) · <a href="https://www.openstreetmap.org/copyright" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL)</li>
           </ul>
-          <p class="mt-2 text-xs text-slate-500">Aucune clé API n'est requise. Tous les services sont gratuits et open-source. Les données cartographiques sont © OpenStreetMap contributors (ODbL).</p>
+          <p class="mt-2 text-xs" style="color:#A09589;">Aucune clé API n'est requise. Tous les services sont gratuits et open-source.</p>
         </div>
       </div>
 
-      <!-- ===== Architecture ===== -->
-      <div *ngIf="sec.id === 'architecture'" class="border border-slate-200 rounded-lg overflow-hidden">
-        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
+      <!-- Architecture (dev only) -->
+      <div *ngIf="sec.id === 'architecture'" class="rounded-xl overflow-hidden border" style="border-color:#DDD4C0;">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-warm" style="background:#FAF9F6;">
           <span class="text-lg">{{ sec.icon }}</span>
-          <span class="font-semibold text-slate-800 flex-1">{{ sec.title }}</span>
-          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <span class="font-semibold flex-1" style="color:#1A1917;">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 transition-transform duration-200" style="color:#A09589;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 border-t border-slate-100">
+        <div *ngIf="sec.open" class="px-4 py-3 text-sm border-t" style="color:#3D3733; border-color:#EDE8DB;">
           <ul class="list-disc pl-5 space-y-1">
             <li><strong>GpxUploaderComponent :</strong> orchestrateur principal (upload, parsing GPX, calcul d'itinéraire, récupération météo)</li>
             <li><strong>GpxMapComponent :</strong> carte Leaflet avec tracé polyline et marqueurs numérotés</li>
-            <li><strong>RideScoreComponent :</strong> calcul et affichage du score de sortie vélo, tenue recommandée, alertes</li>
+            <li><strong>RideScoreComponent :</strong> calcul du score de sortie vélo, tenue recommandée, alertes</li>
             <li><strong>GpxSummaryBarComponent :</strong> barre de statistiques résumées (distance, durée, départ, arrivée)</li>
             <li><strong>GpxResultsTableComponent :</strong> tableau desktop et cartes mobile des passages météo</li>
-            <li><strong>GpxExportService :</strong> export Canvas → PNG (avec score vélo) et partage Web Share</li>
-            <li><strong>HistoryService :</strong> sauvegarde/chargement des trajets en localStorage, gestion quota</li>
-            <li><strong>FeatureFlagService :</strong> feature flags persistées en localStorage (options dev cachées)</li>
-            <li><strong>HistoryPanelComponent :</strong> panneau historique avec barre de stockage, suppression, chargement</li>
+            <li><strong>GpxExportService :</strong> export Canvas → PNG et partage Web Share</li>
+            <li><strong>HistoryService :</strong> sauvegarde/chargement des trajets en localStorage</li>
+            <li><strong>FeatureFlagService :</strong> feature flags persistées en localStorage</li>
             <li><strong>WeatherSheetComponent :</strong> grille météo horaire par ville (desktop table + mobile cards)</li>
             <li><strong>SearchTabComponent :</strong> formulaire de recherche et filtres</li>
             <li><strong>WeatherUtils :</strong> weathercode → emoji, degrés → direction cardinale</li>
@@ -173,148 +238,103 @@
         </div>
       </div>
 
-      <!-- ===== Légende emoji ===== -->
-      <div *ngIf="sec.id === 'legend'" class="border border-slate-200 rounded-lg overflow-hidden">
-        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
+      <!-- Légende emoji (dev only) -->
+      <div *ngIf="sec.id === 'legend'" class="rounded-xl overflow-hidden border" style="border-color:#DDD4C0;">
+        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-warm" style="background:#FAF9F6;">
           <span class="text-lg">{{ sec.icon }}</span>
-          <span class="font-semibold text-slate-800 flex-1">{{ sec.title }}</span>
-          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <span class="font-semibold flex-1" style="color:#1A1917;">{{ sec.title }}</span>
+          <svg [class.rotate-180]="sec.open" class="w-4 h-4 transition-transform duration-200" style="color:#A09589;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 border-t border-slate-100">
+        <div *ngIf="sec.open" class="px-4 py-3 text-sm border-t" style="color:#3D3733; border-color:#EDE8DB;">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
-            <div>☀️ <strong>Ciel clair</strong> <span class="text-slate-400 text-xs"> (0)</span></div>
-            <div>🌤️ <strong>Partiellement nuageux</strong> <span class="text-slate-400 text-xs"> (1, 2)</span></div>
-            <div>☁️ <strong>Couvert</strong> <span class="text-slate-400 text-xs"> (3)</span></div>
-            <div>🌫️ <strong>Brouillard</strong> <span class="text-slate-400 text-xs"> (45, 48)</span></div>
-            <div>🌦️ <strong>Bruine / Averses</strong> <span class="text-slate-400 text-xs"> (51, 53, 55, 80–82)</span></div>
-            <div>🌧️ <strong>Pluie / Verglaçante</strong> <span class="text-slate-400 text-xs"> (56, 57, 61–67)</span></div>
-            <div>❄️ <strong>Neige</strong> <span class="text-slate-400 text-xs"> (71, 73, 75, 77)</span></div>
-            <div>🌨️ <strong>Averses de neige</strong> <span class="text-slate-400 text-xs"> (85, 86)</span></div>
-            <div>⛈️ <strong>Orage</strong> <span class="text-slate-400 text-xs"> (95, 96, 99)</span></div>
-            <div>❓ <strong>Inconnu</strong> <span class="text-slate-400 text-xs"> (autres)</span></div>
+            <div>☀️ <strong>Ciel clair</strong> <span class="text-xs" style="color:#A09589;">(0)</span></div>
+            <div>🌤️ <strong>Partiellement nuageux</strong> <span class="text-xs" style="color:#A09589;">(1, 2)</span></div>
+            <div>☁️ <strong>Couvert</strong> <span class="text-xs" style="color:#A09589;">(3)</span></div>
+            <div>🌫️ <strong>Brouillard</strong> <span class="text-xs" style="color:#A09589;">(45, 48)</span></div>
+            <div>🌦️ <strong>Bruine / Averses</strong> <span class="text-xs" style="color:#A09589;">(51–55, 80–82)</span></div>
+            <div>🌧️ <strong>Pluie / Verglaçante</strong> <span class="text-xs" style="color:#A09589;">(56, 57, 61–67)</span></div>
+            <div>❄️ <strong>Neige</strong> <span class="text-xs" style="color:#A09589;">(71, 73, 75, 77)</span></div>
+            <div>🌨️ <strong>Averses de neige</strong> <span class="text-xs" style="color:#A09589;">(85, 86)</span></div>
+            <div>⛈️ <strong>Orage</strong> <span class="text-xs" style="color:#A09589;">(95, 96, 99)</span></div>
+            <div>❓ <strong>Inconnu</strong> <span class="text-xs" style="color:#A09589;">(autres)</span></div>
           </div>
         </div>
       </div>
 
-      <!-- ===== Remarques ===== -->
-      <div *ngIf="sec.id === 'notes'" class="border border-slate-200 rounded-lg overflow-hidden">
-        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
-          <span class="text-lg">{{ sec.icon }}</span>
-          <span class="font-semibold text-slate-800 flex-1">{{ sec.title }}</span>
-          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-        </button>
-        <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 space-y-1.5 border-t border-slate-100">
-          <p>Les données sont obtenues en temps réel depuis les APIs publiques listées dans la section « APIs & données ».</p>
-          <p>Les coordonnées GPS (latitude/longitude) sont envoyées aux services tiers suivants pour fonctionner : Nominatim, Open-Meteo, BRouter, OSRM, Overpass, Open Elevation et CARTO (tuiles). Aucune autre donnée personnelle n'est transmise.</p>
-          <p>Nominatim applique des limites d'usage (1 requête/seconde). L'application utilise un throttle et un échantillonnage par distance (~2 km) pour respecter ces contraintes. Le serveur OSRM est un serveur de démonstration (fallback uniquement).</p>
-          <p>Aucun compte utilisateur, aucun cookie de tracking, aucune donnée personnelle stockée. Les préférences et l'historique restent en <code>localStorage</code> sur votre appareil.</p>
-        </div>
-      </div>
-
-      <!-- ===== Contact ===== -->
-      <div *ngIf="sec.id === 'contact'" class="border border-slate-200 rounded-lg overflow-hidden">
-        <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
-          <span class="text-lg">{{ sec.icon }}</span>
-          <span class="font-semibold text-slate-800 flex-1">{{ sec.title }}</span>
-          <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-        </button>
-        <div *ngIf="sec.open" class="px-4 py-3 text-sm text-slate-700 space-y-2 border-t border-slate-100">
-          <p>Une idée d'amélioration, un bug à signaler ou simplement envie d'échanger ?</p>
-          <div class="flex flex-col sm:flex-row gap-3">
-            <a href="https://github.com/aZor9/TourMeteo/issues" target="_blank"
-               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 text-white text-sm hover:bg-slate-700 transition-colors">
-              🐛 Ouvrir une issue GitHub
-            </a>
-             <a href="https://forms.gle/tP4UxuvYDDPnj3298" target="_blank"
-               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm hover:bg-indigo-500 transition-colors">
-              📝 Laisser un feedback
-            </a>
-          </div>
-          <p class="text-xs text-slate-400 mt-1">Créé par Hugo Lembrez, assisté par l'IA</p>
-        </div>
-      </div>
-
-      <!-- ===== Options développeur (hidden until 5 taps on version) ===== -->
-      <div *ngIf="sec.id === 'devtools' && showDevOptions" class="border border-amber-300 rounded-lg overflow-hidden bg-amber-50/30">
+      <!-- Options développeur -->
+      <div *ngIf="sec.id === 'devtools'" class="rounded-xl overflow-hidden border border-amber-300 bg-amber-50/20">
         <button (click)="toggle(sec)" class="w-full flex items-center gap-2 px-4 py-3 bg-amber-50 hover:bg-amber-100/80 transition-colors text-left">
           <span class="text-lg">{{ sec.icon }}</span>
           <span class="font-semibold text-amber-800 flex-1">{{ sec.title }}</span>
           <span class="text-[10px] tracking-wide uppercase bg-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">caché</span>
           <svg [class.rotate-180]="sec.open" class="w-4 h-4 text-amber-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div *ngIf="sec.open" class="px-4 py-4 text-sm text-slate-700 border-t border-amber-200 space-y-4">
-          <p class="text-xs text-amber-600">Ces options activent des fonctionnalités en cours de développement. Les préférences sont enregistrées en localStorage.</p>
-
-          <!-- Séparateur : fonctionnalités futures -->
+        <div *ngIf="sec.open" class="px-4 py-4 text-sm border-t border-amber-200 space-y-4" style="color:#3D3733;">
+          <p class="text-xs text-amber-600">Ces options activent des fonctionnalités en cours de développement.</p>
           <div class="pt-2 border-t border-amber-200">
-            <h4 class="text-[11px] font-semibold text-amber-600 uppercase tracking-wide mb-3">🚧 Fonctionnalités futures (en développement)</h4>
+            <h4 class="text-[11px] font-semibold text-amber-600 uppercase tracking-wide mb-3">🚧 Fonctionnalités futures</h4>
           </div>
-
-          <!-- Toggle: Course à pied -->
-          <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-slate-200">
             <div class="flex flex-col">
-              <span class="font-medium text-slate-800">🏃 Page Course à pied</span>
-              <span class="text-xs text-slate-500">Météo horaire pour une sortie running : ville, date, durée ou distance + allure (min/km), conseils nutrition & vêtements</span>
+              <span class="font-medium" style="color:#1A1917;">🏃 Page Course à pied</span>
+              <span class="text-xs" style="color:#72675C;">Météo horaire pour une sortie running, conseils nutrition & vêtements</span>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" [checked]="flags.running" (change)="toggleFlag('running')" class="sr-only peer">
-              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
             </label>
           </div>
-
-          <!-- Toggle: Plan nutrition vélo -->
-          <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-slate-200">
             <div class="flex flex-col">
-              <span class="font-medium text-slate-800">🍌 Plan nutrition effort (vélo)</span>
-              <span class="text-xs text-slate-500">Recommandation de ravitaillement sur le parcours en fonction de la durée, avec cible de glucides/h optionnelle</span>
+              <span class="font-medium" style="color:#1A1917;">🍌 Plan nutrition effort</span>
+              <span class="text-xs" style="color:#72675C;">Recommandation de ravitaillement sur le parcours</span>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" [checked]="flags.nutrition" (change)="toggleFlag('nutrition')" class="sr-only peer">
-              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
             </label>
           </div>
-
-          <!-- Toggle: Créateur de parcours GPX -->
-          <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-slate-200">
             <div class="flex flex-col">
-              <span class="font-medium text-slate-800">🛤️ Créateur de parcours GPX</span>
-              <span class="text-xs text-slate-500">Générer un tracé vélo/running avec dénivelé, pistes cyclables, routes les plus utilisées. Filtres : exclure routes &gt;90 km/h, gravier, sentiers ; favoriser pistes cyclables (±5 %)</span>
+              <span class="font-medium" style="color:#1A1917;">🛤️ Créateur de parcours GPX</span>
+              <span class="text-xs" style="color:#72675C;">Générer un tracé vélo/running optimisé</span>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" [checked]="flags.routeCreator" (change)="toggleFlag('routeCreator')" class="sr-only peer">
-              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
             </label>
           </div>
-
-          <!-- Toggle: Meilleur horaire de départ -->
-          <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-slate-200">
             <div class="flex flex-col">
-              <span class="font-medium text-slate-800">⏰ Meilleur horaire de départ</span>
-              <span class="text-xs text-slate-500">Analyser la météo toute la journée sur un GPX et recommander l'heure de départ optimale (vent, soleil, pluie)</span>
+              <span class="font-medium" style="color:#1A1917;">⏰ Meilleur horaire de départ</span>
+              <span class="text-xs" style="color:#72675C;">Analyser la météo et recommander l'heure optimale</span>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" [checked]="flags.bestDeparture" (change)="toggleFlag('bestDeparture')" class="sr-only peer">
-              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
             </label>
           </div>
-
-          <!-- Toggle: Villes récentes (localStorage) -->
-          <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-slate-200">
             <div class="flex flex-col">
-              <span class="font-medium text-slate-800">📍 Villes récentes</span>
-              <span class="text-xs text-slate-500">Sauvegarde les villes recherchées en localStorage et propose des suggestions dans toutes les barres de recherche</span>
+              <span class="font-medium" style="color:#1A1917;">📍 Villes récentes</span>
+              <span class="text-xs" style="color:#72675C;">Sauvegarde les villes recherchées et propose des suggestions</span>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" [checked]="flags.recentCities" (change)="toggleFlag('recentCities')" class="sr-only peer">
-              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
             </label>
           </div>
-
-          <p class="text-[11px] text-slate-400">💡 Astuce : tape 5× sur le badge de version pour afficher ce panneau.</p>
+          <p class="text-[11px]" style="color:#A09589;">💡 Tape 5× sur le badge de version pour afficher ce panneau.</p>
         </div>
       </div>
 
     </ng-container>
+  </div>
+
+  <!-- Footer légal -->
+  <div class="mt-8 pt-5 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2" style="border-color:#DDD4C0;">
+    <p class="text-xs" style="color:#A09589;">Meteo Ride · Créé par  <a href="https://hugo-lembrez.fr" target="_blank" rel="noopener" class="hover:underline">Hugo Lembrez</a> · Assisté par l'IA</p>
+    <a routerLink="/legal" class="text-xs underline hover:opacity-75" style="color:#A09589;">Mentions légales & RGPD</a>
   </div>
 
 </section>
