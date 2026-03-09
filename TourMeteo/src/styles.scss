@@ -1,68 +1,174 @@
 /* Leaflet CSS */
 @import 'leaflet/dist/leaflet.css';
 
-/* Global theme tokens inspired by Design sympa.html (Tailwind utilities are available via CDN)
-	 Keep this file light: define CSS variables and a few helper classes used by components.
-*/
-
+/* ─── Design Tokens ──────────────────────────────────────────────────────────
+   Charte graphique : Blanc cassé · Bleu marine · Beige chaud
+   Inspiré d'un style éditorial épuré et cohérent.
+─────────────────────────────────────────────────────────────────────────── */
 :root {
-	--color-primary: #137fec;
-	--bg-light: #f6f7f8;
-	--bg-dark: #101922;
-	--muted: #6b7280; /* slate-500 */
+  /* Couleurs principales */
+  --c-blue:        #1B5A96;
+  --c-blue-dark:   #144A7E;
+  --c-blue-light:  #E8F2FB;
+  --c-beige:       #B8935A;
+  --c-beige-dark:  #9A7A48;
+  --c-beige-light: #F5EDD8;
+
+  /* Backgrounds */
+  --c-bg:          #F5F2EC; /* blanc cassé principal */
+  --c-bg-card:     #FFFFFF;
+  --c-bg-surface:  #EDE8DB; /* surface chaude légèrement teintée */
+
+  /* Texte */
+  --c-text:        #1A1917;
+  --c-text-muted:  #72675C;
+  --c-text-faint:  #A09589;
+
+  /* Bordures */
+  --c-border:      rgba(28, 25, 23, 0.10);
+  --c-border-warm: #DDD4C0;
+
+  /* Héritage compat */
+  --color-primary: var(--c-blue);
+  --bg-light:      var(--c-bg);
+  --bg-dark:       #0F1820;
+  --muted:         var(--c-text-muted);
 }
 
 html, body {
-	height: 100%;
+  height: 100%;
 }
 
 body {
-	background-color: var(--bg-light);
-	font-family: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
+  background-color: var(--c-bg);
+  font-family: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  color: var(--c-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Header / Navbar helpers */
+/* ─── Navbar ──────────────────────────────────────────────────────────────── */
 .site-header {
-	background: rgba(255,255,255,0.6);
-	backdrop-filter: blur(6px);
-	border-bottom: 1px solid rgba(15,23,42,0.04);
+  background: rgba(245, 242, 236, 0.72);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--c-border-warm);
 }
 
 .navbar-title {
-	color: var(--color-primary);
-	font-weight: 700;
-	font-size: 1.05rem;
+  color: var(--c-blue);
+  font-weight: 700;
+  font-size: 1.05rem;
 }
 
 .navbar-link {
-	color: #374151; /* slate-700 */
+  color: var(--c-text);
 }
-.navbar-link:hover { color: var(--color-primary); }
+.navbar-link:hover { color: var(--c-blue); }
 
-/* Card styles used for weather tiles */
+/* ─── Cards ───────────────────────────────────────────────────────────────── */
 .card {
-	background: white;
-	border-radius: 0.75rem;
-	border: 1px solid rgba(15,23,42,0.06);
-	box-shadow: 0 4px 12px rgba(19,127,236,0.04);
+  background: var(--c-bg-card);
+  border-radius: 0.875rem;
+  border: 1px solid var(--c-border);
+  box-shadow: 0 2px 8px rgba(27, 90, 150, 0.05);
 }
 
-.weather-card-sunny { background: linear-gradient(180deg, rgba(255,170,0,0.08), rgba(255,255,255,0)); }
-.weather-card-rain  { background: linear-gradient(180deg, rgba(19,127,236,0.06), rgba(255,255,255,0)); }
-.weather-card-cloudy{ background: linear-gradient(180deg, rgba(146,173,201,0.06), rgba(255,255,255,0)); }
+.weather-card-sunny  { background: linear-gradient(180deg, rgba(184, 147, 90, 0.10), rgba(255,255,255,0)); }
+.weather-card-rain   { background: linear-gradient(180deg, rgba(27, 90, 150, 0.07), rgba(255,255,255,0)); }
+.weather-card-cloudy { background: linear-gradient(180deg, rgba(146, 173, 201, 0.08), rgba(255,255,255,0)); }
 
-/* Primary button helper to keep look coherent */
+/* ─── Boutons — Charte unifiée ────────────────────────────────────────────── */
+/* Usage : class="btn btn-primary" / "btn btn-secondary" / "btn btn-ghost" / "btn btn-danger" */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.625rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition: background 0.15s, box-shadow 0.15s, opacity 0.15s;
+  cursor: pointer;
+  white-space: nowrap;
+  border: none;
+  outline: none;
+  text-decoration: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--c-blue);
+    outline-offset: 2px;
+  }
+}
+
+/* Primaire — bleu */
 .btn-primary {
-	background: var(--color-primary);
-	color: white;
-	padding: 0.5rem 1rem;
-	border-radius: 0.5rem;
-	font-weight: 600;
+  background: var(--c-blue);
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(27, 90, 150, 0.25);
+  &:hover  { background: var(--c-blue-dark); box-shadow: 0 2px 8px rgba(27,90,150,0.3); }
+  &:active { background: #0E3A61; }
 }
-.btn-primary:hover { opacity: .95; }
+
+/* Secondaire — beige chaud */
+.btn-secondary {
+  background: var(--c-beige-light);
+  color: var(--c-beige-dark);
+  border: 1px solid var(--c-border-warm);
+  &:hover  { background: #EDD9B8; }
+  &:active { background: #E3CC9E; }
+}
+
+/* Fantôme — contour bleu */
+.btn-ghost {
+  background: transparent;
+  color: var(--c-blue);
+  border: 1px solid var(--c-blue);
+  &:hover  { background: var(--c-blue-light); }
+}
+
+/* Danger — rouge */
+.btn-danger {
+  background: #DC2626;
+  color: #ffffff;
+  &:hover  { background: #B91C1C; }
+  &:active { background: #991B1B; }
+}
+
+/* Taille large */
+.btn-lg {
+  padding: 0.625rem 1.625rem;
+  font-size: 1rem;
+  border-radius: 0.75rem;
+}
+
+/* Taille petite */
+.btn-sm {
+  padding: 0.3125rem 0.875rem;
+  font-size: 0.8125rem;
+  border-radius: 0.5rem;
+}
 
 /* Small helper for muted text */
-.muted { color: var(--muted); }
+.muted { color: var(--c-text-muted); }
+
+/* ─── Navbar active link ──────────────────────────────────────────────────── */
+/* Applied via routerLinkActive — must be real CSS, not Tailwind CDN (not scanned) */
+.nav-link-active {
+  background-color: var(--c-blue-light) !important;
+  color: var(--c-blue) !important;
+  font-weight: 600;
+}
+
+/* ─── Weather table — charte chaude ──────────────────────────────────────── */
+
+.wt-cell-day  { background: rgba(255, 255, 255, 0.8); }
+.wt-cell-night{ background: rgba(255, 255, 255, 0.4); }
+.wt-date-banner {
+  background: var(--c-blue-light);
+  color: var(--c-blue);
+  font-weight: 600;
+}
+
 

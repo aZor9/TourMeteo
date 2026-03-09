@@ -1,79 +1,91 @@
-<nav class="sticky top-0 z-50 backdrop-blur-xl bg-white/55 border-b border-white/40 shadow-[0_4px_30px_rgba(0,0,0,0.06)]" style="-webkit-backdrop-filter:blur(20px)">
-  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+<nav class="sticky top-0 z-50 backdrop-blur-xl border-b shadow-sm"
+     style="background: rgba(245,242,236,0.6); -webkit-backdrop-filter:blur(16px); border-color: #DDD4C0;">
+  <div class="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
     <!-- Logo + title -->
     <a routerLink="/" class="flex items-center gap-2.5 no-underline">
-      <div class="rounded-lg">
-        <img src="/logo.png" alt="Meteo Ride" class="w-8 h-8 object-contain">
-      </div>
-      <span class="font-bold text-lg text-slate-800">Meteo Ride</span>
+      <img src="/logo.png" alt="Meteo Ride" class="w-8 h-8 object-contain">
+      <span class="font-bold text-lg" style="color:#1B5A96;">Meteo Ride</span>
     </a>
 
     <!-- Desktop links -->
-    <div class="hidden sm:flex items-center gap-1">
-      <a routerLink="/" routerLinkActive="bg-blue-50 text-blue-700" [routerLinkActiveOptions]="{exact: true}"
-         class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+    <div class="hidden sm:flex items-center gap-0.5">
+      <a routerLink="/" routerLinkActive="nav-link-active" [routerLinkActiveOptions]="{exact: true}"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+         style="color:#3D3733;">
         Accueil
       </a>
-      <a routerLink="/gpx" routerLinkActive="bg-blue-50 text-blue-700"
-         class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+      <a routerLink="/gpx" routerLinkActive="nav-link-active"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+         style="color:#3D3733;">
         GPX
       </a>
-      <a *ngIf="showRunning" routerLink="/run" routerLinkActive="bg-emerald-50 text-emerald-700"
-         class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+      <a *ngIf="showRunning" routerLink="/run" routerLinkActive="nav-link-active"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+         style="color:#3D3733;">
         🏃 Running
       </a>
-      <a *ngIf="showRouteCreator" routerLink="/route-creator" routerLinkActive="bg-violet-50 text-violet-700"
-         class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+      <a *ngIf="showRouteCreator" routerLink="/route-creator" routerLinkActive="nav-link-active"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+         style="color:#3D3733;">
         🛤️ Parcours
       </a>
-      <a *ngIf="showBestDeparture" routerLink="/best-departure" routerLinkActive="bg-amber-50 text-amber-700"
-         class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+      <a *ngIf="showBestDeparture" routerLink="/best-departure" routerLinkActive="nav-link-active"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+         style="color:#3D3733;">
         ⏰ Départ
       </a>
-      <a routerLink="/about" routerLinkActive="bg-blue-50 text-blue-700"
-         class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+      <a routerLink="/about" routerLinkActive="nav-link-active"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+         style="color:#3D3733;">
         À propos
       </a>
     </div>
 
     <!-- Mobile hamburger -->
     <button (click)="mobileMenuOpen = !mobileMenuOpen"
-            class="sm:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            class="sm:hidden p-2 rounded-lg transition-colors hover:bg-warm"
             [attr.aria-expanded]="mobileMenuOpen"
             aria-label="Menu">
-      <svg *ngIf="!mobileMenuOpen" class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg *ngIf="!mobileMenuOpen" class="w-5 h-5" style="color:#3D3733;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
       </svg>
-      <svg *ngIf="mobileMenuOpen" class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg *ngIf="mobileMenuOpen" class="w-5 h-5" style="color:#3D3733;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
       </svg>
     </button>
   </div>
 
   <!-- Mobile menu dropdown -->
-  <div *ngIf="mobileMenuOpen" class="sm:hidden border-t border-white/30 bg-white/60 backdrop-blur-xl px-4 pt-2 pb-3 space-y-1" style="-webkit-backdrop-filter:blur(20px)">
-    <a routerLink="/" (click)="mobileMenuOpen = false" routerLinkActive="bg-blue-50 text-blue-700" [routerLinkActiveOptions]="{exact: true}"
-       class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+  <div *ngIf="mobileMenuOpen" class="sm:hidden border-t px-4 pt-2 pb-3 space-y-0.5"
+       style="background: rgba(245,242,236,0.96); border-color:#DDD4C0;">
+    <a routerLink="/" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active" [routerLinkActiveOptions]="{exact: true}"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+       style="color:#3D3733;">
       Accueil
     </a>
-    <a routerLink="/gpx" (click)="mobileMenuOpen = false" routerLinkActive="bg-blue-50 text-blue-700"
-       class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+    <a routerLink="/gpx" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+       style="color:#3D3733;">
       GPX
     </a>
-    <a *ngIf="showRunning" routerLink="/run" (click)="mobileMenuOpen = false" routerLinkActive="bg-emerald-50 text-emerald-700"
-       class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+    <a *ngIf="showRunning" routerLink="/run" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+       style="color:#3D3733;">
       🏃 Course à pied
     </a>
-    <a *ngIf="showRouteCreator" routerLink="/route-creator" (click)="mobileMenuOpen = false" routerLinkActive="bg-violet-50 text-violet-700"
-       class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+    <a *ngIf="showRouteCreator" routerLink="/route-creator" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+       style="color:#3D3733;">
       🛤️ Créateur de parcours
     </a>
-    <a *ngIf="showBestDeparture" routerLink="/best-departure" (click)="mobileMenuOpen = false" routerLinkActive="bg-amber-50 text-amber-700"
-       class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+    <a *ngIf="showBestDeparture" routerLink="/best-departure" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+       style="color:#3D3733;">
       ⏰ Meilleur horaire
     </a>
-    <a routerLink="/about" (click)="mobileMenuOpen = false" routerLinkActive="bg-blue-50 text-blue-700"
-       class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+    <a routerLink="/about" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+       style="color:#3D3733;">
       À propos
     </a>
   </div>
