@@ -1,7 +1,8 @@
 import { Component, ChangeDetectorRef, ViewChild, OnInit } from '@angular/core';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { WeatherService } from '../../service/weather.service';
 import { GpxExportService } from '../../service/gpx-export.service';
 import { HistoryService, SavedRoute } from '../../service/history.service';
@@ -20,7 +21,7 @@ import { GpxStateService } from '../../service/gpx-state.service';
   selector: 'app-gpx-uploader',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, HttpClientModule,
+    CommonModule, FormsModule,
     GpxMapComponent, RideScoreComponent, GpxSummaryBarComponent, GpxResultsTableComponent,
     HistoryPanelComponent, NutritionPlanComponent
   ],
@@ -51,9 +52,6 @@ export class GpxUploaderComponent implements OnInit {
   showMap = false;
   showScore = true;
   showTable = false;
-
-  /** Flag: if loaded from history we can change date without re-geocoding */
-  private loadedFromHistory = false;
 
   /** Feature flag getters */
   get historyEnabled(): boolean { return this.featureFlags.isEnabled('history'); }
@@ -328,7 +326,6 @@ export class GpxUploaderComponent implements OnInit {
     this.passages = HistoryService.deserialisePassages(saved.passages);
     this.loading = false;
     this.progressText = 'Chargé depuis l\'historique';
-    this.loadedFromHistory = true;
     this.parseMessage = `Points: ${this.points.length}`;
     this.cd.detectChanges();
   }
@@ -345,7 +342,6 @@ export class GpxUploaderComponent implements OnInit {
     this.progressText = 'Mise à jour de la météo (villes conservées)...';
 
     // Recompute times based on new departure
-    const totalMeters = this.totalDistanceKm * 1000;
     for (const p of this.passages) {
       const hours = (p.distanceKm) / (this.avgSpeed || 1);
       p.time = new Date(departureDate.getTime() + Math.round(hours * 3600 * 1000));
@@ -461,16 +457,12 @@ export class GpxUploaderComponent implements OnInit {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
-  private reverseGeocode(lat: number, lon: number): Promise<string> {
+  private async reverseGeocode(lat: number, lon: number): Promise<string> {
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&email=hugo.lembrez@gmail.com`;
-    return new Promise((resolve, reject) => {
-      this.http.get<any>(url, { headers: { 'User-Agent': 'MeteoRide/2.2.0 (https://meteo-ride.vercel.app)' } }).subscribe({
-        next: res => {
-          const addr = res?.address;
-          resolve(addr?.city || addr?.town || addr?.village || addr?.municipality || addr?.county || 'Inconnu');
-        },
-        error: err => reject(err)
-      });
-    });
+    const res = await firstValueFrom(
+      this.http.get<any>(url, { headers: { 'User-Agent': 'MeteoRide/2.2.0 (https://meteo-ride.vercel.app)' } })
+    );
+    const addr = res?.address;
+    return addr?.city || addr?.town || addr?.village || addr?.municipality || addr?.county || 'Inconnu';
   }
 }

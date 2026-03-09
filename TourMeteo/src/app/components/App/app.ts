@@ -1,6 +1,5 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
 import { WeatherService, WeatherCity } from '../../service/weather.service';
 import { SearchTabComponent } from '../SearchTab/search-tab.component';
 import { WeatherSheetComponent } from '../WeatherSheet/weather-sheet.component';
@@ -8,9 +7,8 @@ import { WeatherSheetComponent } from '../WeatherSheet/weather-sheet.component';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, SearchTabComponent, WeatherSheetComponent],
-  templateUrl: './app.html',
-  providers: [WeatherService]
+  imports: [CommonModule, SearchTabComponent, WeatherSheetComponent],
+  templateUrl: './app.html'
 })
 export class App {
   meteo: WeatherCity[] = [];

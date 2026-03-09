@@ -1,7 +1,6 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 import { WeatherService } from '../../service/weather.service';
 import { getWeatherDescription, degreesToCardinal } from '../../utils/weather-utils';
 import { RecentCitiesService } from '../../service/recent-cities.service';
@@ -25,7 +24,7 @@ interface ClothingItem { emoji: string; label: string; }
 @Component({
   selector: 'app-running',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './running.component.html'
 })
 export class RunningComponent {

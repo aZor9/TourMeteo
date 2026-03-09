@@ -332,10 +332,9 @@ export class GpxExportService {
       const blob = await this.renderDataToPngBlob(passages, displayDate, totalDistanceKm, durationText, departureTime, arrivalTime, cityCount, rideScore, 2);
       if (!blob) return 'Échec génération';
       const file = new File([blob], `gpx-passages-${displayDate.replace(/\//g, '-')}.png`, { type: 'image/png' });
-      // @ts-ignore
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        // @ts-ignore
-        await navigator.share({ files: [file], title: 'GPX Passages', text: `Passages ${displayDate}` });
+      const shareNav = navigator as Navigator & { canShare?: (data?: object) => boolean; share?: (data?: object) => Promise<void> };
+      if (shareNav.canShare && shareNav.canShare({ files: [file] })) {
+        await shareNav.share!({ files: [file], title: 'GPX Passages', text: `Passages ${displayDate}` });
         return 'Partagé';
       } else {
         const url = URL.createObjectURL(blob);

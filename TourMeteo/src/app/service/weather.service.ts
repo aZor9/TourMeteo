@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { CityService } from './city.service';
 
 export interface WeatherCity {
@@ -25,10 +26,7 @@ export class WeatherService {
   async getWeatherByCoords(lat: number, lon: number, cityName: string, date: string): Promise<WeatherCity> {
     const url = `${this.weatherApiUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,winddirection_10m,weathercode,is_day,precipitation,precipitation_probability,relative_humidity_2m,apparent_temperature&start_date=${date}&end_date=${date}`;
 
-    // wrapper simple en Promise pour convertir l'Observable Http en Promise
-    const response: any = await new Promise((resolve, reject) => {
-      this.http.get<any>(url).subscribe({ next: res => resolve(res), error: err => reject(err) });
-    });
+    const response: any = await firstValueFrom(this.http.get<any>(url));
 
     // transformer la réponse brute en objet typé WeatherCity
     const hourly = response.hourly.time.map((hour: string, i: number) => ({

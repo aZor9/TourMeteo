@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { WeatherService } from '../../service/weather.service';
 import { CityService } from '../../service/city.service';
 import { getWeatherDescription, degreesToCardinal } from '../../utils/weather-utils';
-import { HttpClientModule } from '@angular/common/http';
 import { RecentCitiesService } from '../../service/recent-cities.service';
 import { Router } from '@angular/router';
 import { GpxStateService } from '../../service/gpx-state.service';
@@ -39,7 +38,7 @@ interface ParsedGPXPoint {
 @Component({
   selector: 'app-best-departure',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './best-departure.component.html'
 })
 export class BestDepartureComponent implements OnInit {
@@ -104,8 +103,6 @@ export class BestDepartureComponent implements OnInit {
   goToGpx() {
     this.router.navigate(['/gpx']);
   }
-
-  get gpxWeatherEnabled(): boolean { return true; } // /gpx is always available
 
   // ─── GPX file handling ───
 
@@ -400,6 +397,7 @@ export class BestDepartureComponent implements OnInit {
         'Accept': 'application/json'
       }
     });
+    if (!res.ok) throw new Error(`Reverse geocode failed: ${res.status}`);
     const data = await res.json();
     return data.address?.city || data.address?.town || data.address?.village || data.display_name?.split(',')[0] || `${lat.toFixed(2)},${lon.toFixed(2)}`;
   }
