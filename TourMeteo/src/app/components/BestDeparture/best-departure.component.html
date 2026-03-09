@@ -54,11 +54,13 @@
           <div>
             <label class="block text-xs font-medium text-slate-500 mb-1">Vitesse moyenne (km/h)</label>
             <input type="number" [(ngModel)]="avgSpeedKmh" min="1" max="80"
+                   (keydown.enter)="compute()"
                    class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all" />
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-500 mb-1">Date</label>
             <input type="date" [(ngModel)]="manualDate"
+                   (keydown.enter)="compute()"
                    class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all" />
           </div>
         </div>
@@ -76,6 +78,7 @@
                    (input)="citySuggestions = recentCities.search(manualCity); showSuggestions = citySuggestions.length > 0"
                    (focus)="citySuggestions = recentCities.getAll(); showSuggestions = citySuggestions.length > 0"
                    (blur)="$event; showSuggestions = false"
+                   (keydown.enter)="compute()"
                    autocomplete="off"
                    class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all" />
             <div *ngIf="showSuggestions && citySuggestions.length > 0"
@@ -90,6 +93,7 @@
           <div>
             <label class="block text-xs font-medium text-slate-500 mb-1">Date</label>
             <input type="date" [(ngModel)]="manualDate"
+                   (keydown.enter)="compute()"
                    class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all" />
           </div>
         </div>
@@ -121,10 +125,17 @@
       </div>
 
       <!-- Submit -->
-      <button (click)="compute()" [disabled]="loading || !canCompute"
-              class="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm hover:shadow-md disabled:opacity-50">
-        ⏰ Analyser les créneaux
-      </button>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button (click)="compute()" [disabled]="loading || !canCompute"
+                class="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm hover:shadow-md disabled:opacity-50">
+          ⏰ Analyser les créneaux
+        </button>
+        <button *ngIf="computeMode === 'gpx' && gpxPoints.length > 1" (click)="goToGpx()"
+                class="w-full sm:w-auto btn btn-ghost px-5 py-2.5 text-sm font-semibold"
+                title="Voir la météo heure par heure sur tout l’itinéraire">
+          🌦️ Météo sur l’itinéraire
+        </button>
+      </div>
     </div>
 
     <!-- Progress -->

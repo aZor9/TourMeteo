@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WeatherService } from '../../service/weather.service';
@@ -6,6 +6,9 @@ import { CityService } from '../../service/city.service';
 import { getWeatherDescription, degreesToCardinal } from '../../utils/weather-utils';
 import { HttpClientModule } from '@angular/common/http';
 import { RecentCitiesService } from '../../service/recent-cities.service';
+import { Router } from '@angular/router';
+import { GpxStateService } from '../../service/gpx-state.service';
+import { FeatureFlagService } from '../../service/feature-flag.service';
 
 interface DepartureOption {
   hour: number;
@@ -39,7 +42,7 @@ interface ParsedGPXPoint {
   imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './best-departure.component.html'
 })
-export class BestDepartureComponent {
+export class BestDepartureComponent implements OnInit {
 
   // ─── Form ───
   avgSpeedKmh = 25;
@@ -76,7 +79,10 @@ export class BestDepartureComponent {
     private cd: ChangeDetectorRef,
     private weatherService: WeatherService,
     private cityService: CityService,
-    public recentCities: RecentCitiesService
+    public recentCities: RecentCitiesService,
+    private gpxState: GpxStateService,
+    private router: Router,
+    private featureFlags: FeatureFlagService
   ) {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -84,6 +90,22 @@ export class BestDepartureComponent {
     const dd = String(today.getDate()).padStart(2, '0');
     this.manualDate = `${yyyy}-${mm}-${dd}`;
   }
+
+  ngOnInit() {
+    if (this.gpxState.has() && !this.gpxFileName) {
+      const s = this.gpxState.get()!;
+      this.gpxPoints = s.points;
+      this.gpxFileName = s.fileName;
+      this.gpxDistanceKm = s.distanceKm;
+      this.computeMode = 'gpx';
+    }
+  }
+
+  goToGpx() {
+    this.router.navigate(['/gpx']);
+  }
+
+  get gpxWeatherEnabled(): boolean { return true; } // /gpx is always available
 
   // ─── GPX file handling ───
 
@@ -117,6 +139,7 @@ export class BestDepartureComponent {
       );
     }
     this.gpxDistanceKm = +this.gpxDistanceKm.toFixed(1);
+    this.gpxState.set({ points: this.gpxPoints, fileName: this.gpxFileName, distanceKm: this.gpxDistanceKm });
     this.cd.detectChanges();
   }
 

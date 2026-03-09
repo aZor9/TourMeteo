@@ -254,11 +254,23 @@
         </div>
       </div>
 
-      <!-- Download -->
-      <button (click)="downloadGPX()"
-              class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors shadow-sm">
-        📥 Télécharger GPX
-      </button>
+      <!-- Actions -->
+      <div class="flex flex-wrap gap-2">
+        <button (click)="downloadGPX()"
+                class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors shadow-sm">
+          📥 Télécharger GPX
+        </button>
+        <button (click)="sendToGpx()"
+                class="btn btn-primary flex items-center gap-1.5 px-4 py-2 text-sm"
+                title="Voir la météo heure par heure sur tout ce parcours">
+          🌦️ Météo sur le parcours
+        </button>
+        <button *ngIf="bestDepartureEnabled" (click)="sendToBestDeparture()"
+                class="btn btn-ghost flex items-center gap-1.5 px-4 py-2 text-sm"
+                title="Trouver le meilleur horaire de départ pour ce parcours">
+          ⏰ Meilleur horaire
+        </button>
+      </div>
     </div>
   </div>
 </div>

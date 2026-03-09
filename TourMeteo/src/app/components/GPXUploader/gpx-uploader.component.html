@@ -59,11 +59,13 @@
             <div>
               <label class="block text-xs font-medium text-slate-500 mb-1">Vitesse (km/h)</label>
               <input type="number" [(ngModel)]="avgSpeed" min="1"
+                     (keydown.enter)="computeSchedule()"
                      class="w-full sm:w-28 border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
             </div>
             <div>
               <label class="block text-xs font-medium text-slate-500 mb-1">Heure de départ</label>
               <input type="datetime-local" [(ngModel)]="departure"
+                     (keydown.enter)="computeSchedule()"
                      class="w-full sm:w-auto border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
             </div>
           </div>
@@ -71,6 +73,11 @@
             <button (click)="computeSchedule()"
             class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:from-blue-800 active:to-indigo-800 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm hover:shadow-md">
             🚴 Voir la météo sur l'itinéraire
+          </button>
+          <button *ngIf="bestDepartureEnabled" (click)="goToBestDeparture()"
+            class="w-full sm:w-auto btn btn-ghost px-5 py-2.5 text-sm font-semibold"
+            title="Analyser le meilleur horaire de départ pour ce parcours GPX">
+            ⏰ Meilleur horaire de départ
           </button>
           <button *ngIf="passages.length > 0 && experimentalEnabled" (click)="refreshWeatherOnly()"
             class="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm hover:shadow-md"

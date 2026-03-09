@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef, ViewChild } from '@angular/core';
+import { Component, ChangeDetectorRef, ViewChild, OnInit } from '@angular/core';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
@@ -13,6 +13,8 @@ import { GpxSummaryBarComponent } from './gpx-summary-bar/gpx-summary-bar.compon
 import { GpxResultsTableComponent } from './gpx-results-table/gpx-results-table.component';
 import { HistoryPanelComponent } from './history-panel/history-panel.component';
 import { NutritionPlanComponent } from './nutrition-plan/nutrition-plan.component';
+import { Router } from '@angular/router';
+import { GpxStateService } from '../../service/gpx-state.service';
 
 @Component({
   selector: 'app-gpx-uploader',
@@ -24,7 +26,7 @@ import { NutritionPlanComponent } from './nutrition-plan/nutrition-plan.componen
   ],
   templateUrl: './gpx-uploader.component.html'
 })
-export class GpxUploaderComponent {
+export class GpxUploaderComponent implements OnInit {
   totalDistanceKm = 0;
   points: Array<{ lat: number; lon: number }> = [];
   avgSpeed = 20;
@@ -58,6 +60,7 @@ export class GpxUploaderComponent {
   get mapEnabled(): boolean { return this.featureFlags.isEnabled('map'); }
   get experimentalEnabled(): boolean { return this.featureFlags.isEnabled('experimental'); }
   get nutritionEnabled(): boolean { return this.featureFlags.isEnabled('nutrition'); }
+  get bestDepartureEnabled(): boolean { return this.featureFlags.isEnabled('bestDeparture'); }
 
   @ViewChild('historyPanel') historyPanel!: HistoryPanelComponent;
 
@@ -67,7 +70,9 @@ export class GpxUploaderComponent {
     private weatherService: WeatherService,
     private exportService: GpxExportService,
     private historyService: HistoryService,
-    private featureFlags: FeatureFlagService
+    private featureFlags: FeatureFlagService,
+    private gpxState: GpxStateService,
+    private router: Router
   ) {
     const today = new Date();
     today.setHours(9, 0, 0, 0);
@@ -77,6 +82,20 @@ export class GpxUploaderComponent {
     const hh = String(today.getHours()).padStart(2, '0');
     const min = String(today.getMinutes()).padStart(2, '0');
     this.departure = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+  }
+
+  ngOnInit() {
+    if (this.gpxState.has() && !this.fileName) {
+      const s = this.gpxState.get()!;
+      this.points = s.points;
+      this.fileName = s.fileName;
+      this.totalDistanceKm = s.distanceKm;
+      this.parseMessage = `${s.points.length} points (depuis meilleur horaire)`;
+    }
+  }
+
+  goToBestDeparture() {
+    this.router.navigate(['/best-departure']);
   }
 
   // ─── File handling ───
@@ -114,6 +133,7 @@ export class GpxUploaderComponent {
         );
       }
       this.totalDistanceKm = +(totalMeters / 1000).toFixed(3);
+      this.gpxState.set({ points: this.points, fileName: this.fileName, distanceKm: this.totalDistanceKm });
       this.cd.detectChanges();
     } catch {
       this.points = [];

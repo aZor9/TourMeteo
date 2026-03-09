@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { CityService } from '../../service/city.service';
+import { Router } from '@angular/router';
+import { GpxStateService } from '../../service/gpx-state.service';
+import { FeatureFlagService } from '../../service/feature-flag.service';
 
 /* ────────── Interfaces ────────── */
 
@@ -79,7 +82,10 @@ export class RouteCreatorComponent implements AfterViewInit, OnDestroy {
   constructor(
     private http: HttpClient,
     private cd: ChangeDetectorRef,
-    private cityService: CityService
+    private cityService: CityService,
+    private gpxState: GpxStateService,
+    private router: Router,
+    private featureFlags: FeatureFlagService
   ) {}
 
   /* ═══════════════ Lifecycle ═══════════════ */
@@ -525,6 +531,29 @@ export class RouteCreatorComponent implements AfterViewInit, OnDestroy {
         .addTo(this.mapInstance);
       this.mapInstance.fitBounds(this.routeLayer.getBounds().pad(0.1));
     }
+  }
+
+  /* ═══════════════ Send to other pages ═══════════════ */
+
+  get bestDepartureEnabled(): boolean { return this.featureFlags.isEnabled('bestDeparture'); }
+
+  private pushToGpxState() {
+    const label = this.waypoints.map(w => w.name).join(' → ');
+    this.gpxState.set({
+      points: this.routePoints,
+      fileName: `${label}.gpx`,
+      distanceKm: this.stats?.distanceKm ?? 0
+    });
+  }
+
+  sendToGpx() {
+    this.pushToGpxState();
+    this.router.navigate(['/gpx']);
+  }
+
+  sendToBestDeparture() {
+    this.pushToGpxState();
+    this.router.navigate(['/best-departure']);
   }
 
   /* ═══════════════ GPX download ═══════════════ */
