@@ -475,6 +475,7 @@ export class GpxUploaderComponent implements OnInit {
       this.showMap = this.mapEnabled;
       this.showScore = true;
       this.showTable = true;
+      this.showNutrition = this.nutritionEnabled;
     }
   }
 
