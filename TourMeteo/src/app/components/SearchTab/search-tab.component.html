@@ -30,12 +30,21 @@
       />
       <!-- Recent cities dropdown -->
       <div *ngIf="showSuggestions && citySuggestions.length > 0"
-           class="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-        <button *ngFor="let s of citySuggestions" type="button"
-                (mousedown)="pickSuggestion(s)"
-                class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
-          📍 {{ s }}
-        </button>
+           class="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto divide-y divide-slate-100">
+        <div *ngFor="let s of citySuggestions"
+             (mousedown)="pickSuggestion(s)"
+             class="flex items-center justify-between px-3 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer group">
+          <span class="flex items-center gap-1.5 truncate">
+            <span class="text-xs">📍</span>
+            <span class="truncate">{{ s }}</span>
+          </span>
+          <button type="button"
+                  (mousedown)="removeSuggestion(s, $event)"
+                  title="Supprimer de l'historique"
+                  class="ml-2 text-xs text-slate-400 hover:text-red-500 hover:bg-red-50 rounded p-1 transition opacity-70 group-hover:opacity-100">
+            ✕
+          </button>
+        </div>
       </div>
     </div>
 

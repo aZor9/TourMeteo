@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FeatureFlagService, FeatureFlags } from '../../service/feature-flag.service';
+import { RecentCitiesService } from '../../service/recent-cities.service';
 
 interface AccordionSection {
   id: string;
@@ -26,6 +27,21 @@ export class AboutComponent {
   showDevOptions = false;
   flags: FeatureFlags;
 
+  get recentCitiesCount(): number {
+    return this.recentCities.getAll().length;
+  }
+
+  constructor(
+    private featureFlags: FeatureFlagService,
+    private recentCities: RecentCitiesService
+  ) {
+    this.flags = this.featureFlags.getAll();
+  }
+
+  clearRecentCities(): void {
+    this.recentCities.clear();
+  }
+
   sections: AccordionSection[] = [
     // Utilisateurs (non-dev)
     { id: 'features',     title: 'Fonctionnalités',               icon: '🚀', group: 'user', open: false  },
@@ -46,9 +62,6 @@ export class AboutComponent {
     return this.sections.filter(s => s.group === 'user' || this.showDevOptions);
   }
 
-  constructor(private featureFlags: FeatureFlagService) {
-    this.flags = this.featureFlags.getAll();
-  }
 
   toggle(section: AccordionSection): void {
     section.open = !section.open;

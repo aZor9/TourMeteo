@@ -22,14 +22,14 @@ export interface FeatureFlags {
 }
 
 const DEFAULTS: FeatureFlags = {
-  history: false,
-  map: false,
+  history: true,
+  map: true,
   experimental: false,
   running: false,
   nutrition: false,
   routeCreator: false,
   bestDeparture: false,
-  recentCities: false
+  recentCities: true
 };
 
 @Injectable({ providedIn: 'root' })

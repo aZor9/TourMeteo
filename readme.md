@@ -75,9 +75,12 @@ readme.md               ← ce fichier
 - **Filtres résultats :** bascule Résumé / Détail, masquer/afficher carte, score ou tableau individuellement
 - **Rafraîchir météo 🔧 :** changer la date ou l'heure sans re-géocoder les villes (fonctionnalité dev, activer dans options développeur)
 
-### Historique local & Carte interactive ✨
+### Fonctionnalités supplémentaires ✨
 - **Historique des trajets** : sauvegarde en `localStorage` avec rechargement rapide, gestion du quota
 - **Carte interactive** : tracé du parcours GPX sur une carte Leaflet avec marqueurs numérotés
+- **Villes récentes** 📍 : mémorisation locale des villes recherchées et suggestions automatiques
+- **Plan nutritionnel d'effort** 🍌 : estimation des glucides et de l'hydratation (avec avertissement santé)
+- **Rafraîchir météo** 🔄 : changer la date ou l'heure sans re-géocoder les villes
 - Fonctionnalités supplémentaires, activables dans la section « Fonctionnalités » de la page À propos
 
 ### Options développeur (feature flags)

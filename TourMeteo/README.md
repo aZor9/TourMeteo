@@ -18,10 +18,12 @@ Application Angular de comparaison météo entre plusieurs villes, heure par heu
 - **Créateur de parcours** 🛤️ : génération d'itinéraires vélo/running via BRouter (routes goudronnées, pas de gravier ni chemin privé), analyse Overpass (types de routes, état de surface, pistes cyclables), export GPX, mode boucle
 - **Meilleur horaire de départ** ⏰ : analyse météo heure par heure sur un GPX pour recommander l'heure de départ optimale
 - **Course à pied** 🏃 : météo horaire pour une sortie running avec conseils nutrition & vêtements
+- **Villes récentes** 📍 : mémorisation locale des villes recherchées avec suggestions automatiques (activable/désactivable dans À propos)
+- **Plan nutritionnel d'effort** 🍌 : estimation des besoins en glucides et hydratation sur parcours GPX (activable/désactivable dans À propos)
 - **Historique local** ✨ : sauvegarde des trajets en localStorage (fonctionnalité supplémentaire, activer dans À propos > Fonctionnalités)
 - **Carte interactive** ✨ : tracé GPX sur carte Leaflet (fonctionnalité supplémentaire, activer dans À propos > Fonctionnalités)
 - **Rafraîchir météo** 🔄 : changer la date sans re-géocoder les villes
-- **Feature Flags** : toggles publics (historique, carte, rafraîchir) + options dev cachées (tap 5× sur le badge de version dans À propos)
+- **Feature Flags** : toggles publics (historique, carte, rafraîchir, villes récentes, nutrition) + options dev cachées (tap 5× sur le badge de version dans À propos)
 - **Vercel Analytics** : suivi anonyme des performances
 - **Page À propos** : sections déroulantes (accordéon), contact intégré
 

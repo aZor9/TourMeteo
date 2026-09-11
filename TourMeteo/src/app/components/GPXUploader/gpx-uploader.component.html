@@ -152,6 +152,9 @@
         <label class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
           <input type="checkbox" [(ngModel)]="showTable" class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300"> Tableau
         </label>
+        <label *ngIf="nutritionEnabled" class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+          <input type="checkbox" [(ngModel)]="showNutrition" class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300"> Nutrition
+        </label>
       </div>
 
       <!-- Summary stats -->
@@ -170,7 +173,7 @@
       <app-ride-score *ngIf="showScore" [passages]="passages" [totalDistanceKm]="totalDistanceKm" (scoreComputed)="onScoreComputed($event)"></app-ride-score>
 
       <!-- Nutrition Plan -->
-      <app-nutrition-plan *ngIf="nutritionEnabled && passages.length >= 2"
+      <app-nutrition-plan *ngIf="nutritionEnabled && showNutrition && passages.length >= 2"
         [passages]="passages"
         [totalDistanceKm]="totalDistanceKm"
         [durationText]="durationText">

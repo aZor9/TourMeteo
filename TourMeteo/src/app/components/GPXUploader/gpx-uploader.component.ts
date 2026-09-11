@@ -30,7 +30,7 @@ import { GpxStateService } from '../../service/gpx-state.service';
 export class GpxUploaderComponent implements OnInit {
   totalDistanceKm = 0;
   points: Array<{ lat: number; lon: number }> = [];
-  avgSpeed = 20;
+  avgSpeed = 25;
   departure = '';
   loading = false;
   fileName = '';
@@ -52,6 +52,7 @@ export class GpxUploaderComponent implements OnInit {
   showMap = false;
   showScore = true;
   showTable = false;
+  showNutrition = false;
 
   /** Feature flag getters */
   get historyEnabled(): boolean { return this.featureFlags.isEnabled('history'); }

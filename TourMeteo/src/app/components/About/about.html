@@ -1,4 +1,4 @@
-﻿<div class="px-3 sm:px-0 max-w-3xl mx-auto py-6">
+<div class="px-3 sm:px-0 max-w-3xl mx-auto py-6">
 <section class="bg-white rounded-2xl border p-4 sm:p-7 shadow-sm" style="border-color:#DDD4C0;">
 
   <!-- Header -->
@@ -55,6 +55,8 @@
             <li><strong>Score de sortie vélo :</strong> score /100, recommandation de tenue cycliste, alertes et conseils personnalisés</li>
             <li><strong>Export PNG :</strong> image du tableau des passages avec score vélo et tenue recommandée</li>
             <li><strong>Partage :</strong> via l'API Web Share ou téléchargement automatique</li>
+            <li><strong>Villes récentes :</strong> suggestion et mémorisation locale des dernières villes recherchées</li>
+            <li><strong>Plan nutritionnel d'effort :</strong> estimation des besoins en glucides et hydratation au fil du tracé GPX</li>
           </ul>
           <div class="mt-3 pt-3 border-t" style="border-color:#EDE8DB;">
             <h4 class="text-xs font-semibold uppercase tracking-wide mb-3" style="color:#A09589;">✨ Fonctionnalités supplémentaires</h4>
@@ -89,7 +91,46 @@
                   <div class="w-11 h-6 rounded-full transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner" [style.background]="flags.experimental ? '#1B5A96' : '#DDD4C0'"></div>
                 </label>
               </div>
+              <div class="flex items-center justify-between rounded-xl px-4 py-3 border" style="background:#FAF9F6; border-color:#DDD4C0;">
+                <div class="flex flex-col">
+                  <div class="flex items-center gap-2">
+                    <span class="font-medium" style="color:#1A1917;">📍 Villes récentes</span>
+                    <button *ngIf="recentCitiesCount > 0" (click)="clearRecentCities()" type="button"
+                            class="text-[11px] px-2 py-0.5 rounded text-red-600 bg-red-50 hover:bg-red-100 transition"
+                            title="Effacer la liste des villes enregistrées">
+                      Effacer ({{ recentCitiesCount }})
+                    </button>
+                  </div>
+                  <span class="text-xs" style="color:#72675C;">Mémorise localement les villes recherchées pour des suggestions rapides</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" [checked]="flags.recentCities" (change)="toggleFlag('recentCities')" class="sr-only peer">
+                  <div class="w-11 h-6 rounded-full transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner" [style.background]="flags.recentCities ? '#1B5A96' : '#DDD4C0'"></div>
+                </label>
+              </div>
+              <div class="flex items-center justify-between rounded-xl px-4 py-3 border" style="background:#FAF9F6; border-color:#DDD4C0;">
+                <div class="flex flex-col">
+                  <span class="font-medium" style="color:#1A1917;">🍌 Plan nutrition effort</span>
+                  <span class="text-xs" style="color:#72675C;">Estimation des besoins en glucides et hydratation sur votre parcours GPX</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" [checked]="flags.nutrition" (change)="toggleFlag('nutrition')" class="sr-only peer">
+                  <div class="w-11 h-6 rounded-full transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner" [style.background]="flags.nutrition ? '#1B5A96' : '#DDD4C0'"></div>
+                </label>
+              </div>
             </div>
+
+            <!-- Mise en garde nutritionnelle & médicale -->
+            <div class="mt-3 rounded-xl p-3.5 border border-amber-200 bg-amber-50/70 text-xs text-amber-900 flex items-start gap-2.5">
+              <span class="text-base flex-shrink-0">⚠️</span>
+              <div class="space-y-1">
+                <p class="font-semibold text-amber-950">Mise en garde — Recommandations nutritionnelles & santé</p>
+                <p class="leading-relaxed text-amber-800">
+                  Les calculs nutritionnels et d'hydratation (apports en glucides en g/h, espacement des prises, volumes d'eau) sont fournis à titre <strong>strictement indicatif</strong> et reposent sur des moyennes d'effort d'endurance. Ils <strong>ne constituent en aucun cas une prescription médicale ou diététique</strong> individualisée. Chaque organisme réagit différemment selon le métabolisme, les conditions météo et l'intensité réelle : testez toujours vos protocoles de ravitaillement à l'entraînement et consultez un professionnel de santé ou de la nutrition du sport en cas de besoin spécifique.
+                </p>
+              </div>
+            </div>
+
             <p class="text-[11px] mt-2" style="color:#A09589;">Ces préférences sont enregistrées localement.</p>
           </div>
         </div>
@@ -107,6 +148,7 @@
           <p>Pour chaque point, un reverse-géocodage Nominatim identifie la ville, puis la météo horaire est récupérée via Open-Meteo. Les doublons consécutifs sont filtrés automatiquement.</p>
           <p>Le tracé est affiché sur une <strong>carte interactive</strong> (Leaflet) avec des marqueurs numérotés.</p>
           <p>Un <strong>score de sortie vélo</strong> (0-100) est calculé en fonction de la température, du vent, des précipitations et des conditions spéciales. Des recommandations de tenue et des conseils sont générés.</p>
+          <p>Un <strong>plan nutritionnel d'effort</strong> estime les besoins en glucides (g/h) et en hydratation avec une timeline des ravitaillements <em>(recommandations indicatives — voir la mise en garde santé dans la section Fonctionnalités)</em>.</p>
           <p>Les résultats peuvent être <strong>exportés en image PNG</strong> ou <strong>partagés</strong> via l'API Web Share.</p>
         </div>
       </div>
@@ -122,7 +164,7 @@
           <p>Les données sont obtenues en temps réel depuis les APIs publiques listées en section développeur.</p>
           <p>Les coordonnées GPS (latitude/longitude) sont envoyées aux services tiers suivants : Nominatim, Open-Meteo, BRouter, OSRM, Overpass, Open Elevation et CARTO (tuiles). Aucune autre donnée personnelle n'est transmise.</p>
           <p>Nominatim applique des limites d'usage (1 requête/seconde). L'application utilise un throttle et un échantillonnage par distance (~2 km) pour respecter ces contraintes.</p>
-          <p><strong>Aucun compte utilisateur, aucun cookie de tracking, aucune donnée personnelle stockée côté serveur.</strong> Les préférences et l'historique restent en <code>localStorage</code> sur votre appareil.</p>
+          <p><strong>Aucun compte utilisateur, aucun cookie de tracking, aucune donnée personnelle stockée côté serveur.</strong> Les préférences, l'historique des parcours et les villes récentes restent stockés exclusivement en <code>localStorage</code> sur votre appareil.</p>
         </div>
       </div>
 
@@ -285,16 +327,6 @@
           </div>
           <div class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-slate-200">
             <div class="flex flex-col">
-              <span class="font-medium" style="color:#1A1917;">🍌 Plan nutrition effort</span>
-              <span class="text-xs" style="color:#72675C;">Recommandation de ravitaillement sur le parcours</span>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" [checked]="flags.nutrition" (change)="toggleFlag('nutrition')" class="sr-only peer">
-              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
-            </label>
-          </div>
-          <div class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-slate-200">
-            <div class="flex flex-col">
               <span class="font-medium" style="color:#1A1917;">🛤️ Créateur de parcours GPX</span>
               <span class="text-xs" style="color:#72675C;">Générer un tracé vélo/running optimisé</span>
             </div>
@@ -310,16 +342,6 @@
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" [checked]="flags.bestDeparture" (change)="toggleFlag('bestDeparture')" class="sr-only peer">
-              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
-            </label>
-          </div>
-          <div class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-slate-200">
-            <div class="flex flex-col">
-              <span class="font-medium" style="color:#1A1917;">📍 Villes récentes</span>
-              <span class="text-xs" style="color:#72675C;">Sauvegarde les villes recherchées et propose des suggestions</span>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" [checked]="flags.recentCities" (change)="toggleFlag('recentCities')" class="sr-only peer">
               <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
             </label>
           </div>

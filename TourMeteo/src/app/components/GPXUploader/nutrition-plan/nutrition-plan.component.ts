@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { Passage } from '../../../models/passage.model';
 
 interface NutritionSlot {
@@ -16,7 +17,7 @@ interface NutritionSlot {
 @Component({
   selector: 'app-nutrition-plan',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './nutrition-plan.component.html'
 })
 export class NutritionPlanComponent implements OnChanges {

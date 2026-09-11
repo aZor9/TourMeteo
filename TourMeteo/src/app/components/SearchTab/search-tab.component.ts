@@ -90,4 +90,14 @@ export class SearchTabComponent {
     this.cities = parts.join(', ');
     this.showSuggestions = false;
   }
+
+  removeSuggestion(city: string, event: MouseEvent) {
+    event.stopPropagation();
+    event.preventDefault();
+    this.recentCities.remove(city);
+    const parts = this.cities.split(',');
+    const current = parts[parts.length - 1].trim();
+    this.citySuggestions = current ? this.recentCities.search(current) : this.recentCities.getAll();
+    this.showSuggestions = this.citySuggestions.length > 0;
+  }
 }
