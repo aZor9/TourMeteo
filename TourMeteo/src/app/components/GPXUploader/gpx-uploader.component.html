@@ -13,23 +13,112 @@
     </div>
   </div>
 
-  <!-- File upload -->
-  <div class="mb-6">
-    <label class="group flex flex-col items-center justify-center gap-3 w-full border-2 border-dashed border-slate-300 rounded-2xl p-8 cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition-all duration-200">
-      <div class="flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 group-hover:bg-blue-100 transition-colors">
-        <svg class="w-6 h-6 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <!-- Strava Status Notification -->
+  <div *ngIf="stravaEnabled && stravaStatusMessage"
+       class="mb-4 p-3.5 rounded-xl bg-orange-50 border border-orange-200 text-orange-900 text-xs flex items-center justify-between shadow-sm">
+    <span>{{ stravaStatusMessage }}</span>
+    <button (click)="stravaStatusMessage = ''" class="text-orange-400 hover:text-orange-700 text-sm">✕</button>
+  </div>
+
+  <!-- Upload & Strava Section -->
+  <div class="mb-6" [ngClass]="stravaEnabled ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : ''">
+
+    <!-- 1. File upload -->
+    <label class="group flex flex-col items-center justify-center gap-3 w-full border-2 border-dashed border-slate-300 rounded-2xl p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200">
+      <div class="flex items-center justify-center w-11 h-11 rounded-full bg-slate-100 group-hover:bg-blue-100 transition-colors">
+        <svg class="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
         </svg>
       </div>
       <div class="text-center">
-        <span *ngIf="!fileName" class="text-sm font-medium text-slate-600 group-hover:text-blue-600 transition-colors">Déposer ou sélectionner un fichier .gpx</span>
-        <span *ngIf="!fileName" class="block text-xs text-slate-400 mt-0.5">Format GPX uniquement</span>
-        <span *ngIf="fileName" class="text-sm font-medium text-blue-600">📄 {{ fileName }}</span>
-        <span *ngIf="fileName" class="block text-xs text-slate-400 mt-0.5">Cliquez pour changer de fichier</span>
+        <span *ngIf="!fileName" class="text-sm font-semibold text-slate-700 group-hover:text-blue-600 transition-colors">Fichier .gpx</span>
+        <span *ngIf="!fileName" class="block text-xs text-slate-400 mt-0.5">Glisser-déposer ou parcourir</span>
+        <span *ngIf="fileName" class="text-sm font-semibold text-blue-600 truncate max-w-[200px] block">📄 {{ fileName }}</span>
+        <span *ngIf="fileName" class="block text-xs text-slate-400 mt-0.5">Cliquer pour changer de fichier</span>
       </div>
       <input type="file" accept=".gpx" (change)="onFileChange($event)" class="hidden" />
     </label>
+
+    <!-- 2. Strava Integration Card (dev feature flag) -->
+    <div *ngIf="stravaEnabled"
+         class="rounded-2xl p-6 border transition-all flex flex-col justify-between"
+         [class]="strava.isConnected ? 'bg-gradient-to-br from-orange-50/80 to-amber-50/50 border-orange-200 shadow-sm' : 'bg-white border-slate-200 hover:border-orange-200 shadow-sm'">
+
+      <!-- Top info -->
+      <div>
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <div class="flex items-center gap-2">
+            <!-- Strava icon -->
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white" style="background: #FC4C02;">
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7.01 13.828h4.172"/>
+              </svg>
+            </div>
+            <span class="text-sm font-bold tracking-tight text-slate-800">Strava</span>
+          </div>
+
+          <!-- Connected or Demo badge -->
+          <span *ngIf="strava.isConnected" class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            {{ strava.isDemoMode ? 'Mode Démo' : 'Connecté' }}
+          </span>
+        </div>
+
+        <!-- Description or Athlete info -->
+        <div *ngIf="!strava.isConnected" class="text-xs text-slate-500 mb-4 leading-relaxed">
+          Importez directement vos <strong>itinéraires</strong> et vos <strong>sorties récentes</strong> sans manipuler de fichier.
+        </div>
+
+        <div *ngIf="strava.isConnected && strava.currentAthlete" class="flex items-center gap-2.5 mb-4 mt-1">
+          <img *ngIf="strava.currentAthlete.profile" [src]="strava.currentAthlete.profile" alt="Avatar"
+               class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm" />
+          <div class="text-xs">
+            <p class="font-semibold text-slate-800 leading-tight">{{ strava.currentAthlete.firstname }} {{ strava.currentAthlete.lastname }}</p>
+            <p class="text-slate-400 text-[11px]">{{ strava.currentAthlete.city || 'Athlète Strava' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div>
+        <div *ngIf="!strava.isConnected" class="space-y-2">
+          <button (click)="connectStrava()" type="button"
+                  class="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold text-white shadow-sm hover:opacity-95 active:scale-[0.99] transition cursor-pointer"
+                  style="background: #FC4C02;">
+            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+              <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7.01 13.828h4.172"/>
+            </svg>
+            <span>Connect with Strava</span>
+          </button>
+          <div class="text-center">
+            <button (click)="enableStravaDemo()" type="button"
+                    class="text-[11px] text-slate-400 hover:text-orange-600 underline transition cursor-pointer">
+              Ou essayer avec le mode démo Strava
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="strava.isConnected" class="flex items-center gap-2">
+          <button (click)="openStravaModal()" type="button"
+                  class="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs font-bold text-white shadow-sm hover:opacity-95 active:scale-[0.99] transition cursor-pointer"
+                  style="background: #FC4C02;">
+            <span>🗺️ Choisir un parcours</span>
+          </button>
+          <button (click)="strava.disconnect()" type="button" title="Se déconnecter de Strava"
+                  class="p-2.5 rounded-xl border border-slate-200 text-slate-400 hover:text-red-500 hover:bg-red-50 transition cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
   </div>
+
+  <!-- Strava Routes Modal -->
+  <app-strava-modal *ngIf="stravaEnabled" [isOpen]="showStravaModal" (close)="closeStravaModal()" (routeSelected)="onStravaRouteSelected($event)"></app-strava-modal>
 
   <!-- History panel -->
   <app-history-panel *ngIf="historyEnabled" #historyPanel (load)="loadFromHistory($event)"></app-history-panel>

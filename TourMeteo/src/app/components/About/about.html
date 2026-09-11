@@ -345,6 +345,16 @@
               <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
             </label>
           </div>
+          <div class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-slate-200">
+            <div class="flex flex-col">
+              <span class="font-medium" style="color:#1A1917;">🚴 Connexion Strava</span>
+              <span class="text-xs" style="color:#72675C;">Bouton Connect with Strava dans l'import GPX pour charger parcours et sorties</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" [checked]="flags.strava" (change)="toggleFlag('strava')" class="sr-only peer">
+              <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
+            </label>
+          </div>
           <p class="text-[11px]" style="color:#A09589;">💡 Tape 5× sur le badge de version pour afficher ce panneau.</p>
         </div>
       </div>

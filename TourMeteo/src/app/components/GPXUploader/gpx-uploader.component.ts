@@ -14,8 +14,10 @@ import { GpxSummaryBarComponent } from './gpx-summary-bar/gpx-summary-bar.compon
 import { GpxResultsTableComponent } from './gpx-results-table/gpx-results-table.component';
 import { HistoryPanelComponent } from './history-panel/history-panel.component';
 import { NutritionPlanComponent } from './nutrition-plan/nutrition-plan.component';
-import { Router } from '@angular/router';
+import { StravaModalComponent } from './strava-modal/strava-modal.component';
+import { ActivatedRoute, Router } from '@angular/router';
 import { GpxStateService } from '../../service/gpx-state.service';
+import { StravaService } from '../../service/strava.service';
 
 @Component({
   selector: 'app-gpx-uploader',
@@ -23,7 +25,7 @@ import { GpxStateService } from '../../service/gpx-state.service';
   imports: [
     CommonModule, FormsModule,
     GpxMapComponent, RideScoreComponent, GpxSummaryBarComponent, GpxResultsTableComponent,
-    HistoryPanelComponent, NutritionPlanComponent
+    HistoryPanelComponent, NutritionPlanComponent, StravaModalComponent
   ],
   templateUrl: './gpx-uploader.component.html'
 })
@@ -53,6 +55,8 @@ export class GpxUploaderComponent implements OnInit {
   showScore = true;
   showTable = false;
   showNutrition = false;
+  showStravaModal = false;
+  stravaStatusMessage = '';
 
   /** Feature flag getters */
   get historyEnabled(): boolean { return this.featureFlags.isEnabled('history'); }
@@ -60,6 +64,7 @@ export class GpxUploaderComponent implements OnInit {
   get experimentalEnabled(): boolean { return this.featureFlags.isEnabled('experimental'); }
   get nutritionEnabled(): boolean { return this.featureFlags.isEnabled('nutrition'); }
   get bestDepartureEnabled(): boolean { return this.featureFlags.isEnabled('bestDeparture'); }
+  get stravaEnabled(): boolean { return this.featureFlags.isEnabled('strava'); }
 
   @ViewChild('historyPanel') historyPanel!: HistoryPanelComponent;
 
@@ -71,7 +76,9 @@ export class GpxUploaderComponent implements OnInit {
     private historyService: HistoryService,
     private featureFlags: FeatureFlagService,
     private gpxState: GpxStateService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    public strava: StravaService
   ) {
     const today = new Date();
     today.setHours(9, 0, 0, 0);
@@ -83,7 +90,23 @@ export class GpxUploaderComponent implements OnInit {
     this.departure = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
   }
 
-  ngOnInit() {
+  async ngOnInit() {
+    // Détection du retour d'autorisation Strava OAuth (?code=XXXXX)
+    const code = this.route.snapshot.queryParamMap.get('code');
+    if (code) {
+      this.stravaStatusMessage = 'Connexion à Strava en cours…';
+      const result = await this.strava.handleCallback(code);
+      // Nettoyer l'URL du navigateur
+      this.router.navigate([], { queryParams: {}, replaceUrl: true });
+      if (result.success) {
+        this.stravaStatusMessage = '✅ Compte Strava connecté avec succès !';
+        this.showStravaModal = true;
+      } else {
+        this.stravaStatusMessage = `⚠️ ${result.message || 'Erreur lors de la connexion Strava.'}`;
+      }
+      setTimeout(() => this.stravaStatusMessage = '', 6000);
+    }
+
     if (this.gpxState.has() && !this.fileName) {
       const s = this.gpxState.get()!;
       this.points = s.points;
@@ -91,6 +114,40 @@ export class GpxUploaderComponent implements OnInit {
       this.totalDistanceKm = s.distanceKm;
       this.parseMessage = `${s.points.length} points (depuis meilleur horaire)`;
     }
+  }
+
+  openStravaModal() {
+    this.showStravaModal = true;
+  }
+
+  closeStravaModal() {
+    this.showStravaModal = false;
+  }
+
+  connectStrava() {
+    this.strava.connect();
+  }
+
+  enableStravaDemo() {
+    this.strava.enableDemo();
+    this.showStravaModal = true;
+  }
+
+  onStravaRouteSelected(data: {
+    name: string;
+    points: { lat: number; lon: number }[];
+    distanceKm: number;
+    departureTime?: string;
+  }) {
+    this.fileName = data.name;
+    this.points = data.points;
+    this.totalDistanceKm = data.distanceKm;
+    this.parseMessage = `${this.points.length} points GPS (importé depuis Strava)`;
+    if (data.departureTime) {
+      this.departure = data.departureTime;
+    }
+    this.gpxState.set({ points: this.points, fileName: this.fileName, distanceKm: this.totalDistanceKm });
+    this.cd.detectChanges();
   }
 
   goToBestDeparture() {

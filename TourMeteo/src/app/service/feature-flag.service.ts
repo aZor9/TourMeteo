@@ -19,6 +19,8 @@ export interface FeatureFlags {
   bestDeparture: boolean;
   /** Save & suggest recent search cities (localStorage) */
   recentCities: boolean;
+  /** Show Strava connection in GPX page (dev feature) */
+  strava: boolean;
 }
 
 const DEFAULTS: FeatureFlags = {
@@ -29,7 +31,8 @@ const DEFAULTS: FeatureFlags = {
   nutrition: false,
   routeCreator: false,
   bestDeparture: false,
-  recentCities: true
+  recentCities: true,
+  strava: false
 };
 
 @Injectable({ providedIn: 'root' })

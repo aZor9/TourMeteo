@@ -17,6 +17,7 @@ Application Angular de comparaison météo entre plusieurs villes, heure par heu
 - **Filtres résultats** : bascule Résumé / Détail, masquer/afficher carte, score ou tableau
 - **Créateur de parcours** 🛤️ : génération d'itinéraires vélo/running via BRouter (routes goudronnées, pas de gravier ni chemin privé), analyse Overpass (types de routes, état de surface, pistes cyclables), export GPX, mode boucle
 - **Meilleur horaire de départ** ⏰ : analyse météo heure par heure sur un GPX pour recommander l'heure de départ optimale
+- **Intégration Strava** 🚴 : bouton « Connect with Strava » (OAuth 2.0) pour importer en 1 clic ses itinéraires créés et ses sorties récentes (avec mode démo inclus)
 - **Course à pied** 🏃 : météo horaire pour une sortie running avec conseils nutrition & vêtements
 - **Villes récentes** 📍 : mémorisation locale des villes recherchées avec suggestions automatiques (activable/désactivable dans À propos)
 - **Plan nutritionnel d'effort** 🍌 : estimation des besoins en glucides et hydratation sur parcours GPX (activable/désactivable dans À propos)
@@ -112,5 +113,6 @@ Les fichiers de production seront dans le dossier `dist/`.
 - L'export PNG utilise le Canvas API natif, sans dépendance externe
 - Leaflet est importé dynamiquement (lazy loading) pour réduire la taille du bundle initial
 - L'historique et les feature flags sont stockés en `localStorage` (clés `tourmeteo_history` et `tourmeteo_flags`)
-- Aucun compte utilisateur, cookie de tracking ou donnée personnelle n'est stocké côté serveur
+- Aucun compte utilisateur, cookie de tracking ou donnée personnelle n'est stocké côté serveur (Sauf pour le cas de 'lacces à l'API Strava)
+- **Strava API (OAuth 2.0)** : connexion via le bouton « Connect with Strava ». En production Vercel, renseignez les variables d'environnement `STRAVA_CLIENT_ID` et `STRAVA_CLIENT_SECRET` issues de votre application développeur [Strava Settings API](https://www.strava.com/settings/api). Un mode démo est disponible pour tester sans identifiants.
 - Données cartographiques © OpenStreetMap contributors (ODbL)

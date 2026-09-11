@@ -66,6 +66,7 @@ readme.md               ← ce fichier
 
 ### Import GPX et export
 - **Import :** charger un fichier `.gpx` pour calculer la distance totale du parcours
+- **Connexion Strava 🚴 :** importer directement ses itinéraires enregistrés ou ses activités récentes en 1 clic (authentification OAuth 2.0 ou mode démo)
 - **Calcul d'itinéraire :** estimation de l'heure de passage à chaque point selon la vitesse moyenne et l'heure de départ renseignées
 - **Reverse-géocodage :** détection automatique de la ville à chaque point d'échantillonnage (Nominatim, throttlé ~1 req/s)
 - **Météo par passage :** température, ressenti, vent (vitesse + direction cardinale), humidité, probabilité de pluie, précipitations et emoji weathercode

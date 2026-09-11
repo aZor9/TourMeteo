@@ -93,6 +93,7 @@
             <li><strong>Préférences utilisateur</strong> — feature flags (carte interactive, historique, nutrition, villes récentes, etc.)</li>
             <li><strong>Historique de trajets</strong> — si la fonctionnalité est activée : noms de fichiers GPX, paramètres de trajet, résultats météo calculés</li>
             <li><strong>Villes récentes</strong> — si la fonctionnalité est activée : noms des villes recherchées pour faciliter les suggestions futures (effaçables à tout moment depuis la recherche ou la page À propos)</li>
+            <li><strong>Connexion Strava</strong> — si vous connectez votre compte : jeton d'accès sécurisé et profil athlète (effaçables à tout moment en cliquant sur « Se déconnecter »)</li>
           </ul>
           <p class="mt-2">Ces données ne quittent jamais votre appareil. Vous pouvez les supprimer à tout moment via les paramètres de votre navigateur (section « Stockage du site » ou « Cookies et données du site »).</p>
         </div>
@@ -126,10 +127,15 @@
                   <td class="px-3 py-2">Coordonnées de la zone affichée</td>
                   <td class="px-3 py-2">Affichage des tuiles de carte</td>
                 </tr>
-                <tr style="background:#FAF9F6;">
+                <tr style="background:#FAF9F6; border-bottom:1px solid #EDE8DB;">
                   <td class="px-3 py-2"><strong>BRouter / OSRM</strong> <span class="text-[10px] opacity-60">(expérimental)</span></td>
                   <td class="px-3 py-2">Points de départ/arrivée GPS</td>
                   <td class="px-3 py-2">Calcul d'itinéraire vélo</td>
+                </tr>
+                <tr style="border-bottom:1px solid #EDE8DB;">
+                  <td class="px-3 py-2"><strong>Strava API</strong> <span class="text-[10px] opacity-60">(si connecté)</span></td>
+                  <td class="px-3 py-2">Jeton d'autorisation OAuth</td>
+                  <td class="px-3 py-2">Import des parcours et sorties de l'athlète</td>
                 </tr>
               </tbody>
             </table>
