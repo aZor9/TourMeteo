@@ -6,10 +6,8 @@ New features :
 
 Améliorations UI/UX:
 - Ajouter option rapide pour basculer unité vitesse (affichage et calculs).
-- Page d'accueil en vrai page d'accueil avec une page daily pour la page d'accueil actuelle, et la page gpx en page Ride
 
-Idée futur :
-🚴 Données segments & perfs : API Strava API
+ fusionner deux fichiers, couper au milieu pour en faire deux parcours,
 
 ---
 

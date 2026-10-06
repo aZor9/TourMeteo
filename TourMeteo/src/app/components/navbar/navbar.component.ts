@@ -14,6 +14,7 @@ export class NavbarComponent {
 
   constructor(private ff: FeatureFlagService) {}
 
+  get showEditor(): boolean { return this.ff.isEnabled('gpxEditor'); }
   get showHourly(): boolean { return this.ff.isEnabled('hourly'); }
   get showRunning(): boolean { return this.ff.isEnabled('running'); }
   get showRouteCreator(): boolean { return this.ff.isEnabled('routeCreator'); }

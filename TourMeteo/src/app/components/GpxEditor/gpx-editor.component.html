@@ -1,0 +1,144 @@
+<div class="px-3 sm:px-8 py-4 max-w-5xl mx-auto pb-24" style="color:#1A1917;">
+
+  <h1 class="text-xl sm:text-2xl font-bold mb-1" style="color:#1B5A96;">Éditeur GPX</h1>
+  <p class="text-sm mb-4" style="color:#72675C;">Ouvrez un fichier, coupez le début ou la fin, supprimez, déplacez ou ajoutez des points, puis exportez-le.</p>
+
+  <!-- Choix du fichier -->
+  <label class="btn btn-primary btn-lg w-full sm:w-auto cursor-pointer mb-3">
+    {{ points.length ? '📂 Ouvrir un autre fichier' : '📂 Choisir un fichier GPX' }}
+    <input type="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" (change)="onFile($event)" class="hidden" />
+  </label>
+
+  <div *ngIf="error" role="alert" class="p-3 mb-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">{{ error }}</div>
+  <div *ngIf="info && !error" role="status" class="p-3 mb-3 rounded-xl text-sm" style="background:#E8F2FB; color:#144A7E;">{{ info }}</div>
+
+  <div *ngIf="!points.length && !error" class="card p-5 text-sm text-center" style="color:#72675C;">
+    Aucun fichier ouvert. Le fichier reste sur votre appareil : il n'est envoyé nulle part.
+  </div>
+
+  <ng-container *ngIf="points.length">
+
+    <!-- Nom + statistiques -->
+    <div class="card p-3 sm:p-4 mb-3">
+      <label for="gpx-name" class="block text-xs font-medium mb-1" style="color:#72675C;">Nom du parcours</label>
+      <input id="gpx-name" type="text" [(ngModel)]="name" maxlength="120" autocomplete="off"
+             class="w-full rounded-xl border px-3 py-2.5 text-base focus:outline-none focus:ring-2"
+             style="border-color:#DDD4C0; background:#fff;" />
+      <div class="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-sm">
+        <span><strong>{{ points.length | number:'1.0-0' }}</strong> points</span>
+        <span><strong>{{ distanceKm | number:'1.1-1' }}</strong> km</span>
+        <span *ngIf="gain !== null">⛰️ <strong>+{{ gain | number:'1.0-0' }}</strong> m</span>
+        <span *ngIf="mergedSegments > 1" style="color:#A09589;">({{ mergedSegments }} segments fusionnés)</span>
+      </div>
+    </div>
+
+    <!-- Carte collée en haut : on voit la coupe en rouge pendant qu'on règle les curseurs -->
+    <div class="sticky sm:static z-30 mb-3" style="top: 56px;">
+      <div class="rounded-xl overflow-hidden border shadow-md" style="border-color:#DDD4C0;">
+        <div #mapEl class="w-full h-[38vh] sm:h-[55vh]" style="min-height: 220px; z-index: 0;"></div>
+      </div>
+      <p *ngIf="tooManyHandles" class="text-[11px] mt-1 px-2 py-1 rounded-lg" style="color:#B45309; background:rgba(255,251,235,0.95);">
+        Beaucoup de points à l'écran : zoomez pour les voir et les déplacer. « Zone » et « Couper » fonctionnent quand même.
+      </p>
+    </div>
+
+    <!-- Couper le début / la fin -->
+    <section class="card p-3 sm:p-4 mb-3" aria-labelledby="cut-title">
+      <h2 id="cut-title" class="text-sm font-semibold mb-1">✂️ Couper le début ou la fin</h2>
+      <p class="text-xs mb-3" style="color:#72675C;">Pratique pour un gros fichier : indiquez combien de points retirer, la partie retirée apparaît en rouge sur la carte.</p>
+
+      <div class="space-y-3">
+        <div>
+          <label for="cut-head" class="flex items-center justify-between text-sm font-medium">
+            <span>Retirer au début</span>
+            <span class="text-xs font-normal" style="color:#72675C;">{{ headKm | number:'1.1-1' }} km</span>
+          </label>
+          <div class="flex items-center gap-3 mt-1">
+            <input id="cut-head" type="number" (focus)="$event.target.select()" inputmode="numeric" min="0" [max]="maxCut" step="1" [(ngModel)]="cutHead" (ngModelChange)="onCutInput('head')"
+                   class="w-28 rounded-xl border px-3 py-2 text-base" style="border-color:#DDD4C0; background:#fff;" />
+            <input type="range" min="0" [max]="maxCut" step="1" [(ngModel)]="cutHead" (ngModelChange)="onCutInput('head')"
+                   aria-label="Points à retirer au début" class="flex-1 h-8" />
+          </div>
+        </div>
+
+        <div>
+          <label for="cut-tail" class="flex items-center justify-between text-sm font-medium">
+            <span>Retirer à la fin</span>
+            <span class="text-xs font-normal" style="color:#72675C;">{{ tailKm | number:'1.1-1' }} km</span>
+          </label>
+          <div class="flex items-center gap-3 mt-1">
+            <input id="cut-tail" type="number" (focus)="$event.target.select()" inputmode="numeric" min="0" [max]="maxCut" step="1" [(ngModel)]="cutTail" (ngModelChange)="onCutInput('tail')"
+                   class="w-28 rounded-xl border px-3 py-2 text-base" style="border-color:#DDD4C0; background:#fff;" />
+            <input type="range" min="0" [max]="maxCut" step="1" [(ngModel)]="cutTail" (ngModelChange)="onCutInput('tail')"
+                   aria-label="Points à retirer à la fin" class="flex-1 h-8" />
+          </div>
+        </div>
+      </div>
+
+      <p *ngIf="cutHead || cutTail" class="text-sm mt-3" aria-live="polite">
+        Il restera <strong>{{ keptPoints | number:'1.0-0' }}</strong> points · <strong>{{ keptKm | number:'1.1-1' }}</strong> km
+      </p>
+      <div class="flex gap-2 mt-3">
+        <button type="button" class="btn btn-primary flex-1" (click)="applyCut()" [disabled]="!cutHead && !cutTail">Appliquer la coupe</button>
+        <button type="button" class="btn btn-ghost" (click)="cancelCut()" [disabled]="!cutHead && !cutTail">Annuler</button>
+      </div>
+    </section>
+
+    <!-- Modes d'édition -->
+    <section class="card p-3 sm:p-4 mb-3" aria-labelledby="tools-title">
+      <h2 id="tools-title" class="text-sm font-semibold mb-2">🛠️ Modifier les points</h2>
+
+      <div class="grid grid-cols-3 gap-2 mb-3" role="group" aria-label="Mode d'édition">
+        <button type="button" (click)="setMode('select')" [attr.aria-pressed]="mode === 'select'"
+                class="btn btn-sm" [ngClass]="mode === 'select' ? 'btn-primary' : 'btn-ghost'">👆 Sélection</button>
+        <button type="button" (click)="setMode('box')" [attr.aria-pressed]="mode === 'box'"
+                class="btn btn-sm" [ngClass]="mode === 'box' ? 'btn-primary' : 'btn-ghost'">▭ Zone</button>
+        <button type="button" (click)="setMode('add')" [attr.aria-pressed]="mode === 'add'"
+                class="btn btn-sm" [ngClass]="mode === 'add' ? 'btn-primary' : 'btn-ghost'">＋ Ajouter</button>
+      </div>
+
+      <p class="text-xs mb-3" style="color:#72675C;">
+        <ng-container [ngSwitch]="mode">
+          <ng-container *ngSwitchCase="'select'">Touchez un point pour le sélectionner, faites-le glisser pour le déplacer.</ng-container>
+          <ng-container *ngSwitchCase="'box'">Faites glisser un rectangle sur la carte pour sélectionner tous les points qu'il contient (la carte ne bouge plus dans ce mode).</ng-container>
+          <ng-container *ngSwitchCase="'add'">Touchez la carte : un point est ajouté au bon endroit du tracé (ou en début / fin).</ng-container>
+        </ng-container>
+      </p>
+
+      <div class="flex flex-wrap gap-2">
+        <button type="button" class="btn btn-danger btn-sm" (click)="deleteSelected()" [disabled]="!selected.size">🗑️ Supprimer ({{ selected.size }})</button>
+        <button type="button" class="btn btn-ghost btn-sm" (click)="selectBetween()" [disabled]="selected.size < 2">↔ Tout entre les extrêmes</button>
+        <button type="button" class="btn btn-ghost btn-sm" (click)="clearSelection()" [disabled]="!selected.size">Désélectionner</button>
+      </div>
+    </section>
+
+    <!-- Actions sur le tracé entier -->
+    <section class="card p-3 sm:p-4 mb-3 mt-3" aria-labelledby="path-title">
+      <h2 id="path-title" class="text-sm font-semibold mb-2">Tracé</h2>
+      <div class="flex flex-wrap gap-2 mb-3">
+        <button type="button" class="btn btn-ghost btn-sm" (click)="undo()" [disabled]="!canUndo">↩︎ Annuler</button>
+        <button type="button" class="btn btn-ghost btn-sm" (click)="redo()" [disabled]="!canRedo">↪︎ Rétablir</button>
+        <button type="button" class="btn btn-ghost btn-sm" (click)="reverse()">🔁 Inverser le sens</button>
+        <button type="button" class="btn btn-ghost btn-sm" (click)="resetAll()" [disabled]="!canUndo">Revenir à l'original</button>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <label for="simplify-tol" class="text-sm">Réduire le nombre de points, tolérance</label>
+        <select id="simplify-tol" [(ngModel)]="simplifyTolerance" class="rounded-lg border px-2 py-1.5 text-sm" style="border-color:#DDD4C0; background:#fff;">
+          <option [ngValue]="2">2 m (fidèle)</option>
+          <option [ngValue]="5">5 m</option>
+          <option [ngValue]="10">10 m</option>
+          <option [ngValue]="25">25 m (léger)</option>
+        </select>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="simplifyTrack()">Simplifier</button>
+      </div>
+    </section>
+  </ng-container>
+
+  <!-- Export : bouton fixe en bas sur mobile -->
+  <div *ngIf="points.length" class="fixed bottom-0 inset-x-0 z-40 p-3 border-t backdrop-blur-xl"
+       style="background:rgba(245,242,236,0.92); border-color:#DDD4C0; padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));">
+    <div class="max-w-5xl mx-auto">
+      <button type="button" class="btn btn-primary btn-lg w-full" (click)="exportGpx()">⬇️ Exporter « {{ name || 'parcours' }} »</button>
+    </div>
+  </div>
+</div>

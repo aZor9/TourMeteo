@@ -24,6 +24,7 @@ const CARDS: FeatureCard[] = [
   { link: '/hourly', icon: '📈', title: 'Graphiques', text: 'Pluie, vent, UV et qualité de l\'air heure par heure, en graphiques.', flag: 'hourly' },
   { link: '/daily', icon: '📅', title: 'Daily', text: 'Comparez la météo de plusieurs villes sur une même journée.' },
   { link: '/gpx', icon: '🚴', title: 'Ride', text: 'Importez un parcours : météo à chaque passage, score de sortie et tenue conseillée.' },
+  { link: '/editor', icon: '✂️', title: 'Éditeur GPX', text: 'Coupez, déplacez, ajoutez ou supprimez des points, puis réexportez votre fichier.', flag: 'gpxEditor' },
   { link: '/best-departure', icon: '⏰', title: 'Meilleur départ', text: 'Trouvez l\'heure de départ idéale pour votre parcours.', flag: 'bestDeparture' },
   { link: '/route-creator', icon: '🛤️', title: 'Créer un parcours', text: 'Générez une boucle vélo ou running et exportez-la en GPX.', flag: 'routeCreator' },
   { link: '/run', icon: '🏃', title: 'Running', text: 'Météo, nutrition et vêtements pour votre sortie à pied.', flag: 'running' }

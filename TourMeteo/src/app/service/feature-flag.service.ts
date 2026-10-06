@@ -23,6 +23,8 @@ export interface FeatureFlags {
   strava: boolean;
   /** Show hourly charts page (/hourly) */
   hourly: boolean;
+  /** Show GPX editor page (/editor) */
+  gpxEditor: boolean;
 }
 
 const DEFAULTS: FeatureFlags = {
@@ -35,7 +37,8 @@ const DEFAULTS: FeatureFlags = {
   bestDeparture: false,
   recentCities: true,
   strava: false,
-  hourly: true
+  hourly: true,
+  gpxEditor: false
 };
 
 @Injectable({ providedIn: 'root' })

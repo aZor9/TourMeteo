@@ -16,5 +16,10 @@ export const routes: Routes = [
 		canActivate: [featureFlagGuard('hourly')],
 		loadComponent: () => import('./components/Hourly/hourly.component').then(m => m.HourlyComponent)
 	},
+	{
+		path: 'editor',
+		canActivate: [featureFlagGuard('gpxEditor')],
+		loadComponent: () => import('./components/GpxEditor/gpx-editor.component').then(m => m.GpxEditorComponent)
+	},
 	{ path: '**', redirectTo: '' },
 ];

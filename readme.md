@@ -75,6 +75,13 @@ readme.md               ← ce fichier
 - Bandeau emoji toutes les 3 h, navigation jour précédent / suivant, bouton **Ma position** (géolocalisation)
 - URL partageable : `/hourly?city=Lille&date=2026-10-06`
 
+### Éditeur GPX (`/editor`) ✂️ — feature flag **dev** `gpxEditor` (désactivé par défaut ; À propos → taper 5× sur le badge de version → Fonctionnalités futures)
+- Ouvrir un `.gpx` (15 Mo max, traces ou routes), tout reste sur l'appareil
+- **Couper le début / la fin** : nombre de points à retirer (champ + curseur), aperçu en rouge sur la carte, km retirés (pensé pour les gros fichiers sur mobile)
+- Sélectionner des points (toucher, rectangle de zone, « tout entre les extrêmes »), les **supprimer**, les **déplacer** (glisser) ou en **ajouter** (toucher la carte)
+- Simplifier (Douglas-Peucker), inverser le sens, annuler / rétablir (Ctrl+Z / Ctrl+Y), revenir à l'original
+- Renommer le parcours et **exporter** un GPX 1.1 (altitude et heures conservées)
+
 ### Import GPX et export
 - **Import :** charger un fichier `.gpx` pour calculer la distance totale du parcours
 - **Connexion Strava 🚴 :** importer directement ses itinéraires enregistrés ou ses activités récentes en 1 clic (authentification OAuth 2.0 ou mode démo)
