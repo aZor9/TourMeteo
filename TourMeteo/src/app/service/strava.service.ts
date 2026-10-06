@@ -86,7 +86,8 @@ export class StravaService {
       response_type: 'code',
       redirect_uri: window.location.origin + '/gpx',
       approval_prompt: 'auto',
-      scope: 'read,activity:read_all',
+      // read_all : nécessaire pour lister les itinéraires (souvent privés) ; activity:read_all pour les sorties
+      scope: 'read,read_all,activity:read_all',
       state
     });
     window.location.href = `https://www.strava.com/oauth/authorize?${params.toString()}`;
@@ -114,7 +115,7 @@ export class StravaService {
   }
 
   /** Échange le code OAuth reçu lors du callback contre un token */
-  async handleCallback(code: string, state: string | null): Promise<{ success: boolean; message?: string }> {
+  async handleCallback(code: string, state: string | null, grantedScope: string | null = null): Promise<{ success: boolean; message?: string }> {
     const expected = sessionStorage.getItem(STATE_KEY);
     sessionStorage.removeItem(STATE_KEY);
     if (!expected || expected !== state) {
@@ -135,6 +136,13 @@ export class StravaService {
         }
         this.isDemo = false;
         this.persistSession();
+        // Strava renvoie les autorisations réellement accordées : l'utilisateur peut avoir décoché des cases
+        if (grantedScope) {
+          const granted = grantedScope.split(',');
+          if (!granted.includes('read_all') || !granted.includes('activity:read_all')) {
+            return { success: true, message: 'Connecté, mais certaines autorisations ont été refusées : les itinéraires ou sorties privés ne seront pas visibles. Reconnectez-vous en laissant toutes les cases cochées.' };
+          }
+        }
         return { success: true };
       }
       return { success: false, message: res?.message || 'Réponse inattendue de Strava.' };
@@ -165,6 +173,16 @@ export class StravaService {
       throw new Error('Session Strava expirée, veuillez vous reconnecter.');
     }
     return this.accessToken;
+  }
+
+  /** Message lisible selon le code HTTP renvoyé par Strava (via notre proxy) */
+  private explain(err: any, fallback: string): Error {
+    switch (err?.status) {
+      case 401: return new Error('Autorisation Strava expirée ou révoquée : déconnectez-vous puis reconnectez-vous.');
+      case 403: return new Error('Strava refuse l\x27accès (403) : autorisations insuffisantes. Déconnectez-vous puis reconnectez-vous en laissant toutes les cases cochées.');
+      case 429: return new Error('Limite de requêtes Strava atteinte, réessayez dans quelques minutes.');
+      default: return new Error(err?.error?.message || err?.message || fallback);
+    }
   }
 
   private applyTokenResponse(res: any): void {
@@ -203,7 +221,7 @@ export class StravaService {
     } catch (err: any) {
       // On remonte l'erreur (affichée dans la modale) au lieu de basculer silencieusement
       // sur des données de démo, ce qui masquait les vrais problèmes de connexion.
-      throw new Error(err?.error?.message || err?.message || 'Impossible de récupérer les itinéraires Strava.');
+      throw this.explain(err, 'Impossible de récupérer les itinéraires Strava.');
     }
   }
 
@@ -233,7 +251,7 @@ export class StravaService {
         subType: a.sport_type || a.type || 'Ride'
       })).filter(a => !!a.polyline);
     } catch (err: any) {
-      throw new Error(err?.error?.message || err?.message || 'Impossible de récupérer les activités Strava.');
+      throw this.explain(err, 'Impossible de récupérer les activités Strava.');
     }
   }
 

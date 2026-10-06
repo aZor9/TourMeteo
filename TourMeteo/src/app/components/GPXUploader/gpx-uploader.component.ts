@@ -103,16 +103,16 @@ export class GpxUploaderComponent implements OnInit {
       setTimeout(() => this.stravaStatusMessage = '', 6000);
     } else if (code) {
       this.stravaStatusMessage = 'Connexion à Strava en cours…';
-      const result = await this.strava.handleCallback(code, qp.get('state'));
+      const result = await this.strava.handleCallback(code, qp.get('state'), qp.get('scope'));
       // Nettoyer l'URL du navigateur
       this.router.navigate([], { queryParams: {}, replaceUrl: true });
       if (result.success) {
-        this.stravaStatusMessage = '✅ Compte Strava connecté avec succès !';
+        this.stravaStatusMessage = result.message ? `⚠️ ${result.message}` : '✅ Compte Strava connecté avec succès !';
         this.showStravaModal = true;
       } else {
         this.stravaStatusMessage = `⚠️ ${result.message || 'Erreur lors de la connexion Strava.'}`;
       }
-      setTimeout(() => this.stravaStatusMessage = '', 6000);
+      setTimeout(() => this.stravaStatusMessage = '', result.message ? 12000 : 6000);
     }
 
     if (this.gpxState.has() && !this.fileName) {
