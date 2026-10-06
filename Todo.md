@@ -15,32 +15,12 @@ Idée futur :
 
 # Backlog priorisé (revue du projet — octobre 2026)
 
-## ✅ Fait dans cette revue
-- [x] Nouvelle page d'accueil `/` (météo du moment + 12 h, verdict, lieux récents, cartes vers les fonctionnalités) ; l'ancienne accueil multi-villes devient `/daily` ; routes en lazy loading (bundle initial 612 → 376 kB)
-- [x] Feature flag `hourly` (activé par défaut, À propos → Fonctionnalités) + guard de route
-- [x] `/hourly` enrichie : rafales, UV, nuages, pression, point de rosée, visibilité, lever/coucher, qualité de l'air (PM, indice européen) et pollens, bandes nuit + ligne « maintenant », lieux récents
-- [x] Fuseau horaire : `timezone=auto` sur les appels Open-Meteo (les heures étaient en GMT, décalées de 1-2 h en France)
-- [x] Page `/hourly` : météo d'un lieu sur une journée en graphiques (pluie + proba, température/ressenti, vent), bouton « Ma position », jour précédent/suivant, URL partageable `?city=…&date=…`
-- [x] Strava : Client ID servi par `/api/strava-config` (plus de `prompt()`), paramètre OAuth `state` (anti-CSRF), refresh automatique du token (expire toutes les 6 h), erreurs réelles affichées (plus de bascule silencieuse sur les données démo), gestion du refus d'autorisation
-- [x] API Strava : fonctions en CommonJS (`module.exports`), plus de CORS `*`, `athlete_id` validé (anti path-injection), `grant_type` en liste blanche, token uniquement via header `Authorization`, timeouts, `Cache-Control: no-store`
-- [x] `vercel.json` : HSTS, CSP, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy
-- [x] PWA : `theme_color`/`background_color`/`lang`/`shortcuts` dans le manifest, balises iOS, cache SW des appels Open-Meteo (réseau d'abord, repli cache = utile en montagne) et Nominatim (30 j)
-- [x] `index.html` : `lang="fr"`, doublon de police supprimé, config Tailwind externalisée
-
-## ⚡ Performance (fait)
-- [x] Logo 432 Ko → 8 Ko dans la navbar (icônes 64/192/512 px), manifest corrigé
-- [x] Cache `immutable` d'un an sur les fichiers hashés (main/chunk/styles), 7 jours sur logos et polices
-- [x] Tailwind compilé au lieu du CDN (CSS 10 Ko transférés, aucun script tiers bloquant)
-
 ## 🔴 Sécurité — à faire
 - [ ] **Vérifier sur Vercel** : `STRAVA_CLIENT_ID` + `STRAVA_CLIENT_SECRET` définis (Production **et** Preview), et « Authorization Callback Domain » = `meteo.hugo-lembrez.fr` dans https://www.strava.com/settings/api. Sans ça, Strava ne marchera jamais.
 - [ ] Tokens Strava en `localStorage` : lisibles par n'importe quel script de la page (XSS). Cible : le serveur échange le code et pose le refresh token dans un cookie `HttpOnly; Secure; SameSite=Lax`, le front ne voit jamais de token.
-- [x] CDN Tailwind remplacé par Tailwind v3 compilé au build (plus de flash de page sans style, plus de script tiers ; retirer `'unsafe-inline'` de la CSP reste à faire)
 - [ ] Durcir davantage la CSP (hash/nonce) une fois Tailwind compilé ; tester avec `Content-Security-Policy-Report-Only` d'abord
 - [ ] Rate limiting des fonctions `/api/*` (Vercel WAF / Upstash Ratelimit)
-- [x] Angular 21.1.3 → 21.2.25 + `npm audit fix` : **0 vulnérabilité en production** (restent 9 alertes dans des outils de dev non embarqués : CLI, chokidar de Tailwind…)
 - [ ] Adapter la date d'expiration de `public/.well-known/security.txt` (créé, expire 2027-10-06)
-- [x] Parsing GPX : 15 Mo max, fichier invalide détecté, coordonnées hors limites écartées
 - [ ] `User-Agent` dans `CityService` : ignoré par les navigateurs (header interdit). Pour respecter la politique Nominatim, passer par un proxy `/api/geocode` avec cache + vrai User-Agent (retire aussi l'email du bundle front)
 
 ## 📊 Stats / observabilité (outils externes)
@@ -83,7 +63,6 @@ Déjà présents : Vercel Analytics + Speed Insights.
 - [ ] Un service `localStorage` commun (try/catch + versioning des clés)
 - [ ] Tests : `app.spec.ts` seul pour l'instant → tests Vitest sur `weather-utils`, `decodePolyline`, parsing GPX, ride-score
 - [ ] CI GitHub Actions : `npm ci && ng build && ng test` sur chaque PR (branche `dev` → `main`)
-- [x] Version : source unique = `package.json` (2.3.0), lue par la page À propos et les `User-Agent`
 - [ ] `Dockerfile` : image `node:20` OK, ajouter `.dockerignore` (`node_modules`, `dist`)
 - [ ] Environnement local : `vercel dev` pour tester `/api/*` (ou proxy dans `ng serve`), sinon Strava ne peut pas marcher en local
 
