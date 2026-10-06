@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 
 export interface StravaAthlete {
   id: number;
@@ -68,12 +68,14 @@ export class StravaService {
   async connect(): Promise<{ success: boolean; message?: string }> {
     let clientId: string;
     try {
-      const cfg = await firstValueFrom(this.http.get<{ clientId: string }>('/api/strava-config'));
+      const cfg = await firstValueFrom(this.http.get<{ clientId: string }>('/api/strava-config').pipe(timeout(10000)));
       clientId = cfg.clientId;
     } catch (err: any) {
       return {
         success: false,
-        message: err?.error?.message || 'Strava n\'est pas configuré sur ce serveur (API /api/strava-config indisponible).'
+        message: err?.name === 'TimeoutError'
+          ? 'Le serveur met trop de temps à répondre, réessayez dans un instant.'
+          : err?.error?.message || 'Strava n\'est pas configuré sur ce serveur (API /api/strava-config indisponible).'
       };
     }
 
@@ -177,9 +179,12 @@ export class StravaService {
 
   /** Message lisible selon le code HTTP renvoyé par Strava (via notre proxy) */
   private explain(err: any, fallback: string): Error {
+    // Détail renvoyé par Strava (ex : "Authorization Error — read_permission: missing") pour faciliter le diagnostic
+    const detail = [err?.error?.message, ...(err?.error?.errors ?? []).map((e: any) => [e.resource, e.field, e.code].filter(Boolean).join('/'))].filter(Boolean).join(' · ');
+    const suffix = detail ? ` [${detail}]` : '';
     switch (err?.status) {
-      case 401: return new Error('Autorisation Strava expirée ou révoquée : déconnectez-vous puis reconnectez-vous.');
-      case 403: return new Error('Strava refuse l\x27accès (403) : autorisations insuffisantes. Déconnectez-vous puis reconnectez-vous en laissant toutes les cases cochées.');
+      case 401: return new Error('Autorisation Strava expirée ou révoquée : déconnectez-vous puis reconnectez-vous.' + suffix);
+      case 403: return new Error('Strava refuse l\x27accès (403) : autorisations insuffisantes. Déconnectez-vous puis reconnectez-vous en laissant toutes les cases cochées.' + suffix);
       case 429: return new Error('Limite de requêtes Strava atteinte, réessayez dans quelques minutes.');
       default: return new Error(err?.error?.message || err?.message || fallback);
     }

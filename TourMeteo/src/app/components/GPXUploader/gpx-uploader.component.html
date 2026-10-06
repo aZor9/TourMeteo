@@ -70,8 +70,15 @@
         </div>
 
         <div *ngIf="strava.isConnected && strava.currentAthlete" class="flex items-center gap-2.5 mb-4 mt-1">
-          <img *ngIf="strava.currentAthlete.profile" [src]="strava.currentAthlete.profile" alt="Avatar"
+          <img *ngIf="strava.currentAthlete.profile && !avatarFailed" [src]="strava.currentAthlete.profile" alt="Avatar"
+               referrerpolicy="no-referrer" (error)="avatarFailed = true"
                class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm" />
+          <!-- Repli quand la photo ne charge pas : initiales -->
+          <div *ngIf="!strava.currentAthlete.profile || avatarFailed" aria-hidden="true"
+               class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white border-2 border-white shadow-sm"
+               style="background:#FC4C02;">
+            {{ (strava.currentAthlete.firstname || '?').charAt(0) }}{{ (strava.currentAthlete.lastname || '').charAt(0) }}
+          </div>
           <div class="text-xs">
             <p class="font-semibold text-slate-800 leading-tight">{{ strava.currentAthlete.firstname }} {{ strava.currentAthlete.lastname }}</p>
             <p class="text-slate-400 text-[11px]">{{ strava.currentAthlete.city || 'Athlète Strava' }}</p>
@@ -82,13 +89,17 @@
       <!-- Action buttons -->
       <div>
         <div *ngIf="!strava.isConnected" class="space-y-2">
-          <button (click)="connectStrava()" type="button"
-                  class="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold text-white shadow-sm hover:opacity-95 active:scale-[0.99] transition cursor-pointer"
+          <button (click)="connectStrava()" type="button" [disabled]="stravaConnecting" [attr.aria-busy]="stravaConnecting"
+                  class="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold text-white shadow-sm hover:opacity-95 active:scale-[0.99] transition cursor-pointer disabled:opacity-70 disabled:cursor-wait"
                   style="background: #FC4C02;">
-            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+            <svg *ngIf="stravaConnecting" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            <svg *ngIf="!stravaConnecting" class="w-4 h-4 fill-current" viewBox="0 0 24 24">
               <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7.01 13.828h4.172"/>
             </svg>
-            <span>Connect with Strava</span>
+            <span>{{ stravaConnecting ? 'Redirection vers Strava…' : 'Connect with Strava' }}</span>
           </button>
           <div class="text-center">
             <button (click)="enableStravaDemo()" type="button"

@@ -8,7 +8,7 @@
   ],
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/((?!ngsw-worker\\.js).*)",
       "headers": [
         {
           "key": "Strict-Transport-Security",
@@ -37,6 +37,35 @@
       ]
     },
     {
+      "source": "/ngsw-worker.js",
+      "headers": [
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), payment=(), usb=(), geolocation=(self)"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; connect-src https:; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+        }
+      ]
+    },
+    {
       "source": "/(ngsw-worker\\.js|ngsw\\.json|index\\.html|manifest\\.webmanifest)",
       "headers": [
         {
@@ -46,7 +75,7 @@
       ]
     },
     {
-      "source": "/((?:main|chunk|styles|polyfills)-[A-Za-z0-9]+.(?:js|css))",
+      "source": "/((?:main|chunk|styles|polyfills)-[A-Za-z0-9]+\\.(?:js|css))",
       "headers": [
         {
           "key": "Cache-Control",
@@ -55,7 +84,7 @@
       ]
     },
     {
-      "source": "/(logo-[0-9]+.png|media/.*)",
+      "source": "/(logo-[0-9]+\\.png|media/.*)",
       "headers": [
         {
           "key": "Cache-Control",

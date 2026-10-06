@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef, ViewChild, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, HostListener, ViewChild, OnInit } from '@angular/core';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -59,6 +59,10 @@ export class GpxUploaderComponent implements OnInit {
   showNutrition = false;
   showStravaModal = false;
   stravaStatusMessage = '';
+  /** Redirection OAuth en cours (désactive le bouton, affiche un spinner) */
+  stravaConnecting = false;
+  /** La photo de profil Strava n'a pas pu être chargée : on affiche les initiales */
+  avatarFailed = false;
 
   /** Feature flag getters */
   get historyEnabled(): boolean { return this.featureFlags.isEnabled('history'); }
@@ -132,9 +136,22 @@ export class GpxUploaderComponent implements OnInit {
     this.showStravaModal = false;
   }
 
+  /** Retour arrière depuis la page Strava (cache du navigateur) : on remet le bouton à l'état initial */
+  @HostListener('window:pageshow', ['$event'])
+  onPageShow(e: PageTransitionEvent) {
+    if (e.persisted) {
+      this.stravaConnecting = false;
+      this.cd.detectChanges();
+    }
+  }
+
   async connectStrava() {
+    if (this.stravaConnecting) return;
+    this.stravaConnecting = true;
+    this.cd.detectChanges();
     const result = await this.strava.connect();
     if (!result.success) {
+      this.stravaConnecting = false;
       this.stravaStatusMessage = `⚠️ ${result.message}`;
       setTimeout(() => this.stravaStatusMessage = '', 8000);
       this.cd.detectChanges();
