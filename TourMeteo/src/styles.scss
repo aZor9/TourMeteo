@@ -173,3 +173,8 @@ body {
 }
 
 
+
+/* ─── Tailwind (compilé au build, placé en fin de fichier comme l'ancien CDN pour garder la même priorité) ─── */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

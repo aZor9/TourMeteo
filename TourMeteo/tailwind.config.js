@@ -1,5 +1,6 @@
-// Config Tailwind (CDN) externalisée : évite un <script> inline dans index.html
-tailwind.config = {
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ['./src/**/*.{html,ts}'],
   darkMode: 'class',
   theme: {
     extend: {
@@ -19,5 +20,6 @@ tailwind.config = {
       },
       borderRadius: { 'DEFAULT': '0.375rem', 'lg': '0.625rem', 'xl': '0.875rem', '2xl': '1.25rem', 'full': '9999px' }
     }
-  }
+  },
+  plugins: [require('@tailwindcss/forms'), require('@tailwindcss/container-queries')]
 };

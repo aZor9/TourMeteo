@@ -6,7 +6,7 @@
     <h1 class="text-2xl font-bold" style="color:#1A1917;">{{ title }}</h1>
     <p class="mt-1 text-sm" style="color:#72675C;">Meteo Ride — application de comparaison météo entre plusieurs villes, heure par heure, pensée pour les cyclistes et randonneurs.</p>
     <div class="flex flex-wrap items-center gap-2 mt-3 text-sm">
-      <span (click)="onVersionTap()" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold cursor-default select-none text-xs" style="background:#E8F2FB; color:#1B5A96;" title="Version">v2.2.1</span>
+      <span (click)="onVersionTap()" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold cursor-default select-none text-xs" style="background:#E8F2FB; color:#1B5A96;" title="Version">v2.2.2</span>
       <span class="text-xs" style="color:#A09589;">Angular 21 · Tailwind CSS · Leaflet</span>
       <span *ngIf="devTapCount >= 3 && devTapCount < 5" class="text-xs animate-pulse" style="color:#DDD4C0;">{{ 5 - devTapCount }} tap(s)…</span>
       <span *ngIf="showDevOptions" class="text-xs font-semibold" style="color:#22874C;">🔓 Mode dev activé</span>

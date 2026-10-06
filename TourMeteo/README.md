@@ -31,7 +31,7 @@ Application Angular de comparaison météo entre plusieurs villes, heure par heu
 ## Stack technique
 
 - **Angular 21** avec composants standalone
-- **Tailwind CSS** (CDN)
+- **Tailwind CSS** v3 (compilé au build, config dans `tailwind.config.js`)
 - **Leaflet** pour les cartes interactives (BSD 2-Clause)
 - **Open-Meteo API** pour les données météo horaires
 - **Nominatim / OpenStreetMap** pour le géocodage et reverse-géocodage
