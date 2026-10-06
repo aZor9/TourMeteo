@@ -27,15 +27,20 @@ Idée futur :
 - [x] PWA : `theme_color`/`background_color`/`lang`/`shortcuts` dans le manifest, balises iOS, cache SW des appels Open-Meteo (réseau d'abord, repli cache = utile en montagne) et Nominatim (30 j)
 - [x] `index.html` : `lang="fr"`, doublon de police supprimé, config Tailwind externalisée
 
+## ⚡ Performance (fait)
+- [x] Logo 432 Ko → 8 Ko dans la navbar (icônes 64/192/512 px), manifest corrigé
+- [x] Cache `immutable` d'un an sur les fichiers hashés (main/chunk/styles), 7 jours sur logos et polices
+- [x] Tailwind compilé au lieu du CDN (CSS 10 Ko transférés, aucun script tiers bloquant)
+
 ## 🔴 Sécurité — à faire
 - [ ] **Vérifier sur Vercel** : `STRAVA_CLIENT_ID` + `STRAVA_CLIENT_SECRET` définis (Production **et** Preview), et « Authorization Callback Domain » = `meteo.hugo-lembrez.fr` dans https://www.strava.com/settings/api. Sans ça, Strava ne marchera jamais.
 - [ ] Tokens Strava en `localStorage` : lisibles par n'importe quel script de la page (XSS). Cible : le serveur échange le code et pose le refresh token dans un cookie `HttpOnly; Secure; SameSite=Lax`, le front ne voit jamais de token.
 - [x] CDN Tailwind remplacé par Tailwind v3 compilé au build (plus de flash de page sans style, plus de script tiers ; retirer `'unsafe-inline'` de la CSP reste à faire)
 - [ ] Durcir davantage la CSP (hash/nonce) une fois Tailwind compilé ; tester avec `Content-Security-Policy-Report-Only` d'abord
 - [ ] Rate limiting des fonctions `/api/*` (Vercel WAF / Upstash Ratelimit)
-- [ ] `npm audit` signale 47 vulnérabilités (surtout toolchain de dev : `ws`, etc., pas embarquées dans le bundle). Faire `npm audit fix` (sans `--force`), puis activer Dependabot / Renovate sur le repo GitHub
+- [x] Angular 21.1.3 → 21.2.25 + `npm audit fix` : **0 vulnérabilité en production** (restent 9 alertes dans des outils de dev non embarqués : CLI, chokidar de Tailwind…)
 - [ ] Adapter la date d'expiration de `public/.well-known/security.txt` (créé, expire 2027-10-06)
-- [ ] Parsing GPX : limiter la taille du fichier (ex. 10 Mo) et le nombre de points avant `DOMParser`
+- [x] Parsing GPX : 15 Mo max, fichier invalide détecté, coordonnées hors limites écartées
 - [ ] `User-Agent` dans `CityService` : ignoré par les navigateurs (header interdit). Pour respecter la politique Nominatim, passer par un proxy `/api/geocode` avec cache + vrai User-Agent (retire aussi l'email du bundle front)
 
 ## 📊 Stats / observabilité (outils externes)
@@ -78,7 +83,7 @@ Déjà présents : Vercel Analytics + Speed Insights.
 - [ ] Un service `localStorage` commun (try/catch + versioning des clés)
 - [ ] Tests : `app.spec.ts` seul pour l'instant → tests Vitest sur `weather-utils`, `decodePolyline`, parsing GPX, ride-score
 - [ ] CI GitHub Actions : `npm ci && ng build && ng test` sur chaque PR (branche `dev` → `main`)
-- [ ] Mettre à jour `package.json` `name`/`version` et le version badge de la page À propos depuis une seule source
+- [x] Version : source unique = `package.json` (2.3.0), lue par la page À propos et les `User-Agent`
 - [ ] `Dockerfile` : image `node:20` OK, ajouter `.dockerignore` (`node_modules`, `dist`)
 - [ ] Environnement local : `vercel dev` pour tester `/api/*` (ou proxy dans `ng serve`), sinon Strava ne peut pas marcher en local
 

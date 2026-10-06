@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { APP_VERSION } from '../version';
 
 @Injectable({ providedIn: 'root' })
 export class CityService {
   // URL pour transformer un nom de ville en latitude/longitude
   private geocodeApiUrl = 'https://nominatim.openstreetmap.org/search';
-  private appId = 'MeteoRide/2.2.0 (https://meteo-ride.vercel.app)';
+  private appId = `MeteoRide/${APP_VERSION} (https://meteo.hugo-lembrez.fr)`;
   /** Cache mémoire : évite de re-solliciter Nominatim (1 req/s max) pour une ville déjà vue */
   private cache = new Map<string, { lat: string; lon: string }>();
 

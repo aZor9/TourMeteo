@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FeatureFlagService, FeatureFlags } from '../../service/feature-flag.service';
 import { RecentCitiesService } from '../../service/recent-cities.service';
+import { APP_VERSION } from '../../version';
 
 interface AccordionSection {
   id: string;
@@ -21,6 +22,7 @@ interface AccordionSection {
 })
 export class AboutComponent {
   title = 'À propos';
+  version = APP_VERSION;
 
   /** Hidden dev mode: tap version badge 5 times to reveal */
   devTapCount = 0;

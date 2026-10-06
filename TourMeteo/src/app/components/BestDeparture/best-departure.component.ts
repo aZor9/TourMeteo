@@ -35,6 +35,8 @@ interface ParsedGPXPoint {
   lon: number;
 }
 
+import { APP_VERSION } from '../../version';
+
 @Component({
   selector: 'app-best-departure',
   standalone: true,
@@ -393,7 +395,7 @@ export class BestDepartureComponent implements OnInit {
   private async reverseGeocode(lat: number, lon: number): Promise<string> {
     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&email=hugo.lembrez@gmail.com`, {
       headers: {
-        'User-Agent': 'MeteoRide/2.2.0 (https://meteo-ride.vercel.app)',
+        'User-Agent': `MeteoRide/${APP_VERSION} (https://meteo.hugo-lembrez.fr)`,
         'Accept': 'application/json'
       }
     });

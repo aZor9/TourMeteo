@@ -19,6 +19,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { GpxStateService } from '../../service/gpx-state.service';
 import { StravaService } from '../../service/strava.service';
 
+import { APP_VERSION } from '../../version';
+
 @Component({
   selector: 'app-gpx-uploader',
   standalone: true,
@@ -170,6 +172,12 @@ export class GpxUploaderComponent implements OnInit {
   onFileChange(ev: Event) {
     const input = ev.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
+    // Un GPX réaliste fait quelques Mo : au-delà, on refuse (évite de figer l'onglet)
+    if (input.files[0].size > 15 * 1024 * 1024) {
+      this.parseMessage = 'Fichier trop volumineux (15 Mo maximum).';
+      input.value = '';
+      return;
+    }
     this.fileName = input.files[0].name;
     const reader = new FileReader();
     reader.onload = () => this.parseGpx(reader.result as string);
@@ -184,12 +192,17 @@ export class GpxUploaderComponent implements OnInit {
       const doc = parser.parseFromString(xmlText, 'application/xml');
       const all = Array.from(doc.getElementsByTagName('*')) as Element[];
       const trkpts = all.filter(e => (e.localName || '').toLowerCase() === 'trkpt');
+      if (doc.getElementsByTagName('parsererror').length > 0) {
+        this.parseMessage = 'Fichier GPX invalide ou corrompu.';
+        return;
+      }
+      // On écarte les points aux coordonnées absentes ou hors limites
       this.points = trkpts.map(p => ({
-        lat: parseFloat(p.getAttribute('lat') || '0'),
-        lon: parseFloat(p.getAttribute('lon') || '0')
-      }));
+        lat: parseFloat(p.getAttribute('lat') ?? ''),
+        lon: parseFloat(p.getAttribute('lon') ?? '')
+      })).filter(p => isFinite(p.lat) && isFinite(p.lon) && Math.abs(p.lat) <= 90 && Math.abs(p.lon) <= 180);
       this.parseMessage = trkpts.length > 0
-        ? `Points trouvés: ${trkpts.length}`
+        ? `Points trouvés: ${this.points.length}`
         : 'Aucun point trkpt trouvé dans le GPX.';
 
       let totalMeters = 0;
@@ -530,7 +543,7 @@ export class GpxUploaderComponent implements OnInit {
   private async reverseGeocode(lat: number, lon: number): Promise<string> {
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&email=hugo.lembrez@gmail.com`;
     const res = await firstValueFrom(
-      this.http.get<any>(url, { headers: { 'User-Agent': 'MeteoRide/2.2.0 (https://meteo-ride.vercel.app)' } })
+      this.http.get<any>(url, { headers: { 'User-Agent': `MeteoRide/${APP_VERSION} (https://meteo.hugo-lembrez.fr)` } })
     );
     const addr = res?.address;
     return addr?.city || addr?.town || addr?.village || addr?.municipality || addr?.county || 'Inconnu';
