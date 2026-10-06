@@ -64,6 +64,17 @@ readme.md               ← ce fichier
 - Filtres : température, vent, résumé météo
 - **Vue mobile** : cartes avec emoji météo en fond (opacité élevée), indicateur jour/nuit sous l'heure, affichage des précipitations (probabilité + quantité)
 
+### Accueil (`/`) et Daily (`/daily`)
+- **Accueil** : météo du moment pour la dernière ville / votre position, 12 prochaines heures, phrase de synthèse, lieux récents en un tap, accès aux fonctionnalités
+- **Daily** : comparaison multi-villes (ancienne page d'accueil)
+
+### Météo heure par heure en graphiques (`/hourly`) 📈 — feature flag `hourly` (activé par défaut)
+- Un lieu + un jour → graphiques **précipitations** (mm + probabilité), **température / ressenti** et **vent** (Chart.js, chargé à la demande)
+- Aussi : rafales, UV, nuages, pression, point de rosée, visibilité, lever/coucher du soleil, **qualité de l'air et pollens** (API Open-Meteo Air Quality, pollens en Europe uniquement)
+- Tuiles de synthèse (min/max, cumul de pluie, proba max, vent max) + phrase « Pluie entre 14h et 17h »
+- Bandeau emoji toutes les 3 h, navigation jour précédent / suivant, bouton **Ma position** (géolocalisation)
+- URL partageable : `/hourly?city=Lille&date=2026-10-06`
+
 ### Import GPX et export
 - **Import :** charger un fichier `.gpx` pour calculer la distance totale du parcours
 - **Connexion Strava 🚴 :** importer directement ses itinéraires enregistrés ou ses activités récentes en 1 clic (authentification OAuth 2.0 ou mode démo)
@@ -166,6 +177,16 @@ Le projet est configuré pour un déploiement automatique depuis GitHub (branche
   ]
 }
 ```
+
+> Le `vercel.json` réel contient aussi les en-têtes de sécurité (HSTS, CSP, X-Frame-Options, etc.) : voir le fichier.
+
+### Strava (variables d'environnement)
+| Variable | Rôle |
+|----------|------|
+| `STRAVA_CLIENT_ID` | Exposée au front via `/api/strava-config` (public par nature) |
+| `STRAVA_CLIENT_SECRET` | Reste côté serveur, utilisée par `/api/strava-token` |
+
+À définir dans Vercel → Settings → Environment Variables (Production **et** Preview), puis redéployer. Dans https://www.strava.com/settings/api, le champ « Authorization Callback Domain » doit valoir le domaine du site (ex. `meteo-ride.vercel.app`, sans `https://`). Les fonctions `/api/*` n'existent pas sous `ng serve` : utiliser `vercel dev` pour tester Strava en local.
 
 Le rewrite SPA redirige toutes les routes vers `index.html` pour que le router Angular gère la navigation côté client (`/about`, `/gpx`, etc.).
 

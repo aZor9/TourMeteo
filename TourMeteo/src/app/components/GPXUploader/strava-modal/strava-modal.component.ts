@@ -57,8 +57,8 @@ export class StravaModalComponent implements OnInit, OnChanges {
       } else {
         this.activities = await this.strava.getActivities();
       }
-    } catch {
-      this.errorMessage = 'Impossible de récupérer les données depuis Strava.';
+    } catch (err: any) {
+      this.errorMessage = err?.message || 'Impossible de récupérer les données depuis Strava.';
     } finally {
       this.loading = false;
     }

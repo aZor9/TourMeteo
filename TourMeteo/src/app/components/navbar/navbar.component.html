@@ -14,25 +14,35 @@
          style="color:#3D3733;">
         Accueil
       </a>
+      <a *ngIf="showHourly" routerLink="/hourly" routerLinkActive="nav-link-active"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+         style="color:#3D3733;">
+        Graphiques
+      </a>
+      <a routerLink="/daily" routerLinkActive="nav-link-active"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+         style="color:#3D3733;">
+        Daily
+      </a>
       <a routerLink="/gpx" routerLinkActive="nav-link-active"
          class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
          style="color:#3D3733;">
-        Import GPX
+        Ride
       </a>
       <a *ngIf="showRunning" routerLink="/run" routerLinkActive="nav-link-active"
          class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
          style="color:#3D3733;">
-        🏃 Running
+        Running
       </a>
       <a *ngIf="showRouteCreator" routerLink="/route-creator" routerLinkActive="nav-link-active"
          class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
          style="color:#3D3733;">
-        🛤️ Parcours
+        Parcours
       </a>
       <a *ngIf="showBestDeparture" routerLink="/best-departure" routerLinkActive="nav-link-active"
          class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
          style="color:#3D3733;">
-        ⏰ Départ
+        Départ
       </a>
       <a routerLink="/about" routerLinkActive="nav-link-active"
          class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
@@ -63,25 +73,35 @@
        style="color:#3D3733;">
       Accueil
     </a>
+    <a *ngIf="showHourly" routerLink="/hourly" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+       style="color:#3D3733;">
+      Graphiques
+    </a>
+    <a routerLink="/daily" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+       style="color:#3D3733;">
+      Daily
+    </a>
     <a routerLink="/gpx" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
        class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
        style="color:#3D3733;">
-      GPX
+      Ride
     </a>
     <a *ngIf="showRunning" routerLink="/run" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
        class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
        style="color:#3D3733;">
-      🏃 Course à pied
+      Running
     </a>
     <a *ngIf="showRouteCreator" routerLink="/route-creator" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
        class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
        style="color:#3D3733;">
-      🛤️ Créateur de parcours
+      Parcours
     </a>
     <a *ngIf="showBestDeparture" routerLink="/best-departure" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
        class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
        style="color:#3D3733;">
-      ⏰ Meilleur horaire
+      Départ
     </a>
     <a routerLink="/about" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
        class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"

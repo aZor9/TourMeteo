@@ -1,15 +1,31 @@
 {
   "name": "Meteo Ride",
   "short_name": "Meteo Ride",
+  "description": "Météo heure par heure sur votre parcours vélo ou running",
+  "lang": "fr",
   "display": "standalone",
+  "orientation": "portrait",
   "scope": "./",
   "start_url": "./",
+  "theme_color": "#1B5A96",
+  "background_color": "#F5F2EC",
+  "categories": ["weather", "sports", "navigation"],
   "icons": [
     {
       "src": "logo.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
+  ],
+  "shortcuts": [
+    { "name": "Météo d'un lieu heure par heure", "short_name": "Graphiques", "url": "/hourly" },
+    { "name": "Importer un GPX", "short_name": "GPX", "url": "/gpx" }
   ]
 }

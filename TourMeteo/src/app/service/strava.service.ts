@@ -24,32 +24,22 @@ export interface StravaRouteItem {
 const STORAGE_TOKEN_KEY = 'tourmeteo_strava_token';
 const STORAGE_ATHLETE_KEY = 'tourmeteo_strava_athlete';
 const STORAGE_DEMO_KEY = 'tourmeteo_strava_demo';
-const STORAGE_CLIENT_ID_KEY = 'tourmeteo_strava_client_id';
+const STORAGE_REFRESH_KEY = 'tourmeteo_strava_refresh';
+const STORAGE_EXPIRES_KEY = 'tourmeteo_strava_expires_at';
+const STATE_KEY = 'tourmeteo_strava_oauth_state';
 
 @Injectable({ providedIn: 'root' })
 export class StravaService {
 
   private accessToken: string | null = null;
   private athlete: StravaAthlete | null = null;
+  private refreshToken: string | null = null;
+  /** Expiration de l'access token (timestamp UNIX en secondes) */
+  private expiresAt = 0;
   private isDemo = false;
 
   constructor(private http: HttpClient) {
     this.loadSession();
-  }
-
-  /** Récupère le Client ID Strava configuré */
-  getClientId(): string {
-    return localStorage.getItem(STORAGE_CLIENT_ID_KEY) || '';
-  }
-
-  /** Enregistre le Client ID Strava */
-  setClientId(id: string): void {
-    const trimmed = id.trim();
-    if (trimmed) {
-      localStorage.setItem(STORAGE_CLIENT_ID_KEY, trimmed);
-    } else {
-      localStorage.removeItem(STORAGE_CLIENT_ID_KEY);
-    }
   }
 
   /** Indique si un compte Strava (ou mode démo) est actif */
@@ -74,19 +64,33 @@ export class StravaService {
     return this.athlete;
   }
 
-  /** Démarre la redirection OAuth vers Strava */
-  connect(customClientId?: string): void {
-    const clientId = customClientId || this.getClientId();
-    if (!clientId) {
-      const input = prompt('Veuillez renseigner votre Client ID Strava (obtenu sur https://www.strava.com/settings/api) :');
-      if (!input || !input.trim()) return;
-      this.setClientId(input.trim());
-      return this.connect(input.trim());
+  /** Démarre la redirection OAuth vers Strava (Client ID fourni par /api/strava-config) */
+  async connect(): Promise<{ success: boolean; message?: string }> {
+    let clientId: string;
+    try {
+      const cfg = await firstValueFrom(this.http.get<{ clientId: string }>('/api/strava-config'));
+      clientId = cfg.clientId;
+    } catch (err: any) {
+      return {
+        success: false,
+        message: err?.error?.message || 'Strava n\'est pas configuré sur ce serveur (API /api/strava-config indisponible).'
+      };
     }
-    const redirectUri = encodeURIComponent(window.location.origin + '/gpx');
-    const scope = encodeURIComponent('read,activity:read_all');
-    const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&approval_prompt=auto&scope=${scope}`;
-    window.location.href = authUrl;
+
+    // `state` aléatoire : protège contre l'injection d'un code OAuth forgé (CSRF)
+    const state = crypto.randomUUID();
+    sessionStorage.setItem(STATE_KEY, state);
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      response_type: 'code',
+      redirect_uri: window.location.origin + '/gpx',
+      approval_prompt: 'auto',
+      scope: 'read,activity:read_all',
+      state
+    });
+    window.location.href = `https://www.strava.com/oauth/authorize?${params.toString()}`;
+    return { success: true };
   }
 
   /** Active le mode démo pour tester sans identifiants Strava */
@@ -98,23 +102,37 @@ export class StravaService {
   /** Déconnexion */
   disconnect(): void {
     this.accessToken = null;
+    this.refreshToken = null;
+    this.expiresAt = 0;
     this.athlete = null;
     this.isDemo = false;
     localStorage.removeItem(STORAGE_TOKEN_KEY);
+    localStorage.removeItem(STORAGE_REFRESH_KEY);
+    localStorage.removeItem(STORAGE_EXPIRES_KEY);
     localStorage.removeItem(STORAGE_ATHLETE_KEY);
     localStorage.removeItem(STORAGE_DEMO_KEY);
   }
 
   /** Échange le code OAuth reçu lors du callback contre un token */
-  async handleCallback(code: string): Promise<{ success: boolean; message?: string }> {
+  async handleCallback(code: string, state: string | null): Promise<{ success: boolean; message?: string }> {
+    const expected = sessionStorage.getItem(STATE_KEY);
+    sessionStorage.removeItem(STATE_KEY);
+    if (!expected || expected !== state) {
+      return { success: false, message: 'Réponse Strava invalide (state OAuth incorrect). Réessayez la connexion.' };
+    }
+
     try {
       const res: any = await firstValueFrom(
         this.http.post('/api/strava-token', { code, grant_type: 'authorization_code' })
       );
 
       if (res && res.access_token) {
-        this.accessToken = res.access_token;
-        this.athlete = res.athlete || null;
+        this.applyTokenResponse(res);
+        if (res.athlete) {
+          // On ne garde que les champs utiles (pas tout l'objet athlète)
+          const { id, firstname, lastname, profile, city } = res.athlete;
+          this.athlete = { id, firstname, lastname, profile, city };
+        }
         this.isDemo = false;
         this.persistSession();
         return { success: true };
@@ -126,18 +144,48 @@ export class StravaService {
     }
   }
 
+  /** Renvoie un access token valide, en le rafraîchissant s'il expire (les tokens Strava durent 6 h) */
+  private async getValidToken(): Promise<string | null> {
+    if (!this.accessToken) return null;
+    const now = Math.floor(Date.now() / 1000);
+    if (this.expiresAt && this.expiresAt - 60 > now) return this.accessToken;
+    if (!this.refreshToken) return this.accessToken;
+
+    try {
+      const res: any = await firstValueFrom(
+        this.http.post('/api/strava-token', { grant_type: 'refresh_token', refresh_token: this.refreshToken })
+      );
+      if (res?.access_token) {
+        this.applyTokenResponse(res);
+        this.persistSession();
+      }
+    } catch {
+      // Refresh impossible : session révoquée, l'utilisateur devra se reconnecter
+      this.disconnect();
+      throw new Error('Session Strava expirée, veuillez vous reconnecter.');
+    }
+    return this.accessToken;
+  }
+
+  private applyTokenResponse(res: any): void {
+    this.accessToken = res.access_token;
+    if (res.refresh_token) this.refreshToken = res.refresh_token;
+    this.expiresAt = Number(res.expires_at) || 0;
+  }
+
   /** Récupère la liste des itinéraires Strava créés par l'athlète */
   async getRoutes(): Promise<StravaRouteItem[]> {
     if (this.isDemo) {
       return this.getDemoRoutes().filter(r => r.type === 'route');
     }
 
-    if (!this.accessToken) return [];
+    const token = await this.getValidToken();
+    if (!token) return [];
 
     try {
       const athleteId = this.athlete?.id;
       const url = athleteId ? `/api/strava-routes?athlete_id=${athleteId}` : '/api/strava-routes';
-      const headers = { 'Authorization': `Bearer ${this.accessToken}` };
+      const headers = { 'Authorization': `Bearer ${token}` };
       const rawRoutes: any[] = await firstValueFrom(this.http.get<any[]>(url, { headers }));
 
       if (!Array.isArray(rawRoutes)) return [];
@@ -152,9 +200,10 @@ export class StravaService {
         type: 'route' as const,
         subType: r.sub_type === 1 ? 'Vélo de route' : r.sub_type === 2 ? 'Gravel' : 'Vélo'
       })).filter(r => !!r.polyline);
-    } catch {
-      // Si l'API renvoie une erreur (ex: credentials manquants en local), fallback gracieux
-      return this.getDemoRoutes().filter(r => r.type === 'route');
+    } catch (err: any) {
+      // On remonte l'erreur (affichée dans la modale) au lieu de basculer silencieusement
+      // sur des données de démo, ce qui masquait les vrais problèmes de connexion.
+      throw new Error(err?.error?.message || err?.message || 'Impossible de récupérer les itinéraires Strava.');
     }
   }
 
@@ -164,10 +213,11 @@ export class StravaService {
       return this.getDemoRoutes().filter(r => r.type === 'activity');
     }
 
-    if (!this.accessToken) return [];
+    const token = await this.getValidToken();
+    if (!token) return [];
 
     try {
-      const headers = { 'Authorization': `Bearer ${this.accessToken}` };
+      const headers = { 'Authorization': `Bearer ${token}` };
       const rawActs: any[] = await firstValueFrom(this.http.get<any[]>('/api/strava-activities', { headers }));
 
       if (!Array.isArray(rawActs)) return [];
@@ -182,8 +232,8 @@ export class StravaService {
         type: 'activity' as const,
         subType: a.sport_type || a.type || 'Ride'
       })).filter(a => !!a.polyline);
-    } catch {
-      return this.getDemoRoutes().filter(r => r.type === 'activity');
+    } catch (err: any) {
+      throw new Error(err?.error?.message || err?.message || 'Impossible de récupérer les activités Strava.');
     }
   }
 
@@ -276,6 +326,8 @@ export class StravaService {
     try {
       this.isDemo = localStorage.getItem(STORAGE_DEMO_KEY) === 'true';
       this.accessToken = localStorage.getItem(STORAGE_TOKEN_KEY);
+      this.refreshToken = localStorage.getItem(STORAGE_REFRESH_KEY);
+      this.expiresAt = Number(localStorage.getItem(STORAGE_EXPIRES_KEY)) || 0;
       const athRaw = localStorage.getItem(STORAGE_ATHLETE_KEY);
       if (athRaw) {
         this.athlete = JSON.parse(athRaw);
@@ -291,6 +343,10 @@ export class StravaService {
       if (this.accessToken) {
         localStorage.setItem(STORAGE_TOKEN_KEY, this.accessToken);
       }
+      if (this.refreshToken) {
+        localStorage.setItem(STORAGE_REFRESH_KEY, this.refreshToken);
+      }
+      localStorage.setItem(STORAGE_EXPIRES_KEY, String(this.expiresAt));
       if (this.athlete) {
         localStorage.setItem(STORAGE_ATHLETE_KEY, JSON.stringify(this.athlete));
       }

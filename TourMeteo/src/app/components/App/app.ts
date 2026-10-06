@@ -5,7 +5,7 @@ import { SearchTabComponent } from '../SearchTab/search-tab.component';
 import { WeatherSheetComponent } from '../WeatherSheet/weather-sheet.component';
 
 @Component({
-  selector: 'app-root',
+  selector: 'app-daily',
   standalone: true,
   imports: [CommonModule, SearchTabComponent, WeatherSheetComponent],
   templateUrl: './app.html'

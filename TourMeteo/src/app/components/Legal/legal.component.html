@@ -54,7 +54,7 @@
         <p>Le code source de Meteo Ride est disponible sous licence open-source sur
           <a href="https://github.com/aZor9/TourMeteo" target="_blank" rel="noopener" class="underline hover:opacity-75" style="color:#1B5A96;">GitHub</a>.
           Vous êtes libre de le consulter, le modifier et le redistribuer dans le respect des termes de la licence.</p>
-        <p>Les données météorologiques sont fournies par <strong>Open-Meteo</strong> (CC BY 4.0) et les données cartographiques par <strong>OpenStreetMap</strong> (ODbL) / <strong>CARTO</strong> (CC BY 3.0).</p>
+        <p>Les données météorologiques sont fournies par <strong>Open-Meteo</strong> (CC BY 4.0, y compris la qualité de l'air, issue du service européen CAMS) et les données cartographiques par <strong>OpenStreetMap</strong> (ODbL) / <strong>CARTO</strong> (CC BY 3.0).</p>
         <p class="pt-2 text-xs text-amber-900 bg-amber-50/70 p-3 rounded-xl border border-amber-200">
           <strong>Avertissement santé & nutrition :</strong> Les estimations d'effort, calculs d'hydratation et recommandations nutritionnelles générés par l'application sont fournis à titre strictement informatif et indicatif. Ils ne sauraient en aucun cas constituer une prescription médicale ou diététique, ni engager la responsabilité de l'éditeur. L'utilisateur demeure seul responsable de sa pratique sportive et de son alimentation.
         </p>
@@ -79,8 +79,8 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             <div>
-              <p class="font-medium" style="color:#1B5A96;">Aucune donnée personnelle n'est collectée par Meteo Ride.</p>
-              <p class="mt-1" style="color:#3D3733;">Il n'existe ni compte utilisateur, ni formulaire d'inscription, ni cookie de tracking, ni outil d'analyse d'audience sur ce service.</p>
+              <p class="font-medium" style="color:#1B5A96;">Aucune donnée personnelle n'est collectée par Meteo Ride à des fins de profilage ou de publicité.</p>
+              <p class="mt-1" style="color:#3D3733;">Il n'existe ni compte utilisateur, ni formulaire d'inscription, ni cookie de tracking. Le site utilise uniquement des outils de mesure d'audience et de performance <strong>anonymes</strong> (Vercel Analytics et Speed Insights, voir 4.3), sans cookie et sans suivi d'un site à l'autre.</p>
             </div>
           </div>
         </div>
@@ -93,9 +93,11 @@
             <li><strong>Préférences utilisateur</strong> — feature flags (carte interactive, historique, nutrition, villes récentes, etc.)</li>
             <li><strong>Historique de trajets</strong> — si la fonctionnalité est activée : noms de fichiers GPX, paramètres de trajet, résultats météo calculés</li>
             <li><strong>Villes récentes</strong> — si la fonctionnalité est activée : noms des villes recherchées pour faciliter les suggestions futures (effaçables à tout moment depuis la recherche ou la page À propos)</li>
-            <li><strong>Connexion Strava</strong> — si vous connectez votre compte : jeton d'accès sécurisé et profil athlète (effaçables à tout moment en cliquant sur « Se déconnecter »)</li>
+            <li><strong>Dernier lieu consulté (accueil)</strong> — nom du lieu et ses coordonnées. Si vous avez utilisé « Ma position », il s'agit de vos coordonnées approximatives (arrondies à environ 10 m), conservées uniquement pour réafficher la météo à l'ouverture suivante</li>
+            <li><strong>Connexion Strava</strong> — si vous connectez votre compte : jeton d'accès, jeton de rafraîchissement, date d'expiration et profil athlète (nom, ville, photo), effaçables à tout moment en cliquant sur « Se déconnecter »</li>
+            <li><strong>Session</strong> (<code>sessionStorage</code>) — un identifiant aléatoire temporaire servant à sécuriser la connexion Strava, supprimé dès la fin de celle-ci</li>
           </ul>
-          <p class="mt-2">Ces données ne quittent jamais votre appareil. Vous pouvez les supprimer à tout moment via les paramètres de votre navigateur (section « Stockage du site » ou « Cookies et données du site »).</p>
+          <p class="mt-2">Ces données restent stockées sur votre appareil ; elles ne sont jamais transmises à l'éditeur, à l'exception de la connexion Strava décrite en 4.3. Vous pouvez les supprimer à tout moment via les paramètres de votre navigateur (section « Stockage du site » ou « Cookies et données du site »).</p>
         </div>
 
         <!-- 4.3 -->
@@ -123,6 +125,16 @@
                   <td class="px-3 py-2">Récupération des données météo</td>
                 </tr>
                 <tr style="border-bottom:1px solid #EDE8DB;">
+                  <td class="px-3 py-2"><strong>Open-Meteo Air Quality</strong></td>
+                  <td class="px-3 py-2">Latitude, longitude, date</td>
+                  <td class="px-3 py-2">Qualité de l'air et pollens (page Graphiques)</td>
+                </tr>
+                <tr style="background:#FAF9F6; border-bottom:1px solid #EDE8DB;">
+                  <td class="px-3 py-2"><strong>Géolocalisation de l'appareil</strong> <span class="text-[10px] opacity-60">(sur demande)</span></td>
+                  <td class="px-3 py-2">Position fournie par votre navigateur, uniquement après votre autorisation</td>
+                  <td class="px-3 py-2">Bouton « Ma position » : les coordonnées sont ensuite transmises à Open-Meteo pour obtenir la météo locale</td>
+                </tr>
+                <tr style="border-bottom:1px solid #EDE8DB;">
                   <td class="px-3 py-2"><strong>CARTO / OSM</strong></td>
                   <td class="px-3 py-2">Coordonnées de la zone affichée</td>
                   <td class="px-3 py-2">Affichage des tuiles de carte</td>
@@ -134,15 +146,22 @@
                 </tr>
                 <tr style="border-bottom:1px solid #EDE8DB;">
                   <td class="px-3 py-2"><strong>Strava API</strong> <span class="text-[10px] opacity-60">(si connecté)</span></td>
-                  <td class="px-3 py-2">Jeton d'autorisation OAuth</td>
+                  <td class="px-3 py-2">Code d'autorisation OAuth, jetons d'accès et de rafraîchissement. Ils transitent par une fonction serveur hébergée sur Vercel qui les relaie à Strava, sans les enregistrer ni les journaliser</td>
                   <td class="px-3 py-2">Import des parcours et sorties de l'athlète</td>
+                </tr>
+                <tr style="background:#FAF9F6; border-bottom:1px solid #EDE8DB;">
+                  <td class="px-3 py-2"><strong>Vercel</strong> <span class="text-[10px] opacity-60">(hébergeur, Analytics, Speed Insights)</span></td>
+                  <td class="px-3 py-2">Adresse IP (traitée par l'hébergeur pour servir le site), page consultée, type d'appareil et de navigateur, indicateurs de performance, sans identifiant persistant</td>
+                  <td class="px-3 py-2">Hébergement, sécurité, mesure d'audience et de performance anonymes</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p class="mt-2 text-xs" style="color:#A09589;">Ces services sont soumis à leurs propres politiques de confidentialité. Consultez notamment celle de
             <a href="https://nominatim.org/release-docs/latest/api/Overview/" target="_blank" rel="noopener" class="underline hover:opacity-75" style="color:#1B5A96;">Nominatim</a> et d'
-            <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener" class="underline hover:opacity-75" style="color:#1B5A96;">Open-Meteo</a>.</p>
+            <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener" class="underline hover:opacity-75" style="color:#1B5A96;">Open-Meteo</a>,
+            <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener" class="underline hover:opacity-75" style="color:#1B5A96;">Vercel</a> et
+            <a href="https://www.strava.com/legal/privacy" target="_blank" rel="noopener" class="underline hover:opacity-75" style="color:#1B5A96;">Strava</a>.</p>
         </div>
 
         <!-- 4.4 -->
@@ -161,7 +180,7 @@
         <div>
           <h3 class="font-semibold mb-1.5" style="color:#1A1917;">4.6 Vos droits (articles 15 à 22 du RGPD)</h3>
           <p>Conformément au RGPD, vous disposez de droits sur vos données personnelles : accès, rectification, effacement, limitation du traitement, portabilité et opposition.</p>
-          <p class="mt-1">Étant donné qu'aucune donnée personnelle n'est collectée côté serveur, il n'y a, en pratique, aucun traitement à exercer auprès de l'éditeur. Si vous souhaitez supprimer vos données locales, rendez-vous dans les paramètres de votre navigateur → « Données du site ».</p>
+          <p class="mt-1">Étant donné que l'éditeur ne conserve aucune donnée personnelle côté serveur (les journaux techniques et la mesure d'audience anonymes relèvent de l'hébergeur Vercel), il n'y a, en pratique, aucun traitement à exercer auprès de l'éditeur. Si vous souhaitez supprimer vos données locales, rendez-vous dans les paramètres de votre navigateur → « Données du site ».</p>
           <p class="mt-1">Pour toute question, contactez l'éditeur via
             <a href="https://forms.gle/tP4UxuvYDDPnj3298" target="_blank" rel="noopener" class="underline hover:opacity-75" style="color:#1B5A96;">ce formulaire</a>.
           </p>

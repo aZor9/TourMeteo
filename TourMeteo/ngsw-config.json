@@ -11,6 +11,7 @@
           "/index.csr.html",
           "/index.html",
           "/manifest.webmanifest",
+          "/tailwind-config.js",
           "/*.css",
           "/*.js"
         ]
@@ -24,6 +25,39 @@
         "files": [
           "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
         ]
+      }
+    },
+    {
+      "name": "cdn",
+      "installMode": "lazy",
+      "updateMode": "lazy",
+      "resources": {
+        "urls": [
+          "https://cdn.tailwindcss.com/**",
+          "https://fonts.googleapis.com/**",
+          "https://fonts.gstatic.com/**"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "weather-api",
+      "urls": ["https://api.open-meteo.com/**", "https://air-quality-api.open-meteo.com/**"],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 60,
+        "maxAge": "30m",
+        "timeout": "6s"
+      }
+    },
+    {
+      "name": "geocoding-api",
+      "urls": ["https://nominatim.openstreetmap.org/**"],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 300,
+        "maxAge": "30d"
       }
     }
   ]

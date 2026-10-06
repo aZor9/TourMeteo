@@ -21,6 +21,8 @@ export interface FeatureFlags {
   recentCities: boolean;
   /** Show Strava connection in GPX page (dev feature) */
   strava: boolean;
+  /** Show hourly charts page (/hourly) */
+  hourly: boolean;
 }
 
 const DEFAULTS: FeatureFlags = {
@@ -32,7 +34,8 @@ const DEFAULTS: FeatureFlags = {
   routeCreator: false,
   bestDeparture: false,
   recentCities: true,
-  strava: false
+  strava: false,
+  hourly: true
 };
 
 @Injectable({ providedIn: 'root' })

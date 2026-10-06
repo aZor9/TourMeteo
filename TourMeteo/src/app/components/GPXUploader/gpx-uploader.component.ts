@@ -92,10 +92,16 @@ export class GpxUploaderComponent implements OnInit {
 
   async ngOnInit() {
     // Détection du retour d'autorisation Strava OAuth (?code=XXXXX)
-    const code = this.route.snapshot.queryParamMap.get('code');
-    if (code) {
+    const qp = this.route.snapshot.queryParamMap;
+    const code = qp.get('code');
+    if (qp.get('error')) {
+      // L'utilisateur a refusé l'autorisation sur Strava (?error=access_denied)
+      this.router.navigate([], { queryParams: {}, replaceUrl: true });
+      this.stravaStatusMessage = '⚠️ Autorisation Strava refusée.';
+      setTimeout(() => this.stravaStatusMessage = '', 6000);
+    } else if (code) {
       this.stravaStatusMessage = 'Connexion à Strava en cours…';
-      const result = await this.strava.handleCallback(code);
+      const result = await this.strava.handleCallback(code, qp.get('state'));
       // Nettoyer l'URL du navigateur
       this.router.navigate([], { queryParams: {}, replaceUrl: true });
       if (result.success) {
@@ -124,8 +130,13 @@ export class GpxUploaderComponent implements OnInit {
     this.showStravaModal = false;
   }
 
-  connectStrava() {
-    this.strava.connect();
+  async connectStrava() {
+    const result = await this.strava.connect();
+    if (!result.success) {
+      this.stravaStatusMessage = `⚠️ ${result.message}`;
+      setTimeout(() => this.stravaStatusMessage = '', 8000);
+      this.cd.detectChanges();
+    }
   }
 
   enableStravaDemo() {

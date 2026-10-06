@@ -8,10 +8,67 @@ export interface WeatherCity {
   hourly: Array<{ hour: string; temperature: number; wind: number; windDir?: number; summary: number; isDay: boolean; precipitation?: number; precipitationProbability?: number; humidity?: number; apparentTemperature?: number }>;
 }
 
+/** Une heure de prévision détaillée (page graphiques) */
+export interface DayHour {
+  time: string;            // ISO local "2026-10-06T14:00"
+  hour: number;            // 0-23
+  temperature: number;
+  apparent: number;
+  dewPoint: number | null;
+  precipitation: number;   // mm
+  probability: number;     // %
+  weathercode: number;
+  isDay: boolean;
+  wind: number;            // km/h
+  gust: number | null;     // km/h
+  windDir: number | null;
+  humidity: number | null;
+  cloud: number | null;    // %
+  uv: number | null;
+  visibilityKm: number | null;
+  pressure: number | null; // hPa
+}
+
+export interface DayDetails {
+  hours: DayHour[];
+  sunrise: string | null;
+  sunset: string | null;
+  uvMax: number | null;
+  sunshineH: number | null;
+  daylightH: number | null;
+}
+
+export interface AirQuality {
+  aqi: Array<number | null>;
+  pm25: Array<number | null>;
+  pm10: Array<number | null>;
+  pollen: Record<string, Array<number | null>>;
+}
+
+export interface NowWeather {
+  temperature: number;
+  apparent: number;
+  weathercode: number;
+  isDay: boolean;
+  wind: number;
+  gust: number | null;
+  humidity: number | null;
+  precipitation: number;
+  next: Array<{ hour: number; temperature: number; precipitation: number; probability: number; weathercode: number; isDay: boolean }>;
+}
+
+const POLLENS: Record<string, string> = {
+  alder_pollen: 'Aulne', birch_pollen: 'Bouleau', grass_pollen: 'Graminées',
+  olive_pollen: 'Olivier', ragweed_pollen: 'Ambroisie', mugwort_pollen: 'Armoise'
+};
+
+const nz = <T>(arr: T[] | undefined, i: number): T | null => (arr && arr[i] !== undefined && arr[i] !== null ? arr[i] : null);
+
 @Injectable({ providedIn: 'root' })
 export class WeatherService {
   // URL de l'API météo
   private weatherApiUrl = 'https://api.open-meteo.com/v1/forecast';
+  private airApiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality';
 
   constructor(private http: HttpClient, private cityService: CityService) {}
 
@@ -24,7 +81,8 @@ export class WeatherService {
 
   // Renvoie les données météo directement par coordonnées (évite le géocodage)
   async getWeatherByCoords(lat: number, lon: number, cityName: string, date: string): Promise<WeatherCity> {
-    const url = `${this.weatherApiUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,winddirection_10m,weathercode,is_day,precipitation,precipitation_probability,relative_humidity_2m,apparent_temperature&start_date=${date}&end_date=${date}`;
+    // timezone=auto : heures locales du lieu (sans ça Open-Meteo répond en GMT, donc décalé de 1-2 h en France)
+    const url = `${this.weatherApiUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,winddirection_10m,weathercode,is_day,precipitation,precipitation_probability,relative_humidity_2m,apparent_temperature&start_date=${date}&end_date=${date}&timezone=auto`;
 
     const response: any = await firstValueFrom(this.http.get<any>(url));
 
@@ -43,5 +101,98 @@ export class WeatherService {
     }));
 
     return { city: cityName, hourly };
+  }
+
+  /** Prévision détaillée d'une journée : rafales, UV, nuages, pression, soleil… */
+  async getDayDetails(lat: number, lon: number, date: string): Promise<DayDetails> {
+    const hourly = 'temperature_2m,apparent_temperature,dew_point_2m,precipitation,precipitation_probability,weathercode,is_day,wind_speed_10m,wind_gusts_10m,winddirection_10m,relative_humidity_2m,cloud_cover,uv_index,visibility,pressure_msl';
+    const daily = 'sunrise,sunset,uv_index_max,sunshine_duration,daylight_duration';
+    const url = `${this.weatherApiUrl}?latitude=${lat}&longitude=${lon}&hourly=${hourly}&daily=${daily}&start_date=${date}&end_date=${date}&timezone=auto`;
+    const r: any = await firstValueFrom(this.http.get<any>(url));
+    const h = r.hourly;
+
+    const hours: DayHour[] = h.time.map((time: string, i: number) => ({
+      time,
+      hour: +time.slice(11, 13),
+      temperature: h.temperature_2m[i],
+      apparent: h.apparent_temperature?.[i] ?? h.temperature_2m[i],
+      dewPoint: nz(h.dew_point_2m, i),
+      precipitation: h.precipitation?.[i] ?? 0,
+      probability: h.precipitation_probability?.[i] ?? 0,
+      weathercode: h.weathercode[i],
+      isDay: h.is_day?.[i] === 1,
+      wind: h.wind_speed_10m[i],
+      gust: nz(h.wind_gusts_10m, i),
+      windDir: nz(h.winddirection_10m, i),
+      humidity: nz(h.relative_humidity_2m, i),
+      cloud: nz(h.cloud_cover, i),
+      uv: nz(h.uv_index, i),
+      visibilityKm: h.visibility?.[i] != null ? +(h.visibility[i] / 1000).toFixed(1) : null,
+      pressure: nz(h.pressure_msl, i)
+    }));
+
+    const d = r.daily || {};
+    return {
+      hours,
+      sunrise: d.sunrise?.[0] ?? null,
+      sunset: d.sunset?.[0] ?? null,
+      uvMax: nz(d.uv_index_max, 0),
+      sunshineH: d.sunshine_duration?.[0] != null ? +(d.sunshine_duration[0] / 3600).toFixed(1) : null,
+      daylightH: d.daylight_duration?.[0] != null ? +(d.daylight_duration[0] / 3600).toFixed(1) : null
+    };
+  }
+
+  /** Qualité de l'air + pollens (pollens : Europe uniquement). Renvoie null si indisponible. */
+  async getAirQuality(lat: number, lon: number, date: string): Promise<AirQuality | null> {
+    try {
+      const pollenKeys = Object.keys(POLLENS).join(',');
+      const url = `${this.airApiUrl}?latitude=${lat}&longitude=${lon}&hourly=european_aqi,pm10,pm2_5,${pollenKeys}&start_date=${date}&end_date=${date}&timezone=auto`;
+      const r: any = await firstValueFrom(this.http.get<any>(url));
+      const h = r.hourly;
+      const n = h.time.length;
+      const col = (key: string) => Array.from({ length: n }, (_, i) => nz<number>(h[key], i));
+      const pollen: Record<string, Array<number | null>> = {};
+      for (const [key, label] of Object.entries(POLLENS)) {
+        const values = col(key);
+        if (values.some(v => v !== null)) pollen[label] = values;
+      }
+      return { aqi: col('european_aqi'), pm25: col('pm2_5'), pm10: col('pm10'), pollen };
+    } catch {
+      return null;
+    }
+  }
+
+  /** Météo actuelle + 12 prochaines heures (page d'accueil) */
+  async getNow(lat: number, lon: number): Promise<NowWeather> {
+    const url = `${this.weatherApiUrl}?latitude=${lat}&longitude=${lon}`
+      + `&current=temperature_2m,apparent_temperature,weathercode,is_day,wind_speed_10m,wind_gusts_10m,relative_humidity_2m,precipitation`
+      + `&hourly=temperature_2m,precipitation,precipitation_probability,weathercode,is_day&forecast_days=2&timezone=auto`;
+    const r: any = await firstValueFrom(this.http.get<any>(url));
+    const c = r.current;
+    const h = r.hourly;
+    // index de l'heure courante dans le tableau horaire
+    const start = Math.max(0, h.time.findIndex((t: string) => t >= String(c.time).slice(0, 13)));
+    const next = [];
+    for (let i = start; i < Math.min(start + 12, h.time.length); i++) {
+      next.push({
+        hour: +h.time[i].slice(11, 13),
+        temperature: h.temperature_2m[i],
+        precipitation: h.precipitation?.[i] ?? 0,
+        probability: h.precipitation_probability?.[i] ?? 0,
+        weathercode: h.weathercode[i],
+        isDay: h.is_day?.[i] === 1
+      });
+    }
+    return {
+      temperature: c.temperature_2m,
+      apparent: c.apparent_temperature,
+      weathercode: c.weathercode,
+      isDay: c.is_day === 1,
+      wind: c.wind_speed_10m,
+      gust: nz([c.wind_gusts_10m], 0),
+      humidity: nz([c.relative_humidity_2m], 0),
+      precipitation: c.precipitation ?? 0,
+      next
+    };
   }
 }

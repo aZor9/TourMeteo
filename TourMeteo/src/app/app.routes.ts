@@ -1,18 +1,20 @@
 import { Routes } from '@angular/router';
-import { AboutComponent } from './components/About/about';
-import { App } from './components/App/app';
-import { GpxUploaderComponent } from './components/GPXUploader/gpx-uploader.component';
-import { RunningComponent } from './components/Running/running.component';
-import { RouteCreatorComponent } from './components/RouteCreator/route-creator.component';
-import { BestDepartureComponent } from './components/BestDeparture/best-departure.component';
-import { LegalComponent } from './components/Legal/legal.component';
+import { HomeComponent } from './components/Home/home.component';
+import { featureFlagGuard } from './guards/feature-flag.guard';
 
 export const routes: Routes = [
-	{ path: '', component: App },
-	{ path: 'about', component: AboutComponent },
-	{ path: 'gpx', component: GpxUploaderComponent },
-	{ path: 'run', component: RunningComponent },
-	{ path: 'route-creator', component: RouteCreatorComponent },
-	{ path: 'best-departure', component: BestDepartureComponent },
-	{ path: 'legal', component: LegalComponent },
+	{ path: '', component: HomeComponent },
+	{ path: 'daily', loadComponent: () => import('./components/App/app').then(m => m.App) },
+	{ path: 'about', loadComponent: () => import('./components/About/about').then(m => m.AboutComponent) },
+	{ path: 'gpx', loadComponent: () => import('./components/GPXUploader/gpx-uploader.component').then(m => m.GpxUploaderComponent) },
+	{ path: 'run', loadComponent: () => import('./components/Running/running.component').then(m => m.RunningComponent) },
+	{ path: 'route-creator', loadComponent: () => import('./components/RouteCreator/route-creator.component').then(m => m.RouteCreatorComponent) },
+	{ path: 'best-departure', loadComponent: () => import('./components/BestDeparture/best-departure.component').then(m => m.BestDepartureComponent) },
+	{ path: 'legal', loadComponent: () => import('./components/Legal/legal.component').then(m => m.LegalComponent) },
+	{
+		path: 'hourly',
+		canActivate: [featureFlagGuard('hourly')],
+		loadComponent: () => import('./components/Hourly/hourly.component').then(m => m.HourlyComponent)
+	},
+	{ path: '**', redirectTo: '' },
 ];

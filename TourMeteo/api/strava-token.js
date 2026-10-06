@@ -1,65 +1,52 @@
-export default async function handler(req, res) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+module.exports = async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
   }
 
   const clientId = process.env.STRAVA_CLIENT_ID;
   const clientSecret = process.env.STRAVA_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    return res.status(500).json({
+    return res.status(503).json({
       error: 'MISSING_CREDENTIALS',
       message: 'Variables d\'environnement STRAVA_CLIENT_ID et STRAVA_CLIENT_SECRET manquantes sur Vercel.'
     });
   }
 
-  try {
-    const { code, refresh_token, grant_type = 'authorization_code' } = req.body || {};
+  const { code, refresh_token, grant_type = 'authorization_code' } = req.body || {};
 
-    const payload = {
-      client_id: clientId,
-      client_secret: clientSecret,
-      grant_type: grant_type
-    };
+  // Liste blanche stricte : on ne relaie jamais un grant_type arbitraire à Strava
+  if (grant_type !== 'authorization_code' && grant_type !== 'refresh_token') {
+    return res.status(400).json({ error: 'BAD_REQUEST', message: 'grant_type invalide.' });
+  }
 
-    if (grant_type === 'refresh_token') {
-      if (!refresh_token) {
-        return res.status(400).json({ error: 'Missing refresh_token' });
-      }
-      payload.refresh_token = refresh_token;
-    } else {
-      if (!code) {
-        return res.status(400).json({ error: 'Missing code' });
-      }
-      payload.code = code;
+  const payload = { client_id: clientId, client_secret: clientSecret, grant_type };
+
+  if (grant_type === 'refresh_token') {
+    if (typeof refresh_token !== 'string' || !refresh_token) {
+      return res.status(400).json({ error: 'BAD_REQUEST', message: 'refresh_token manquant.' });
     }
+    payload.refresh_token = refresh_token;
+  } else {
+    if (typeof code !== 'string' || !code) {
+      return res.status(400).json({ error: 'BAD_REQUEST', message: 'code manquant.' });
+    }
+    payload.code = code;
+  }
 
+  try {
     const response = await fetch('https://www.strava.com/oauth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(8000)
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json(data);
-    }
-
-    return res.status(200).json(data);
+    const data = await response.json().catch(() => ({}));
+    return res.status(response.status).json(data);
   } catch (err) {
-    return res.status(500).json({
-      error: 'SERVER_ERROR',
-      message: err.message || 'Erreur lors de l\'échange de jeton Strava.'
-    });
+    return res.status(502).json({ error: 'UPSTREAM_ERROR', message: 'Strava est injoignable.' });
   }
-}
+};
