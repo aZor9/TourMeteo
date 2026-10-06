@@ -6,8 +6,8 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
   }
 
-  const clientId = process.env.STRAVA_CLIENT_ID;
-  const clientSecret = process.env.STRAVA_CLIENT_SECRET;
+  const clientId = (process.env.STRAVA_CLIENT_ID || '').trim();
+  const clientSecret = (process.env.STRAVA_CLIENT_SECRET || '').trim();
 
   if (!clientId || !clientSecret) {
     return res.status(503).json({

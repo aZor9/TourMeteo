@@ -3,7 +3,8 @@
 // Le Client Secret, lui, ne quitte jamais le serveur (cf. strava-token.js).
 module.exports = function handler(req, res) {
   res.setHeader('Cache-Control', 'public, max-age=300');
-  const clientId = process.env.STRAVA_CLIENT_ID;
+  // trim : une variable d'environnement collée avec un retour à la ligne casse l'URL OAuth
+  const clientId = (process.env.STRAVA_CLIENT_ID || '').trim();
   if (!clientId) {
     return res.status(503).json({
       error: 'MISSING_CREDENTIALS',

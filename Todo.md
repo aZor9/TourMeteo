@@ -28,7 +28,7 @@ Idée futur :
 - [x] `index.html` : `lang="fr"`, doublon de police supprimé, config Tailwind externalisée
 
 ## 🔴 Sécurité — à faire
-- [ ] **Vérifier sur Vercel** : `STRAVA_CLIENT_ID` + `STRAVA_CLIENT_SECRET` définis (Production **et** Preview), et « Authorization Callback Domain » = `meteo-ride.vercel.app` dans https://www.strava.com/settings/api. Sans ça, Strava ne marchera jamais.
+- [ ] **Vérifier sur Vercel** : `STRAVA_CLIENT_ID` + `STRAVA_CLIENT_SECRET` définis (Production **et** Preview), et « Authorization Callback Domain » = `meteo.hugo-lembrez.fr` dans https://www.strava.com/settings/api. Sans ça, Strava ne marchera jamais.
 - [ ] Tokens Strava en `localStorage` : lisibles par n'importe quel script de la page (XSS). Cible : le serveur échange le code et pose le refresh token dans un cookie `HttpOnly; Secure; SameSite=Lax`, le front ne voit jamais de token.
 - [ ] Remplacer le CDN Tailwind (`cdn.tailwindcss.com`) par un vrai build Tailwind (PostCSS) : le CDN est déconseillé en prod (JIT dans le navigateur = lent, dépendance tierce exécutée avec tous les droits). Cela permettra aussi de retirer `'unsafe-inline'` et `cdn.tailwindcss.com` de la CSP `script-src`.
 - [ ] Durcir davantage la CSP (hash/nonce) une fois Tailwind compilé ; tester avec `Content-Security-Policy-Report-Only` d'abord

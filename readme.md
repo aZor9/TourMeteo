@@ -2,7 +2,7 @@
 
 Application Angular permettant de comparer la météo heure par heure entre plusieurs villes — outil pensé pour les cyclistes et randonneurs.
 
-**Démo en ligne :** déployé sur [Vercel](https://meteo-ride.vercel.app/) (branche `dev` du repo Github)
+**Démo en ligne :** déployé sur [Vercel](https://meteo.hugo-lembrez.fr/) (branche `dev` du repo Github)
 
 ---
 
@@ -186,7 +186,7 @@ Le projet est configuré pour un déploiement automatique depuis GitHub (branche
 | `STRAVA_CLIENT_ID` | Exposée au front via `/api/strava-config` (public par nature) |
 | `STRAVA_CLIENT_SECRET` | Reste côté serveur, utilisée par `/api/strava-token` |
 
-À définir dans Vercel → Settings → Environment Variables (Production **et** Preview), puis redéployer. Dans https://www.strava.com/settings/api, le champ « Authorization Callback Domain » doit valoir le domaine du site (ex. `meteo-ride.vercel.app`, sans `https://`). Les fonctions `/api/*` n'existent pas sous `ng serve` : utiliser `vercel dev` pour tester Strava en local.
+À définir dans Vercel → Settings → Environment Variables (Production **et** Preview), puis redéployer. Dans https://www.strava.com/settings/api, le champ « Authorization Callback Domain » doit valoir le domaine du site (ex. `meteo.hugo-lembrez.fr`, sans `https://`). Les fonctions `/api/*` n'existent pas sous `ng serve` : utiliser `vercel dev` pour tester Strava en local.
 
 Le rewrite SPA redirige toutes les routes vers `index.html` pour que le router Angular gère la navigation côté client (`/about`, `/gpx`, etc.).
 
@@ -213,5 +213,5 @@ Le rewrite SPA redirige toutes les routes vers `index.html` pour que le router A
 
 ## Contact / Crédits
 - Repo : https://github.com/aZor9/TourMeteo
-- Site : https://meteo-ride.vercel.app/ 
+- Site : https://meteo.hugo-lembrez.fr/ 
 - Créateur : Hugo Lembrez
