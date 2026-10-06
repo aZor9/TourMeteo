@@ -9,7 +9,7 @@ import { HistoryService, SavedRoute } from '../../../service/history.service';
   template: `
     <!-- Toggle -->
     <button (click)="open = !open"
-            class="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors mb-3">
+            class="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors mb-3 py-2.5">
       <span class="text-lg">📂</span>
       Historique ({{ routes.length }})
       <svg class="w-4 h-4 transition-transform" [class.rotate-180]="open" fill="none" stroke="currentColor" viewBox="0 0 24 24">

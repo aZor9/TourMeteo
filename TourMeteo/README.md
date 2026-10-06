@@ -38,7 +38,6 @@ Application Angular de comparaison météo entre plusieurs villes, heure par heu
 - **BRouter** pour le routage vélo/running (profils `fastbike` / `trekking`)
 - **OSRM** comme moteur de routage en fallback
 - **Overpass API** pour l'analyse voirie (types de routes, pistes cyclables, état de surface)
-- **CARTO Voyager** pour les tuiles cartographiques du créateur de parcours
 - **Vercel Analytics + Speed Insights**
 
 ## Architecture des composants
@@ -102,14 +101,13 @@ Les fichiers de production seront dans le dossier `dist/`.
 | [OSRM](https://project-osrm.org/) | Routage fallback (serveur démo) | BSD 2-Clause + données OSM (ODbL) |
 | [Overpass API](https://overpass-api.de/) | Analyse voirie : types de routes, pistes cyclables, état de surface | Données OSM (ODbL) |
 | [Open Elevation](https://open-elevation.com/) | Profil altimétrique des itinéraires | Open-source |
-| [CARTO](https://carto.com/attributions) | Tuiles carte Voyager (créateur de parcours) | CC BY 3.0 |
 | [OpenStreetMap](https://www.openstreetmap.org/copyright) | Tuiles carte standard (carte GPX) + données routières | ODbL |
 
 ## Notes
 
 - Le reverse-géocodage Nominatim est throttlé à ~1 requête/seconde avec échantillonnage par distance (~2 km). Un email d'identification est inclus dans chaque requête conformément à la politique d'usage.
 - Le serveur OSRM public est un serveur de démonstration — utilisé uniquement en fallback si BRouter est indisponible
-- Les tuiles CARTO et OSM requièrent une attribution visible dans la carte (incluse via Leaflet)
+- Les tuiles OSM requièrent une attribution visible dans la carte (incluse via Leaflet)
 - L'export PNG utilise le Canvas API natif, sans dépendance externe
 - Leaflet est importé dynamiquement (lazy loading) pour réduire la taille du bundle initial
 - L'historique et les feature flags sont stockés en `localStorage` (clés `tourmeteo_history` et `tourmeteo_flags`)

@@ -202,3 +202,69 @@ export function simplify(points: EditPoint[], toleranceM: number): EditPoint[] {
   }
   return points.filter((_, i) => keep[i] === 1);
 }
+
+/** Vrai si toutes les heures présentes sont croissantes (ou s'il n'y en a aucune) */
+export function timesAreConsistent(points: EditPoint[]): boolean {
+  const withTime = points.filter(p => p.time).length;
+  if (withTime === 0) return true;
+  if (withTime !== points.length) return false; // heures partielles : incohérent
+  for (let i = 1; i < points.length; i++) {
+    if (Date.parse(points[i].time!) < Date.parse(points[i - 1].time!)) return false;
+  }
+  return true;
+}
+
+/**
+ * Inverse le sens du tracé. Les heures gardent leur ordre chronologique
+ * (le point de départ garde l'heure de départ), sinon elles seraient décroissantes.
+ */
+export function reversePoints(points: EditPoint[]): EditPoint[] {
+  const times = points.map(p => p.time);
+  return points.slice().reverse().map((p, i) => {
+    const { time: _drop, ...rest } = p;
+    return times[i] ? { ...rest, time: times[i] } : rest;
+  });
+}
+
+export interface MergeResult {
+  points: EditPoint[];
+  /** Le fichier ajouté a été retourné pour minimiser l'écart entre les deux tracés */
+  reversed: boolean;
+  /** Distance (m) entre le point de jonction des deux tracés */
+  gapM: number;
+  /** Les heures ont été retirées car elles se chevauchent ou sont partielles */
+  timesDropped: boolean;
+}
+
+/** Fusionne `added` à la suite (ou avant) de `base`, en l'orientant automatiquement si demandé */
+export function mergeTracks(base: EditPoint[], added: EditPoint[], position: 'end' | 'start', autoOrient: boolean): MergeResult {
+  if (!base.length || !added.length) throw new Error('Rien à fusionner.');
+  let b = added;
+  let reversed = false;
+  if (autoOrient) {
+    const straight = position === 'end'
+      ? haversineMeters(base[base.length - 1], added[0])
+      : haversineMeters(added[added.length - 1], base[0]);
+    const flipped = position === 'end'
+      ? haversineMeters(base[base.length - 1], added[added.length - 1])
+      : haversineMeters(added[0], base[0]);
+    if (flipped < straight) { b = reversePoints(added); reversed = true; }
+  }
+  const merged = position === 'end' ? [...base, ...b] : [...b, ...base];
+  const gapM = position === 'end'
+    ? haversineMeters(base[base.length - 1], b[0])
+    : haversineMeters(b[b.length - 1], base[0]);
+  let timesDropped = false;
+  let points = merged;
+  if (!timesAreConsistent(merged)) {
+    points = merged.map(({ time: _t, ...rest }) => rest);
+    timesDropped = merged.some(p => p.time);
+  }
+  return { points, reversed, gapM, timesDropped };
+}
+
+/** Scinde au point `index` : les deux parties partagent ce point pour rester continues */
+export function splitAt(points: EditPoint[], index: number): [EditPoint[], EditPoint[]] {
+  if (index <= 0 || index >= points.length - 1) throw new Error('Choisissez un point à l\'intérieur du tracé.');
+  return [points.slice(0, index + 1), points.slice(index)];
+}

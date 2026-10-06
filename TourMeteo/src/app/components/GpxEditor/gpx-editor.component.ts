@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   EditPoint, MAX_GPX_BYTES, buildGpx, elevationGain, haversineMeters, interpolatedPoint, nearestOnPath,
-  parseGpx, safeFileName, simplify, totalDistanceKm
+  mergeTracks, parseGpx, reversePoints, safeFileName, simplify, splitAt, totalDistanceKm
 } from '../../utils/gpx-edit';
 import { RoutingProfile, distributeTimes, routeThrough } from '../../utils/routing';
 
@@ -33,6 +33,10 @@ export class GpxEditorComponent implements OnDestroy {
   snap = false;
   snapProfile: RoutingProfile = 'bike';
   snapping = false;
+
+  /** Fusion avec un second fichier */
+  mergePosition: 'end' | 'start' = 'end';
+  mergeAuto = true;
 
   /** Coupe : nombre de points retirés au début / à la fin (aperçu en rouge sur la carte) */
   cutHead = 0;
@@ -255,11 +259,13 @@ export class GpxEditorComponent implements OnDestroy {
   toggle(i: number): void {
     if (this.selected.has(i)) this.selected.delete(i); else this.selected.add(i);
     this.info = '';
+    this.drawSplitPreview();
     this.renderHandles();
   }
 
   clearSelection(): void {
     this.selected.clear();
+    this.drawSplitPreview();
     this.renderHandles();
   }
 
@@ -401,7 +407,7 @@ export class GpxEditorComponent implements OnDestroy {
 
   reverse(): void {
     this.commit();
-    this.points = this.points.slice().reverse();
+    this.points = reversePoints(this.points);
     this.info = 'Sens du parcours inversé.';
     this.afterEdit();
   }
@@ -507,16 +513,104 @@ export class GpxEditorComponent implements OnDestroy {
 
   exportGpx(): void {
     if (this.points.length < 2) { this.error = 'Il faut au moins 2 points pour exporter un parcours.'; return; }
-    const blob = new Blob([buildGpx(this.name, this.points)], { type: 'application/gpx+xml' });
+    this.info = `Exporté : ${this.download(this.name, this.points)}`;
+  }
+
+  private download(name: string, points: EditPoint[]): string {
+    const blob = new Blob([buildGpx(name, points)], { type: 'application/gpx+xml' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = safeFileName(this.name);
+    a.download = safeFileName(name);
     document.body.appendChild(a);
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    this.info = `Exporté : ${a.download}`;
+    return a.download;
+  }
+
+  // ─── Fusionner avec un autre fichier ───
+
+  async onMergeFile(ev: Event): Promise<void> {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this.error = '';
+    if (file.size > MAX_GPX_BYTES) { this.error = 'Fichier trop volumineux (15 Mo maximum).'; return; }
+    try {
+      const other = parseGpx(await file.text(), file.name.replace(/\.gpx$/i, ''));
+      const r = mergeTracks(this.points, other.points, this.mergePosition, this.mergeAuto);
+      this.commit();
+      this.points = r.points;
+      const gap = r.gapM >= 1000 ? (r.gapM / 1000).toFixed(1) + ' km' : Math.round(r.gapM) + ' m';
+      const notes = [
+        `${other.points.length} points ajoutés`,
+        r.reversed ? 'fichier retourné pour coller au tracé' : '',
+        r.gapM > 50 ? `écart de ${gap} entre les deux tracés (relié en ligne droite)` : '',
+        r.timesDropped ? 'heures retirées (elles se chevauchaient)' : ''
+      ].filter(Boolean);
+      this.info = `Fusionné : ${notes.join(' · ')}.`;
+      this.afterEdit();
+      this.redraw(true);
+    } catch (e: any) {
+      this.error = e?.message || 'Impossible de lire ce fichier.';
+    }
+    this.cd.detectChanges();
+  }
+
+  // ─── Scinder en deux parcours ───
+
+  /** Index du point de coupe (un seul point sélectionné, à l'intérieur du tracé) */
+  get splitIndex(): number | null {
+    if (this.selected.size !== 1) return null;
+    const i = [...this.selected][0];
+    return i > 0 && i < this.points.length - 1 ? i : null;
+  }
+
+  get splitParts(): { n1: number; km1: number; n2: number; km2: number } | null {
+    const i = this.splitIndex;
+    if (i === null) return null;
+    return { n1: i + 1, km1: this.cum[i], n2: this.points.length - i, km2: this.distanceKm - this.cum[i] };
+  }
+
+  exportPart(which: 1 | 2): void {
+    const i = this.splitIndex;
+    if (i === null) return;
+    const part = splitAt(this.points, i)[which - 1];
+    this.info = `Exporté : ${this.download(`${this.name} - partie ${which}`, part)}`;
+  }
+
+  /** Les deux fichiers se téléchargent l'un après l'autre (le navigateur peut demander d'autoriser les téléchargements multiples) */
+  exportBothParts(): void {
+    const i = this.splitIndex;
+    if (i === null) return;
+    const [p1, p2] = splitAt(this.points, i);
+    const n1 = this.download(`${this.name} - partie 1`, p1);
+    setTimeout(() => {
+      const n2 = this.download(`${this.name} - partie 2`, p2);
+      this.info = `Exportés : ${n1} et ${n2}`;
+      this.cd.detectChanges();
+    }, 700);
+  }
+
+  keepPart(which: 1 | 2): void {
+    const i = this.splitIndex;
+    if (i === null) return;
+    this.commit();
+    this.points = splitAt(this.points, i)[which - 1];
+    this.info = `Seule la partie ${which} est conservée (annulable).`;
+    this.afterEdit();
+    this.redraw(true);
+  }
+
+  /** Colore la 2e partie en violet quand un point de coupe est sélectionné */
+  private drawSplitPreview(): void {
+    if (!this.cutLayer || !this.L || this.cutHead || this.cutTail) return;
+    this.cutLayer.clearLayers();
+    const i = this.splitIndex;
+    if (i === null) return;
+    this.L.polyline(this.points.slice(i).map(p => [p.lat, p.lon]), { color: '#8A5CC2', weight: 6, opacity: 0.85, interactive: false }).addTo(this.cutLayer);
   }
 
   // ─── Raccourcis clavier ───

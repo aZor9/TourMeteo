@@ -7,7 +7,6 @@ New features :
 Améliorations UI/UX:
 - Ajouter option rapide pour basculer unité vitesse (affichage et calculs).
 
- fusionner deux fichiers, couper au milieu pour en faire deux parcours,
 
 ---
 

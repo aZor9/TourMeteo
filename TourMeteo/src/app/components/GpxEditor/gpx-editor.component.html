@@ -128,6 +128,54 @@
       </div>
     </section>
 
+    <!-- Scinder en deux parcours -->
+    <section class="card p-3 sm:p-4 mb-3" aria-labelledby="split-title">
+      <h2 id="split-title" class="text-sm font-semibold mb-1">✂️ Scinder en deux parcours</h2>
+      <p *ngIf="!splitParts" class="text-xs" style="color:#72675C;">
+        Touchez <strong>un seul point</strong> sur la carte (mode « Sélection ») à l'endroit où couper : le tracé se divise là en deux parcours.
+      </p>
+      <ng-container *ngIf="splitParts as sp">
+        <p class="text-xs mb-3" style="color:#72675C;">Coupure au point {{ splitIndex! + 1 }} : la 2ᵉ partie est colorée en violet sur la carte.</p>
+        <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
+          <div class="rounded-xl border p-2.5" style="border-color:#DDD4C0;">
+            <div class="text-xs" style="color:#1B5A96;">● Partie 1</div>
+            <strong>{{ sp.km1 | number:'1.1-1' }} km</strong> · {{ sp.n1 | number:'1.0-0' }} pts
+          </div>
+          <div class="rounded-xl border p-2.5" style="border-color:#DDD4C0;">
+            <div class="text-xs" style="color:#8A5CC2;">● Partie 2</div>
+            <strong>{{ sp.km2 | number:'1.1-1' }} km</strong> · {{ sp.n2 | number:'1.0-0' }} pts
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary w-full mb-2" (click)="exportBothParts()">⬇️ Exporter les 2 parties</button>
+        <div class="grid grid-cols-2 gap-2 mb-2">
+          <button type="button" class="btn btn-ghost btn-sm" (click)="exportPart(1)">Exporter la partie 1</button>
+          <button type="button" class="btn btn-ghost btn-sm" (click)="exportPart(2)">Exporter la partie 2</button>
+          <button type="button" class="btn btn-secondary btn-sm" (click)="keepPart(1)">Garder la partie 1</button>
+          <button type="button" class="btn btn-secondary btn-sm" (click)="keepPart(2)">Garder la partie 2</button>
+        </div>
+      </ng-container>
+    </section>
+
+    <!-- Fusionner avec un autre fichier -->
+    <section class="card p-3 sm:p-4 mb-3" aria-labelledby="merge-title">
+      <h2 id="merge-title" class="text-sm font-semibold mb-1">🔗 Fusionner avec un autre fichier</h2>
+      <p class="text-xs mb-3" style="color:#72675C;">Ajoute un second GPX à ce tracé pour n'en faire qu'un.</p>
+      <div class="grid grid-cols-2 gap-2 mb-2" role="group" aria-label="Position du fichier ajouté">
+        <button type="button" (click)="mergePosition = 'end'" [attr.aria-pressed]="mergePosition === 'end'"
+                class="btn btn-sm" [ngClass]="mergePosition === 'end' ? 'btn-primary' : 'btn-ghost'">À la suite</button>
+        <button type="button" (click)="mergePosition = 'start'" [attr.aria-pressed]="mergePosition === 'start'"
+                class="btn btn-sm" [ngClass]="mergePosition === 'start' ? 'btn-primary' : 'btn-ghost'">Avant</button>
+      </div>
+      <label class="flex items-center gap-2 text-sm mb-3 cursor-pointer">
+        <input type="checkbox" [(ngModel)]="mergeAuto" class="w-5 h-5" />
+        <span>Orienter automatiquement le fichier ajouté<span class="block text-xs" style="color:#72675C;">Le retourne s'il se raccorde mieux dans l'autre sens</span></span>
+      </label>
+      <label class="btn btn-secondary w-full cursor-pointer">
+        📂 Choisir le fichier à ajouter
+        <input type="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" (change)="onMergeFile($event)" class="hidden" />
+      </label>
+    </section>
+
     <!-- Actions sur le tracé entier -->
     <section class="card p-3 sm:p-4 mb-3 mt-3" aria-labelledby="path-title">
       <h2 id="path-title" class="text-sm font-semibold mb-2">Tracé</h2>

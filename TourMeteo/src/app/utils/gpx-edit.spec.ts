@@ -88,3 +88,50 @@ describe('routing', () => {
     expect(distributeTimes([a, { lat: 0, lon: 0.01 }, b], { lat: 0, lon: 0 }, b)[1].time).toBeUndefined();
   });
 });
+
+import { mergeTracks, reversePoints, splitAt, timesAreConsistent } from './gpx-edit';
+
+describe('fusion, scission, inversion', () => {
+  const t = (s: number) => new Date(Date.UTC(2026, 0, 1, 8, 0, s)).toISOString();
+  const pt = (lat: number, s?: number): EditPoint => (s === undefined ? { lat, lon: 3 } : { lat, lon: 3, time: t(s) });
+
+  it('inverser garde des heures croissantes', () => {
+    const r = reversePoints([pt(1, 0), pt(2, 10), pt(3, 20)]);
+    expect(r.map(p => p.lat)).toEqual([3, 2, 1]);
+    expect(r.map(p => p.time)).toEqual([t(0), t(10), t(20)]);
+    expect(timesAreConsistent(r)).toBe(true);
+  });
+
+  it('fusionne à la suite en retournant le fichier ajouté si c\'est plus proche', () => {
+    const a = [pt(0), pt(1)];
+    const b = [pt(3), pt(2)]; // son DÉBUT est loin de la fin de a, sa FIN est proche
+    const m = mergeTracks(a, b, 'end', true);
+    expect(m.reversed).toBe(true);
+    expect(m.points.map(p => p.lat)).toEqual([0, 1, 2, 3]);
+    expect(m.gapM).toBeGreaterThan(100000);
+    expect(mergeTracks(a, b, 'end', false).points.map(p => p.lat)).toEqual([0, 1, 3, 2]);
+  });
+
+  it('fusionne au début', () => {
+    const m = mergeTracks([pt(5), pt(6)], [pt(3), pt(4)], 'start', true);
+    expect(m.points.map(p => p.lat)).toEqual([3, 4, 5, 6]);
+  });
+
+  it('retire les heures quand les fichiers se chevauchent ou qu\'elles sont partielles', () => {
+    const overlap = mergeTracks([pt(0, 100), pt(1, 200)], [pt(2, 50), pt(3, 60)], 'end', false);
+    expect(overlap.timesDropped).toBe(true);
+    expect(overlap.points.every(p => p.time === undefined)).toBe(true);
+    const ok = mergeTracks([pt(0, 0), pt(1, 10)], [pt(2, 20), pt(3, 30)], 'end', false);
+    expect(ok.timesDropped).toBe(false);
+    expect(ok.points[3].time).toBe(t(30));
+    expect(mergeTracks([pt(0, 0)], [pt(1)], 'end', false).timesDropped).toBe(true);
+  });
+
+  it('scinde en deux parties qui partagent le point de coupe', () => {
+    const [p1, p2] = splitAt([pt(0), pt(1), pt(2), pt(3), pt(4)], 2);
+    expect(p1.map(p => p.lat)).toEqual([0, 1, 2]);
+    expect(p2.map(p => p.lat)).toEqual([2, 3, 4]);
+    expect(() => splitAt([pt(0), pt(1), pt(2)], 0)).toThrow();
+    expect(() => splitAt([pt(0), pt(1), pt(2)], 2)).toThrow();
+  });
+});

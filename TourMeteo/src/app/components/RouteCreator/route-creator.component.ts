@@ -109,11 +109,10 @@ export class RouteCreatorComponent implements AfterViewInit, OnDestroy {
 
     this.mapInstance = this.L.map('route-map', { preferCanvas: true }).setView([46.8, 2.3], 6);
 
-    // CartoDB Positron: faster CDN + cleaner look than default OSM
-    const tileLayer = this.L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '© <a href="https://carto.com/">CARTO</a> © <a href="https://osm.org/">OSM</a>',
-      maxZoom: 19,
-      subdomains: 'abcd'
+    // OpenStreetMap (les tuiles CARTO exigent désormais une clé API : elles affichaient « API KEY REQUIRED »)
+    const tileLayer = this.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19
     }).addTo(this.mapInstance);
 
     // Mark map as ready once first tiles load
