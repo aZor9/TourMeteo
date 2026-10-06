@@ -78,7 +78,7 @@ readme.md               ← ce fichier
 ### Éditeur GPX (`/editor`) ✂️ — feature flag **dev** `gpxEditor` (désactivé par défaut ; À propos → taper 5× sur le badge de version → Fonctionnalités futures)
 - Ouvrir un `.gpx` (15 Mo max, traces ou routes), tout reste sur l'appareil
 - **Couper le début / la fin** : nombre de points à retirer (champ + curseur), aperçu en rouge sur la carte, km retirés (pensé pour les gros fichiers sur mobile)
-- Sélectionner des points (toucher, rectangle de zone, « tout entre les extrêmes »), les **supprimer**, les **déplacer** (glisser) ou en **ajouter** (toucher la carte)
+- Sélectionner des points (toucher, rectangle de zone, « tout entre les extrêmes »), les **supprimer**, les **déplacer** (glisser) ou en **ajouter** (toucher la carte ; option **« Suivre la route »** : le tronçon est recalculé sur les routes via BRouter, OSRM en secours, vélo ou à pied)
 - Simplifier (Douglas-Peucker), inverser le sens, annuler / rétablir (Ctrl+Z / Ctrl+Y), revenir à l'original
 - Renommer le parcours et **exporter** un GPX 1.1 (altitude et heures conservées)
 

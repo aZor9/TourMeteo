@@ -5,6 +5,7 @@ import {
   EditPoint, MAX_GPX_BYTES, buildGpx, elevationGain, haversineMeters, interpolatedPoint, nearestOnPath,
   parseGpx, safeFileName, simplify, totalDistanceKm
 } from '../../utils/gpx-edit';
+import { RoutingProfile, distributeTimes, routeThrough } from '../../utils/routing';
 
 type Mode = 'select' | 'box' | 'add';
 
@@ -27,6 +28,11 @@ export class GpxEditorComponent implements OnDestroy {
   info = '';
   tooManyHandles = false;
   simplifyTolerance = 5;
+
+  /** « Suivre la route » : les points ajoutés sont reliés en suivant les routes (BRouter / OSRM) */
+  snap = false;
+  snapProfile: RoutingProfile = 'bike';
+  snapping = false;
 
   /** Coupe : nombre de points retirés au début / à la fin (aperçu en rouge sur la carte) */
   cutHead = 0;
@@ -111,7 +117,7 @@ export class GpxEditorComponent implements OnDestroy {
     this.handles = L.layerGroup().addTo(this.map);
     this.cutLayer = L.layerGroup().addTo(this.map);
     this.map.on('moveend', () => this.queueRender());
-    this.map.on('click', (e: any) => { if (this.mode === 'add') this.addPointAt(e.latlng.lat, e.latlng.lng); });
+    this.map.on('click', (e: any) => { if (this.mode === 'add') void this.addPointAt(e.latlng.lat, e.latlng.lng); });
   }
 
   private redraw(fit = false): void {
@@ -313,25 +319,84 @@ export class GpxEditorComponent implements OnDestroy {
   }
 
   /** Ajoute un point à l'endroit cliqué, inséré au bon endroit du tracé (ou en début / fin) */
-  private addPointAt(lat: number, lon: number): void {
+  private async addPointAt(lat: number, lon: number): Promise<void> {
+    if (this.snapping) return;
     const near = nearestOnPath(this.points, { lat, lon });
     const p: EditPoint = { lat: +lat.toFixed(7), lon: +lon.toFixed(7) };
+    const n = this.points.length;
+    const kind: 'first' | 'start' | 'end' | 'mid' = !near ? 'first'
+      : near.segment === 0 && near.t === 0 ? 'start'
+      : near.segment === n - 2 && near.t === 1 ? 'end' : 'mid';
+
+    if (this.snap && near) {
+      await this.addAlongRoad(p, kind as 'start' | 'end' | 'mid', near.segment);
+      return;
+    }
+
     this.commit();
-    if (!near) {
+    if (kind === 'first') {
       this.points = [...this.points, p];
-    } else if (near.segment === 0 && near.t === 0) {
+    } else if (kind === 'start') {
       this.points = [{ ...p, ...(this.points[0].ele !== undefined ? { ele: this.points[0].ele } : {}) }, ...this.points];
-    } else if (near.segment === this.points.length - 2 && near.t === 1) {
-      const last = this.points[this.points.length - 1];
+    } else if (kind === 'end') {
+      const last = this.points[n - 1];
       this.points = [...this.points, { ...p, ...(last.ele !== undefined ? { ele: last.ele } : {}) }];
     } else {
-      const a = this.points[near.segment];
-      const b = this.points[near.segment + 1];
-      const np = interpolatedPoint(p.lat, p.lon, a, b, near.t);
-      this.points = [...this.points.slice(0, near.segment + 1), np, ...this.points.slice(near.segment + 1)];
+      const a = this.points[near!.segment];
+      const b = this.points[near!.segment + 1];
+      const np = interpolatedPoint(p.lat, p.lon, a, b, near!.t);
+      this.points = [...this.points.slice(0, near!.segment + 1), np, ...this.points.slice(near!.segment + 1)];
     }
     this.info = 'Point ajouté.';
     this.afterEdit();
+  }
+
+  /** Mode « Suivre la route » : remplace la ligne droite par l'itinéraire routier passant par le point cliqué */
+  private async addAlongRoad(click: EditPoint, kind: 'start' | 'end' | 'mid', seg: number): Promise<void> {
+    const pts = this.points;
+    const n = pts.length;
+    this.snapping = true;
+    this.error = '';
+    this.info = 'Calcul de l\'itinéraire…';
+    this.cd.detectChanges();
+    try {
+      const steps = kind === 'start' ? [click, pts[0]] : kind === 'end' ? [pts[n - 1], click] : [pts[seg], click, pts[seg + 1]];
+      let routed = await routeThrough(steps, this.snapProfile);
+      if (this.points !== pts) return; // le tracé a changé pendant le calcul (annulation, nouveau fichier…)
+
+      let next: EditPoint[];
+      let added: number;
+      if (kind === 'start') {
+        next = [...routed.slice(0, -1), ...pts];
+        added = routed.length - 1;
+      } else if (kind === 'end') {
+        next = [...pts, ...routed.slice(1)];
+        added = routed.length - 1;
+      } else {
+        routed = distributeTimes(routed, pts[seg], pts[seg + 1]);
+        const inner = routed.slice(1, -1);
+        next = [...pts.slice(0, seg + 1), ...inner, ...pts.slice(seg + 1)];
+        added = inner.length;
+      }
+      this.commit();
+      this.points = next;
+      this.info = `Point ajouté en suivant la route (+${added} points).`;
+    } catch {
+      // Service indisponible ou aucune route à proximité : on ajoute le point en ligne droite
+      this.commit();
+      const a = pts[seg];
+      const b = pts[seg + 1];
+      const np = kind === 'mid' ? interpolatedPoint(click.lat, click.lon, a, b, nearestOnPath(pts, click)?.t ?? 0.5) : click;
+      this.points = kind === 'start' ? [np, ...pts]
+        : kind === 'end' ? [...pts, np]
+        : [...pts.slice(0, seg + 1), np, ...pts.slice(seg + 1)];
+      this.info = '';
+      this.error = 'Itinéraire indisponible ici : le point a été ajouté en ligne droite.';
+    } finally {
+      this.snapping = false;
+    }
+    this.afterEdit();
+    this.cd.detectChanges();
   }
 
   reverse(): void {

@@ -105,6 +105,22 @@
         </ng-container>
       </p>
 
+      <!-- Option : suivre la route quand on ajoute des points -->
+      <div class="rounded-xl border px-3 py-2.5 mb-3" style="border-color:#DDD4C0; background:#FAF9F6;">
+        <label class="flex items-center justify-between gap-3 cursor-pointer">
+          <span class="text-sm font-medium">🛣️ Suivre la route<span class="block text-xs font-normal" style="color:#72675C;">Relie les points ajoutés en suivant les routes, au lieu d'une ligne droite</span></span>
+          <input type="checkbox" [(ngModel)]="snap" class="w-5 h-5 shrink-0" aria-label="Suivre la route à l'ajout de points" />
+        </label>
+        <div *ngIf="snap" class="flex items-center gap-2 mt-2">
+          <label for="snap-profile" class="text-xs" style="color:#72675C;">Type de voie</label>
+          <select id="snap-profile" [(ngModel)]="snapProfile" class="rounded-lg border px-2 py-1.5 text-sm" style="border-color:#DDD4C0; background:#fff;">
+            <option value="bike">🚴 Vélo (routes goudronnées)</option>
+            <option value="foot">🏃 À pied</option>
+          </select>
+          <span *ngIf="snapping" class="text-xs" style="color:#1B5A96;" role="status">Calcul…</span>
+        </div>
+      </div>
+
       <div class="flex flex-wrap gap-2">
         <button type="button" class="btn btn-danger btn-sm" (click)="deleteSelected()" [disabled]="!selected.size">🗑️ Supprimer ({{ selected.size }})</button>
         <button type="button" class="btn btn-ghost btn-sm" (click)="selectBetween()" [disabled]="selected.size < 2">↔ Tout entre les extrêmes</button>

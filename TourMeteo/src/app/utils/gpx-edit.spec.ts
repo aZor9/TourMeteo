@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { distributeTimes, parseBRouter, parseOsrm } from './routing';
 import { EditPoint, buildGpx, interpolatedPoint, nearestOnPath, parseGpx, safeFileName, simplify, totalDistanceKm } from './gpx-edit';
 
 const line = (n: number): EditPoint[] =>
@@ -63,5 +64,27 @@ describe('gpx-edit', () => {
   it('nettoie le nom de fichier', () => {
     expect(safeFileName('a/b:c*?.gpx')).toBe('a_b_c__.gpx.gpx');
     expect(safeFileName('   ')).toBe('parcours.gpx');
+  });
+});
+
+describe('routing', () => {
+  it('lit la réponse de BRouter avec altitude', () => {
+    const pts = parseBRouter({ features: [{ geometry: { coordinates: [[3.1, 45.1, 120], [3.2, 45.2, 130.5]] } }] });
+    expect(pts).toEqual([{ lat: 45.1, lon: 3.1, ele: 120 }, { lat: 45.2, lon: 3.2, ele: 130.5 }]);
+    expect(() => parseBRouter({})).toThrow();
+  });
+
+  it('lit la réponse d\'OSRM et refuse une erreur', () => {
+    expect(parseOsrm({ code: 'Ok', routes: [{ geometry: { coordinates: [[3, 45], [3.1, 45.1]] } }] })).toHaveLength(2);
+    expect(() => parseOsrm({ code: 'NoRoute', routes: [] })).toThrow();
+  });
+
+  it('répartit les heures selon la distance parcourue', () => {
+    const a = { lat: 0, lon: 0, time: '2026-01-01T08:00:00.000Z' };
+    const b = { lat: 0, lon: 0.02, time: '2026-01-01T08:20:00.000Z' };
+    const out = distributeTimes([a, { lat: 0, lon: 0.005 }, { lat: 0, lon: 0.01 }, b], a, b);
+    expect(out[1].time).toBe('2026-01-01T08:05:00.000Z');
+    expect(out[2].time).toBe('2026-01-01T08:10:00.000Z');
+    expect(distributeTimes([a, { lat: 0, lon: 0.01 }, b], { lat: 0, lon: 0 }, b)[1].time).toBeUndefined();
   });
 });
