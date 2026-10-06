@@ -15,6 +15,9 @@ Idée futur :
 
 # Backlog priorisé (revue du projet — octobre 2026)
 
+## 🚴 Strava — bloquant
+- [~] **Strava : API réservée aux abonnés** (403 `Application/Status/Inactive`). Sans abonnement, l'intégration ne peut pas fonctionner : le flag `strava` reste désactivé par défaut et l'import GPX manuel (avec astuce d'export dans la page) sert de solution. À rouvrir seulement si un abonnement est pris.
+
 ## 🔴 Sécurité — à faire
 - [ ] **Vérifier sur Vercel** : `STRAVA_CLIENT_ID` + `STRAVA_CLIENT_SECRET` définis (Production **et** Preview), et « Authorization Callback Domain » = `meteo.hugo-lembrez.fr` dans https://www.strava.com/settings/api. Sans ça, Strava ne marchera jamais.
 - [ ] Tokens Strava en `localStorage` : lisibles par n'importe quel script de la page (XSS). Cible : le serveur échange le code et pose le refresh token dans un cookie `HttpOnly; Secure; SameSite=Lax`, le front ne voit jamais de token.

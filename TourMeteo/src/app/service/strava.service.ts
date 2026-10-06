@@ -182,6 +182,11 @@ export class StravaService {
     // Détail renvoyé par Strava (ex : "Authorization Error — read_permission: missing") pour faciliter le diagnostic
     const detail = [err?.error?.message, ...(err?.error?.errors ?? []).map((e: any) => [e.resource, e.field, e.code].filter(Boolean).join('/'))].filter(Boolean).join(' · ');
     const suffix = detail ? ` [${detail}]` : '';
+    // Cas particulier : l'application développeur elle-même est désactivée chez Strava (rien à voir avec l'utilisateur)
+    const inactive = (err?.error?.errors ?? []).some((e: any) => e?.resource === 'Application' && e?.code === 'Inactive');
+    if (err?.status === 403 && inactive) {
+      return new Error('L\'application Meteo Ride est actuellement désactivée côté Strava : l\'import est indisponible pour le moment. Le mode démo reste utilisable.');
+    }
     switch (err?.status) {
       case 401: return new Error('Autorisation Strava expirée ou révoquée : déconnectez-vous puis reconnectez-vous.' + suffix);
       case 403: return new Error('Strava refuse l\x27accès (403) : autorisations insuffisantes. Déconnectez-vous puis reconnectez-vous en laissant toutes les cases cochées.' + suffix);

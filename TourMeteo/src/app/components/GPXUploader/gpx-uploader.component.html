@@ -24,6 +24,7 @@
   <div class="mb-6" [ngClass]="stravaEnabled ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : ''">
 
     <!-- 1. File upload -->
+    <div>
     <label class="group flex flex-col items-center justify-center gap-3 w-full border-2 border-dashed border-slate-300 rounded-2xl p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200">
       <div class="flex items-center justify-center w-11 h-11 rounded-full bg-slate-100 group-hover:bg-blue-100 transition-colors">
         <svg class="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -38,6 +39,18 @@
       </div>
       <input type="file" accept=".gpx" (change)="onFileChange($event)" class="hidden" />
     </label>
+
+    <!-- Astuce : récupérer un GPX depuis Strava, sans abonnement ni connexion -->
+    <details class="mt-2 rounded-xl border px-4 py-3 text-xs" style="border-color:#DDD4C0; background:#FAF9F6; color:#3D3733;">
+      <summary class="cursor-pointer font-medium" style="color:#1B5A96;">🚴 Comment récupérer un GPX depuis Strava ?</summary>
+      <ol class="list-decimal pl-5 mt-2 space-y-1">
+        <li>Sur <strong>strava.com</strong> (navigateur, pas l'appli mobile), ouvrez votre <strong>activité</strong> ou votre <strong>itinéraire</strong>.</li>
+        <li>Menu <strong>« … »</strong> → <strong>Exporter le GPX</strong> (pour un itinéraire : bouton <strong>Exporter le GPX</strong>).</li>
+        <li>Déposez le fichier téléchargé ci-dessus.</li>
+      </ol>
+      <p class="mt-2" style="color:#72675C;">Gratuit, sans abonnement. Fonctionne de la même façon avec Komoot, Garmin Connect, RideWithGPS ou Google Maps (export GPX).</p>
+    </details>
+    </div>
 
     <!-- 2. Strava Integration Card (dev feature flag) -->
     <div *ngIf="stravaEnabled"
