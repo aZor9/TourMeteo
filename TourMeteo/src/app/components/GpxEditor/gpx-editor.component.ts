@@ -132,11 +132,9 @@ export class GpxEditorComponent implements OnDestroy {
     this.L = mod.default || mod;
     const L = this.L;
     this.map = L.map(this.mapEl!.nativeElement, { zoomControl: true, doubleClickZoom: false });
-    // CARTO (données OpenStreetMap) : plus fiable sur mobile que le serveur de tuiles public d'OSM
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: 'abcd',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(this.map);
     this.line = L.polyline([], { color: '#1B5A96', weight: 4, opacity: 0.85, smoothFactor: 1.5 }).addTo(this.map);
     this.handles = L.layerGroup().addTo(this.map);

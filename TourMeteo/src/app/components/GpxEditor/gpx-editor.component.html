@@ -33,14 +33,14 @@
     </div>
 
     <!-- Carte collée en haut : on voit la coupe en rouge pendant qu'on règle les curseurs -->
-    <div class="sticky sm:static z-30 mb-3" style="top: 56px;">
+    <div class="sticky sm:static z-30 mb-3" style="top: 0;">
       <div class="rounded-xl overflow-hidden border shadow-md" style="border-color:#DDD4C0;">
         <div #mapEl class="w-full h-[38vh] sm:h-[55vh]" style="min-height: 220px; z-index: 0;"></div>
       </div>
-      <p *ngIf="tooManyHandles" class="text-[11px] mt-1 px-2 py-1 rounded-lg" style="color:#B45309; background:rgba(255,251,235,0.95);">
-        Beaucoup de points à l'écran : zoomez pour les voir et les déplacer. « Zone » et « Couper » fonctionnent quand même.
-      </p>
     </div>
+    <p *ngIf="tooManyHandles" class="text-[11px] -mt-2 mb-3 px-2 py-1 rounded-lg" style="color:#B45309; background:rgba(255,251,235,0.95);">
+      Beaucoup de points à l'écran : zoomez pour les voir et les déplacer. « Zone » et « Couper » fonctionnent quand même.
+    </p>
 
     <!-- Placer un tracé sans position -->
     <section class="card p-3 sm:p-4 mb-3" aria-labelledby="place-title">
