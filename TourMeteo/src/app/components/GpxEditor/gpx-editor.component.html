@@ -42,6 +42,39 @@
       </p>
     </div>
 
+    <!-- Placer un tracé sans position -->
+    <section class="card p-3 sm:p-4 mb-3" aria-labelledby="place-title">
+      <h2 id="place-title" class="text-sm font-semibold mb-1">📍 Placer sur la carte</h2>
+      <ng-container *ngIf="!placing">
+        <p class="text-xs mb-3" style="color:#72675C;">Pour un tracé sans position géographique : indiquez le départ et l'orientation, il s'ajuste ensuite aux routes.</p>
+        <button type="button" class="btn btn-secondary w-full" (click)="startPlacing()">Placer ce tracé</button>
+      </ng-container>
+      <ng-container *ngIf="placing">
+        <p class="text-xs mb-3" style="color:#72675C;">Touchez la carte pour poser le départ (point vert).</p>
+        <div class="space-y-3">
+          <div>
+            <label for="place-rot" class="flex items-center justify-between text-sm font-medium">
+              <span>Orientation</span><span class="text-xs font-normal" style="color:#72675C;">{{ placeRotation | number:'1.0-0' }}°</span>
+            </label>
+            <input id="place-rot" type="range" min="-180" max="180" step="1" [(ngModel)]="placeRotation" (ngModelChange)="previewPlacement()" class="w-full h-8" />
+          </div>
+          <div>
+            <label for="place-scale" class="flex items-center justify-between text-sm font-medium">
+              <span>Taille</span><span class="text-xs font-normal" style="color:#72675C;">{{ placeScale | number:'1.0-0' }} %</span>
+            </label>
+            <input id="place-scale" type="range" min="20" max="300" step="1" [(ngModel)]="placeScale" (ngModelChange)="previewPlacement()" class="w-full h-8" />
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary w-full mt-3" (click)="fitPlacement()" [disabled]="fitting || !placeAnchorSet">
+          {{ fitting ? 'Recherche…' : '🛣️ Ajuster aux routes' }}
+        </button>
+        <div class="flex gap-2 mt-2">
+          <button type="button" class="btn btn-primary flex-1" (click)="applyPlacement()" [disabled]="!placeAnchorSet">Valider</button>
+          <button type="button" class="btn btn-ghost" (click)="cancelPlacing()">Annuler</button>
+        </div>
+      </ng-container>
+    </section>
+
     <!-- Couper le début / la fin -->
     <section class="card p-3 sm:p-4 mb-3" aria-labelledby="cut-title">
       <h2 id="cut-title" class="text-sm font-semibold mb-1">✂️ Couper le début ou la fin</h2>

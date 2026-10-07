@@ -6,6 +6,7 @@ import {
   mergeTracks, parseGpx, reversePoints, safeFileName, simplify, splitAt, totalDistanceKm
 } from '../../utils/gpx-edit';
 import { RoutingProfile, distributeTimes, routeThrough } from '../../utils/routing';
+import { Placement, autoFitToRoads, isUngeoreferenced, placeTrack } from '../../utils/georef';
 
 type Mode = 'select' | 'box' | 'add';
 
@@ -44,6 +45,14 @@ export class GpxEditorComponent implements OnDestroy {
   private cum: number[] = [];
   private cutLayer: any = null;
 
+  /** Placement d'un tracé sans position : on le pose sur la carte, on l'oriente, puis on l'ajuste aux routes */
+  placing = false;
+  placeRotation = 0;
+  placeScale = 100;
+  fitting = false;
+  private placeBase: EditPoint[] = [];
+  private placeAnchor: { lat: number; lon: number } | null = null;
+
   distanceKm = 0;
   gain: number | null = null;
   mergedSegments = 1;
@@ -69,6 +78,7 @@ export class GpxEditorComponent implements OnDestroy {
     this.map = null;
   }
 
+  get placeAnchorSet(): boolean { return this.placeAnchor !== null; }
   get canUndo(): boolean { return this.history.length > 0; }
   get canRedo(): boolean { return this.future.length > 0; }
 
@@ -95,10 +105,17 @@ export class GpxEditorComponent implements OnDestroy {
       this.future = [];
       this.selected.clear();
       this.mode = 'select';
+      this.placing = false;
       this.updateStats();
       this.cd.detectChanges(); // crée le conteneur de la carte
       await this.ensureMap();
-      this.redraw(true);
+      if (isUngeoreferenced(parsed.points)) {
+        // Pas de position réelle : on ouvre la carte sur la France et on passe directement au placement
+        this.map.setView([46.6, 2.5], 6);
+        this.startPlacing(true);
+      } else {
+        this.redraw(true);
+      }
     } catch (e: any) {
       this.error = e?.message || 'Impossible de lire ce fichier.';
     }
@@ -121,7 +138,10 @@ export class GpxEditorComponent implements OnDestroy {
     this.handles = L.layerGroup().addTo(this.map);
     this.cutLayer = L.layerGroup().addTo(this.map);
     this.map.on('moveend', () => this.queueRender());
-    this.map.on('click', (e: any) => { if (this.mode === 'add') void this.addPointAt(e.latlng.lat, e.latlng.lng); });
+    this.map.on('click', (e: any) => {
+      if (this.placing) { this.placeAnchor = { lat: e.latlng.lat, lon: e.latlng.lng }; this.previewPlacement(); }
+      else if (this.mode === 'add') void this.addPointAt(e.latlng.lat, e.latlng.lng);
+    });
   }
 
   private redraw(fit = false): void {
@@ -144,6 +164,7 @@ export class GpxEditorComponent implements OnDestroy {
     if (!this.map || !this.L) return;
     const L = this.L;
     this.handles.clearLayers();
+    if (this.placing) return;
     const bounds = this.map.getBounds().pad(0.05);
     const last = this.points.length - 1;
     const visible: number[] = [];
@@ -177,6 +198,91 @@ export class GpxEditorComponent implements OnDestroy {
       m.addTo(this.handles);
     }
     this.cd.detectChanges();
+  }
+
+  // ─── Placer un tracé sans position ───
+
+  startPlacing(ungeoreferenced = false): void {
+    if (!this.map || !this.points.length) return;
+    this.setMode('select');
+    this.placing = true;
+    this.placeBase = this.points.slice();
+    this.placeRotation = 0;
+    this.placeScale = 100;
+    this.placeAnchor = ungeoreferenced ? null : { lat: this.points[0].lat, lon: this.points[0].lon };
+    this.error = '';
+    this.info = ungeoreferenced
+      ? "Ce fichier n'a pas de position sur la carte. Touchez la carte à l'endroit du départ, puis réglez l'orientation."
+      : "Touchez la carte pour poser le point de départ, puis réglez l'orientation.";
+    this.selected.clear();
+    this.previewPlacement();
+  }
+
+  private currentPlacement(): Placement | null {
+    return this.placeAnchor
+      ? { anchor: this.placeAnchor, rotationDeg: Number(this.placeRotation) || 0, scale: (Number(this.placeScale) || 100) / 100 }
+      : null;
+  }
+
+  previewPlacement(): void {
+    if (!this.map || !this.placing) return;
+    this.handles.clearLayers();
+    this.cutLayer.clearLayers();
+    const pl = this.currentPlacement();
+    if (!pl) { this.line.setLatLngs([]); return; }
+    const placed = placeTrack(this.placeBase, pl);
+    this.line.setLatLngs(placed.map(p => [p.lat, p.lon]));
+    this.L.circleMarker([pl.anchor.lat, pl.anchor.lon], { radius: 9, color: '#fff', weight: 3, fillColor: '#16A34A', fillOpacity: 1, interactive: false }).addTo(this.cutLayer);
+    this.cd.detectChanges();
+  }
+
+  async fitPlacement(): Promise<void> {
+    const pl = this.currentPlacement();
+    if (!pl || this.fitting) return;
+    this.fitting = true;
+    this.error = '';
+    this.info = 'Recherche des routes autour du tracé…';
+    this.cd.detectChanges();
+    try {
+      const r = await autoFitToRoads(this.placeBase, pl, this.snapProfile);
+      if (!this.placing) return;
+      if (r.afterM < r.beforeM - 0.5) {
+        this.placeAnchor = r.placement.anchor;
+        this.placeRotation = +r.placement.rotationDeg.toFixed(1);
+        this.placeScale = +(r.placement.scale * 100).toFixed(1);
+        this.info = `Ajusté aux routes : écart moyen ${Math.round(r.beforeM)} m → ${Math.round(r.afterM)} m. Vérifiez sur la carte puis validez.`;
+      } else {
+        this.info = 'Le placement colle déjà au mieux aux routes : rien à ajuster.';
+      }
+      this.previewPlacement();
+    } catch (e: any) {
+      this.info = '';
+      this.error = e?.message || 'Ajustement impossible.';
+    } finally {
+      this.fitting = false;
+      this.cd.detectChanges();
+    }
+  }
+
+  applyPlacement(): void {
+    const pl = this.currentPlacement();
+    if (!pl) { this.error = "Touchez d'abord la carte pour poser le point de départ."; return; }
+    const placed = placeTrack(this.placeBase, pl).map(p => ({ ...p, lat: +p.lat.toFixed(7), lon: +p.lon.toFixed(7) }));
+    this.placing = false;
+    this.cutLayer.clearLayers();
+    this.commit();
+    this.points = placed;
+    this.info = 'Tracé placé sur la carte.';
+    this.error = '';
+    this.afterEdit();
+    this.redraw(true);
+  }
+
+  cancelPlacing(): void {
+    this.placing = false;
+    this.cutLayer?.clearLayers();
+    this.info = '';
+    this.redraw(!isUngeoreferenced(this.points));
   }
 
   // ─── Modes ───
