@@ -22,7 +22,7 @@ export interface ParsedGpx {
 const EARTH_RADIUS_M = 6371000;
 
 /** Taille maximale d'un fichier accepté (octets) */
-export const MAX_GPX_BYTES = 15 * 1024 * 1024;
+export const MAX_GPX_BYTES = 60 * 1024 * 1024;
 
 export function haversineMeters(a: EditPoint, b: EditPoint): number {
   const toRad = (d: number) => d * Math.PI / 180;
@@ -52,12 +52,12 @@ export function elevationGain(points: EditPoint[]): number | null {
   return seen ? Math.round(gain) : null;
 }
 
-/** Lit un fichier GPX (trkpt, à défaut rtept). Lève une Error avec un message lisible. */
+/** Lit un fichier GPX (trkpt, à défaut rtept, à défaut wpt). Ne garde que les points GPS (lat, lon, altitude, heure) :
+ *  extensions, capteurs, waypoints annexes, etc. sont ignorés. Lève une Error avec un message lisible. */
 export function parseGpx(xml: string, fallbackName = 'Parcours'): ParsedGpx {
-  const doc = new DOMParser().parseFromString(xml, 'application/xml');
-  if (doc.getElementsByTagName('parsererror').length > 0) {
-    throw new Error('Fichier GPX invalide ou corrompu.');
-  }
+  const clean = xml.replace(/^[﻿\s]+/, '');
+  const doc = new DOMParser().parseFromString(clean, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length > 0) return parseGpxLenient(clean, fallbackName);
 
   const byName = (root: Document | Element, tag: string): Element[] =>
     Array.from(root.getElementsByTagNameNS('*', tag));
@@ -68,6 +68,10 @@ export function parseGpx(xml: string, fallbackName = 'Parcours'): ParsedGpx {
     nodes = byName(doc, 'rtept');
     segments = byName(doc, 'rte').length;
   }
+  if (nodes.length === 0) {
+    nodes = byName(doc, 'wpt');
+    segments = 1;
+  }
 
   const points: EditPoint[] = [];
   for (const n of nodes) {
@@ -75,10 +79,16 @@ export function parseGpx(xml: string, fallbackName = 'Parcours'): ParsedGpx {
     const lon = parseFloat(n.getAttribute('lon') ?? '');
     if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) continue;
     const p: EditPoint = { lat, lon };
-    const ele = n.getElementsByTagNameNS('*', 'ele')[0]?.textContent;
-    if (ele !== undefined && ele !== null && isFinite(parseFloat(ele))) p.ele = parseFloat(ele);
-    const time = n.getElementsByTagNameNS('*', 'time')[0]?.textContent?.trim();
-    if (time && !isNaN(Date.parse(time))) p.time = time;
+    // Enfants directs uniquement : un <time>/<ele> dans <extensions> ne doit pas être pris pour celui du point
+    for (const c of Array.from(n.children)) {
+      if (c.localName === 'ele') {
+        const v = parseFloat(c.textContent ?? '');
+        if (isFinite(v)) p.ele = v;
+      } else if (c.localName === 'time') {
+        const t = c.textContent?.trim();
+        if (t && !isNaN(Date.parse(t))) p.time = t;
+      }
+    }
     points.push(p);
   }
 
@@ -87,6 +97,31 @@ export function parseGpx(xml: string, fallbackName = 'Parcours'): ParsedGpx {
   const trkName = byName(doc, 'trk')[0]?.getElementsByTagNameNS('*', 'name')[0]?.textContent?.trim();
   const metaName = byName(doc, 'metadata')[0]?.getElementsByTagNameNS('*', 'name')[0]?.textContent?.trim();
   return { name: trkName || metaName || fallbackName, points, segments: Math.max(1, segments) };
+}
+
+/** Lecture tolérante pour un XML mal formé : extrait les points par expression régulière */
+function parseGpxLenient(xml: string, fallbackName: string): ParsedGpx {
+  const finite = (v: string | undefined): number => parseFloat(v ?? '');
+  const attr = (attrs: string, key: string): number =>
+    finite(new RegExp('\b' + key + '\s*=\s*["\']([^"\']+)["\']').exec(attrs)?.[1]);
+  for (const tag of ['trkpt', 'rtept', 'wpt']) {
+    const re = new RegExp('<(?:\w+:)?' + tag + '\b([^>]*?)(?:/>|>([\s\S]*?)</(?:\w+:)?' + tag + '>)', 'g');
+    const points: EditPoint[] = [];
+    for (const m of xml.matchAll(re)) {
+      const lat = attr(m[1], 'lat');
+      const lon = attr(m[1], 'lon');
+      if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) continue;
+      const p: EditPoint = { lat, lon };
+      const body = (m[2] ?? '').replace(/<(?:\w+:)?extensions\b[\s\S]*?<\/(?:\w+:)?extensions>/g, '');
+      const ele = finite(/<(?:\w+:)?ele>\s*([^<]+?)\s*</.exec(body)?.[1]);
+      if (isFinite(ele)) p.ele = ele;
+      const time = /<(?:\w+:)?time>\s*([^<]+?)\s*</.exec(body)?.[1];
+      if (time && !isNaN(Date.parse(time))) p.time = time;
+      points.push(p);
+    }
+    if (points.length) return { name: fallbackName, points, segments: 1 };
+  }
+  throw new Error('Fichier GPX invalide ou corrompu.');
 }
 
 function escapeXml(s: string): string {

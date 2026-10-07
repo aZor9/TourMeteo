@@ -29,6 +29,11 @@
          style="color:#3D3733;">
         Ride
       </a>
+      <a *ngIf="showRouteCreator" routerLink="/route-creator" routerLinkActive="nav-link-active"
+         class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+         style="color:#3D3733;">
+        Créer un tracé
+      </a>
       <a *ngIf="showEditor" routerLink="/editor" routerLinkActive="nav-link-active"
          class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
          style="color:#3D3733;">
@@ -38,11 +43,6 @@
          class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
          style="color:#3D3733;">
         Running
-      </a>
-      <a *ngIf="showRouteCreator" routerLink="/route-creator" routerLinkActive="nav-link-active"
-         class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
-         style="color:#3D3733;">
-        Parcours
       </a>
       <a *ngIf="showBestDeparture" routerLink="/best-departure" routerLinkActive="nav-link-active"
          class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
@@ -93,6 +93,11 @@
        style="color:#3D3733;">
       Ride
     </a>
+    <a *ngIf="showRouteCreator" routerLink="/route-creator" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
+       class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
+       style="color:#3D3733;">
+      Créer un tracé
+    </a>
     <a *ngIf="showEditor" routerLink="/editor" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
        class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
        style="color:#3D3733;">
@@ -102,11 +107,6 @@
        class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
        style="color:#3D3733;">
       Running
-    </a>
-    <a *ngIf="showRouteCreator" routerLink="/route-creator" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
-       class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"
-       style="color:#3D3733;">
-      Parcours
     </a>
     <a *ngIf="showBestDeparture" routerLink="/best-departure" (click)="mobileMenuOpen = false" routerLinkActive="nav-link-active"
        class="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-warm"

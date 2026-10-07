@@ -82,7 +82,7 @@ export class GpxEditorComponent implements OnDestroy {
     this.error = '';
     this.info = '';
     if (file.size > MAX_GPX_BYTES) {
-      this.error = 'Fichier trop volumineux (15 Mo maximum).';
+      this.error = 'Fichier trop volumineux (60 Mo maximum).';
       return;
     }
     try {
@@ -537,7 +537,7 @@ export class GpxEditorComponent implements OnDestroy {
     input.value = '';
     if (!file) return;
     this.error = '';
-    if (file.size > MAX_GPX_BYTES) { this.error = 'Fichier trop volumineux (15 Mo maximum).'; return; }
+    if (file.size > MAX_GPX_BYTES) { this.error = 'Fichier trop volumineux (60 Mo maximum).'; return; }
     try {
       const other = parseGpx(await file.text(), file.name.replace(/\.gpx$/i, ''));
       const r = mergeTracks(this.points, other.points, this.mergePosition, this.mergeAuto);
