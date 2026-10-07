@@ -17,25 +17,131 @@ Application Angular permettant de comparer la météo heure par heure entre plus
 ---
 
 ## Architecture du projet
-- Projet Angular complet — dossier racine `TourMeteo/`
-- Document texte (ce `readme.md`) listant : membres, API, instructions de lancement
-- Fichiers auxiliaires : `Dockerfile`, `docker-compose.yml`
+
+```
+TourMeteo/              ← projet Angular (root directory pour Vercel)
+├── src/
+│   ├── app/
+│   │   ├── components/
+│   │   │   ├── App/              Page d'accueil (recherche multi-villes)
+│   │   │   ├── About/            Page « À propos » + options dev cachées
+│   │   │   ├── GPXUploader/      Import GPX + export PNG / partage
+│   │   │   │   ├── gpx-map/      Carte Leaflet (tracé + marqueurs)
+│   │   │   │   ├── ride-score/   Score vélo + tenue
+│   │   │   │   ├── gpx-summary-bar/  Barre de stats
+│   │   │   │   ├── gpx-results-table/ Tableau + cartes mobile
+│   │   │   │   └── history-panel/     Panneau historique (dev flag)
+│   │   │   ├── SearchTab/        Formulaire de recherche
+│   │   │   ├── WeatherSheet/     Tableau météo horaire
+│   │   │   └── navbar/           Barre de navigation
+│   │   ├── service/
+│   │   │   ├── city.service.ts        Géocodage (Nominatim)
+│   │   │   ├── weather.service.ts     Météo horaire (Open-Meteo)
+│   │   │   ├── gpx-export.service.ts  Export PNG + partage
+│   │   │   ├── history.service.ts     Historique localStorage
+│   │   │   └── feature-flag.service.ts Feature flags localStorage
+│   │   ├── app.routes.ts         Routes : /, /about, /gpx
+│   │   ├── app.config.ts         Configuration Angular
+│   │   └── root.component.ts     Composant racine (router-outlet)
+│   └── index.html
+├── angular.json
+├── vercel.json                   Config Vercel (rewrites SPA)
+├── package.json
+└── tsconfig*.json
+Dockerfile              ← développement Docker (ng serve)
+docker-compose.yml
+readme.md               ← ce fichier
+```
 
 ---
 
-## APIs utilisées (avec liens)
-- Géocodage : Nominatim (OpenStreetMap) — https://nominatim.org/release-docs/latest/ (aucune clé requise)
-- Météo : Open-Meteo — https://open-meteo.com/en/docs (API publique, pas de clé requise)
-- Répertoire du projet : https://github.com/aZor9/TourMeteo
+## APIs utilisées
+
+| API | Usage | Clé requise | Documentation |
+|-----|-------|-------------|---------------|
+| **Open-Meteo** | Données météo horaires (température, vent, weathercode, jour/nuit) | Non | https://open-meteo.com/en/docs |
+| **Nominatim** (OpenStreetMap) | Géocodage (nom → lat/lon) et reverse-géocodage (lat/lon → ville) | Non | https://nominatim.org/release-docs/latest/ |
+
+> **Note :** Nominatim applique des limites d'usage (1 req/s, user-agent obligatoire). L'application utilise un throttle et un échantillonnage par distance pour respecter ces limites.
 
 ---
 
-## Installation — Prérequis
-- Node.js : version 18+ recommandée
-- npm (ou `pnpm`/`yarn`) : version récente
+## Fonctionnalités
+
+### Recherche multi-villes
+- Saisir plusieurs villes séparées par des virgules et une date
+- Affichage d'un tableau météo horaire comparatif (température, vent, weathercode avec emoji)
+- Filtres : température, vent, résumé météo
+- **Vue mobile** : cartes avec emoji météo en fond (opacité élevée), indicateur jour/nuit sous l'heure, affichage des précipitations (probabilité + quantité)
+
+### Accueil (`/`) et Daily (`/daily`)
+- **Accueil** : météo du moment pour la dernière ville / votre position, 12 prochaines heures, phrase de synthèse, lieux récents en un tap, accès aux fonctionnalités
+- **Daily** : comparaison multi-villes (ancienne page d'accueil)
+
+### Météo heure par heure en graphiques (`/hourly`) 📈 — feature flag `hourly` (activé par défaut)
+- Un lieu + un jour → graphiques **précipitations** (mm + probabilité), **température / ressenti** et **vent** (Chart.js, chargé à la demande)
+- Aussi : rafales, UV, nuages, pression, point de rosée, visibilité, lever/coucher du soleil, **qualité de l'air et pollens** (API Open-Meteo Air Quality, pollens en Europe uniquement)
+- Tuiles de synthèse (min/max, cumul de pluie, proba max, vent max) + phrase « Pluie entre 14h et 17h »
+- Bandeau emoji toutes les 3 h, navigation jour précédent / suivant, bouton **Ma position** (géolocalisation)
+- URL partageable : `/hourly?city=Lille&date=2026-10-06`
+
+### Éditeur GPX (`/editor`) ✂️ — feature flag **dev** `gpxEditor` (désactivé par défaut ; À propos → taper 5× sur le badge de version → Fonctionnalités futures)
+- Ouvrir un `.gpx` (15 Mo max, traces ou routes), tout reste sur l'appareil
+- **Couper le début / la fin** : nombre de points à retirer (champ + curseur), aperçu en rouge sur la carte, km retirés (pensé pour les gros fichiers sur mobile)
+- Sélectionner des points (toucher, rectangle de zone, « tout entre les extrêmes »), les **supprimer**, les **déplacer** (glisser) ou en **ajouter** (toucher la carte ; option **« Suivre la route »** : le tronçon est recalculé sur les routes via BRouter, OSRM en secours, vélo ou à pied)
+- **Fusionner** deux fichiers (à la suite ou avant, orientation automatique du second, écart signalé) et **scinder** un parcours en deux au point choisi (export des 2 parties, ou garder l'une des deux)
+- Simplifier (Douglas-Peucker), inverser le sens, annuler / rétablir (Ctrl+Z / Ctrl+Y), revenir à l'original
+- Renommer le parcours et **exporter** un GPX 1.1 (altitude et heures conservées)
+
+### Import GPX et export
+- **Import :** charger un fichier `.gpx` pour calculer la distance totale du parcours
+- **Connexion Strava 🚴 :** importer directement ses itinéraires enregistrés ou ses activités récentes en 1 clic (authentification OAuth 2.0 ou mode démo)
+- **Calcul d'itinéraire :** estimation de l'heure de passage à chaque point selon la vitesse moyenne et l'heure de départ renseignées
+- **Reverse-géocodage :** détection automatique de la ville à chaque point d'échantillonnage (Nominatim, throttlé ~1 req/s)
+- **Météo par passage :** température, ressenti, vent (vitesse + direction cardinale), humidité, probabilité de pluie, précipitations et emoji weathercode
+- **Score de sortie vélo :** score 0-100 avec recommandation de tenue cycliste, alertes et conseils
+- **Export PNG :** image soignée du tableau des passages avec score vélo + tenue recommandée (rendu Canvas natif)
+- **Partage :** via l'API Web Share sur les navigateurs compatibles ; fallback téléchargement si non supporté
+- **Filtres résultats :** bascule Résumé / Détail, masquer/afficher carte, score ou tableau individuellement
+- **Rafraîchir météo 🔧 :** changer la date ou l'heure sans re-géocoder les villes (fonctionnalité dev, activer dans options développeur)
+
+### Fonctionnalités supplémentaires ✨
+- **Historique des trajets** : sauvegarde en `localStorage` avec rechargement rapide, gestion du quota
+- **Carte interactive** : tracé du parcours GPX sur une carte Leaflet avec marqueurs numérotés
+- **Villes récentes** 📍 : mémorisation locale des villes recherchées et suggestions automatiques
+- **Plan nutritionnel d'effort** 🍌 : estimation des glucides et de l'hydratation (avec avertissement santé)
+- **Rafraîchir météo** 🔄 : changer la date ou l'heure sans re-géocoder les villes
+- Fonctionnalités supplémentaires, activables dans la section « Fonctionnalités » de la page À propos
+
+### Options développeur (feature flags)
+- Panneau caché dans la page À propos : taper 5× sur le badge de version pour le révéler
+- **Rafraîchir météo** : changer la date/heure sans re-géocoder les villes (fonctionnalité spéciale dev)
+- Toutes les préférences sont persistées en `localStorage`
+
+### Analytics
+- **Vercel Analytics** et **Speed Insights** intégrés (suivi anonyme)
+
+### Légende weathercode (Open-Meteo)
+| Emoji | Codes | Description |
+|-------|-------|-------------|
+| ☀️ | 0 | Ciel clair |
+| 🌤️ | 1, 2 | Partiellement nuageux |
+| ☁️ | 3 | Couvert |
+| 🌫️ | 45, 48 | Brouillard |
+| 🌦️ | 51, 53, 55, 80, 81, 82 | Bruine / Averses |
+| 🌧️ | 56, 57, 61, 63, 65, 66, 67 | Pluie / Bruine verglaçante |
+| ❄️ | 71, 73, 75, 77 | Neige / Grains de neige |
+| 🌨️ | 85, 86 | Averses de neige |
+| ⛈️ | 95, 96, 99 | Orage (avec/sans grêle) |
+
+---
+
+## Installation et lancement
+
+### Prérequis
+- Node.js ≥ 18
+- npm (inclus avec Node.js)
 - Angular CLI (optionnel) : `npm install -g @angular/cli`
-- Docker (optionnel) : pour lancer le projet via conteneur
-
 
 ### Docker (recommandé)
 
@@ -62,32 +168,78 @@ cd TourMeteo
 npm run watch
 ```
 
+### Build production
+
+```bash
+cd TourMeteo
+npm run build       # ng build --configuration production → dist/
+```
+
+### Docker (développement)
+
+```bash
+docker compose build
+docker compose up
+# → http://localhost:4200
+```
+
 ---
 
-## Exemples d'utilisation de l'API (Open-Meteo)
-- Documentation : https://open-meteo.com/en/docs
-- Exemple : requête horaire pour coordonnées lat/lon (voir `weather.service.ts`)
+## Déploiement sur Vercel
 
-## Remarques sur Nominatim
-- Documentation : https://nominatim.org/release-docs/latest/
-- Respecter les conditions d'utilisation (limites de requêtes, user-agent, etc.).
+Le projet est configuré pour un déploiement automatique depuis GitHub (branche `dev`).
+
+### Configuration Vercel (Project Settings)
+| Paramètre | Valeur |
+|-----------|--------|
+| Root Directory | `TourMeteo` |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+
+### Fichier `vercel.json` (dans `TourMeteo/`)
+```json
+{
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+> Le `vercel.json` réel contient aussi les en-têtes de sécurité (HSTS, CSP, X-Frame-Options, etc.) : voir le fichier.
+
+### Strava (variables d'environnement)
+| Variable | Rôle |
+|----------|------|
+| `STRAVA_CLIENT_ID` | Exposée au front via `/api/strava-config` (public par nature) |
+| `STRAVA_CLIENT_SECRET` | Reste côté serveur, utilisée par `/api/strava-token` |
+
+À définir dans Vercel → Settings → Environment Variables (Production **et** Preview), puis redéployer. Dans https://www.strava.com/settings/api, le champ « Authorization Callback Domain » doit valoir le domaine du site (ex. `meteo.hugo-lembrez.fr`, sans `https://`). Les fonctions `/api/*` n'existent pas sous `ng serve` : utiliser `vercel dev` pour tester Strava en local.
+
+Le rewrite SPA redirige toutes les routes vers `index.html` pour que le router Angular gère la navigation côté client (`/about`, `/gpx`, etc.).
 
 ---
 
-
-## Fonctionnalités et améliorations possibles
-- Fonctionnalités : sélection multi-villes, tableau horaire, légende `weathercode` (voir `about.html`)
-- Améliorations possibles : parcours itinéraire (à mettre en place avec l'aide d'autres API), notifications météo, accessibilité améliorée
-- Affichage plus lisible (couleur de la case en fonction du jour ou de la nuit, grand emoji pour le score météo, …)
-- ✅ Application web accessible en ligne (Vercel) — voir la branche `dev`
+## Améliorations possibles
+- Création rapide de trace GPX directement dans l'app (mode preview)
+- Mode "Run" (pas que vélo) — choix unité de vitesse (km/h, min/km, mph)
+- Notifications météo (alertes pluie/orage)
+- Accessibilité améliorée (ARIA, contraste)
+- Proxy serveur pour Nominatim (cache + throttle en production)
+- Intégration Strava API (segments, données de performance)
+- Données vent avancées (Windy, Meteomatics)
+- Profil d'altitude (OpenElevation)
 
 ---
 
 ## Difficultés rencontrées
-- Trouver un moyen de transmettre des longitudes et latitudes à l'API météo.
+- Transmission des coordonnées lat/lon à l'API météo (résolu via `CityService`)
+- Limites de requêtes Nominatim (résolu via throttle et échantillonnage par distance)
+- Configuration du déploiement Vercel pour un projet Angular dans un sous-dossier (résolu via `outputPath` dans `angular.json` et `vercel.json`)
 
 ---
 
 ## Contact / Crédits
-- Repo original : https://github.com/aZor9/TourMeteo
-- Auteur principal : Hugo Lembrez
+- Repo : https://github.com/aZor9/TourMeteo
+- Site : https://meteo.hugo-lembrez.fr/ 
+- Créateur : Hugo Lembrez

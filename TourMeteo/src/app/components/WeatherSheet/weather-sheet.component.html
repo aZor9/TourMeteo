@@ -1,41 +1,101 @@
-<div *ngIf="meteo.length" class="overflow-x-auto bg-white rounded-lg shadow">
-  <div class="p-4 text-blue-700 font-semibold text-center">Date sélectionnée : {{ selectedDate || '' }}</div>
-  <table class="min-w-full border-collapse">
-    <thead class="bg-blue-50">
-      <tr>
-        <th class="border border-gray-300 px-4 py-2 text-left">Heure</th>
-        <ng-container *ngFor="let ville of meteo">
-          <th class="border border-gray-300 px-4 py-2 text-left">{{ ville.city }}</th>
-        </ng-container>
-      </tr>
-    </thead>
-    <tbody>
-      <ng-container *ngIf="meteo.length">
+<!-- Desktop: table view, Mobile: card view -->
+<div *ngIf="meteo.length">
+  <div class="text-center py-3 text-sm rounded-t-xl wt-date-banner">
+    Date sélectionnée : {{ selectedDate || '' }}
+  </div>
+
+  <!-- ===== DESKTOP TABLE (hidden on small screens) ===== -->
+  <div class="hidden md:block overflow-x-auto rounded-b-xl shadow-lg">
+    <table class="min-w-full border-collapse">
+      <thead>
+        <tr class="wt-date-banner">
+          <th class="sticky left-0 z-10 wt-date-banner px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b" style="border-color:#DDD4C0;">Heure</th>
+          <ng-container *ngFor="let ville of meteo">
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b" style="border-color:#DDD4C0;">{{ ville.city }}</th>
+          </ng-container>
+        </tr>
+      </thead>
+      <tbody>
         <ng-container *ngFor="let hourObj of meteo[0]?.hourly; let i = index">
-          <tr class="hover:bg-gray-50">
-            <td class="border border-gray-300 px-4 py-2">{{ hourObj.hour }}h</td>
+          <tr class="transition-colors duration-150">
+            <td class="sticky left-0 z-10 px-4 py-2 text-sm font-medium border-b" style="color:#3D3733; border-color:#EDE8DB;"
+                [class]="meteo[0]?.hourly?.[i]?.isDay ? 'wt-cell-day' : 'wt-cell-night'">
+              {{ hourObj.hour }}h
+            </td>
             <ng-container *ngFor="let ville of meteo">
-              <td class="border border-gray-300 px-4 py-2">
-                <ng-container *ngIf="ville.hourly && ville.hourly[i]">
-                  <div *ngIf="showTemp">🌡️ {{ ville.hourly[i].temperature }}°C</div>
-                  <div *ngIf="showWind">💨 {{ ville.hourly[i].wind }} km/h</div>
-                  <div class="text-sm" *ngIf="ville.hourly[i].isDay !== undefined">
-                    <span *ngIf="ville.hourly[i].isDay">🌞 Jour</span>
-                    <span *ngIf="!ville.hourly[i].isDay">🌙 Nuit</span>
+              <td class="relative overflow-hidden px-4 py-3 border-b min-w-[140px]" style="border-color:#EDE8DB;"
+                  [class]="ville.hourly && ville.hourly[i] ? (ville.hourly[i].isDay ? 'wt-cell-day' : 'wt-cell-night') : ''">
+                <ng-container *ngIf="ville.hourly && ville.hourly[i]; else noData">
+                  <!-- Big background emoji -->
+                  <div *ngIf="showSummary && ville.hourly[i].summary !== undefined"
+                       class="absolute right-1 top-1/2 -translate-y-1/2 text-5xl opacity-[0.85] pointer-events-none select-none leading-none">
+                    {{ getWeatherDescription(+ville.hourly[i].summary).emoji }}
                   </div>
-                  <div *ngIf="showSummary">
-                    <ng-container *ngIf="ville.hourly[i].summary as code">
-                      <span>{{ getWeatherDescription(+code).emoji }}</span>
-                      <span>{{ getWeatherDescription(+code).desc }}</span>
-                    </ng-container>
+                  <div class="relative z-[1] space-y-0.5">
+                    <div *ngIf="showTemp" class="text-sm font-semibold" style="color:#1A1917;">
+                      {{ ville.hourly[i].temperature }}°C
+                    </div>
+                    <div *ngIf="showWind" class="text-xs" style="color:#72675C;">
+                      💨 {{ ville.hourly[i].wind }} km/h
+                    </div>
+                    <div *ngIf="showSummary && ville.hourly[i].summary !== undefined" class="text-xs" style="color:#3D3733;">
+                      {{ getWeatherDescription(+ville.hourly[i].summary).emoji }}
+                      {{ getWeatherDescription(+ville.hourly[i].summary).desc }}
+                    </div>
+                    <div class="text-[10px]" style="color:#A09589;" *ngIf="ville.hourly[i].isDay !== undefined">
+                      {{ ville.hourly[i].isDay ? '☀️ Jour' : '🌙 Nuit' }}
+                    </div>
                   </div>
                 </ng-container>
-                <ng-container *ngIf="!ville.hourly || !ville.hourly[i]">-</ng-container>
+                <ng-template #noData><span style="color:#DDD4C0;">—</span></ng-template>
               </td>
             </ng-container>
           </tr>
         </ng-container>
-      </ng-container>
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===== MOBILE CARDS (visible on small screens only) ===== -->
+  <div class="md:hidden space-y-4 mt-3 px-1">
+    <div *ngFor="let ville of meteo" class="rounded-xl overflow-hidden shadow-sm" style="border:1px solid #DDD4C0;">
+      <div class="wt-date-banner px-4 py-2 font-semibold text-sm sticky top-0 z-10" style="border-bottom:1px solid #DDD4C0;">
+        📍 {{ ville.city }}
+      </div>
+      <div style="border-top:0;">
+        <div *ngFor="let h of ville.hourly; let i = index"
+             class="relative overflow-hidden flex items-center gap-3 px-4 py-3"
+             style="border-bottom:1px solid #EDE8DB;"
+             [class]="h.isDay ? 'wt-cell-day' : 'wt-cell-night'">
+          <!-- Big background emoji -->
+          <div *ngIf="showSummary && h.summary !== undefined"
+               class="absolute right-2 top-1/2 -translate-y-1/2 text-6xl opacity-[0.85] pointer-events-none select-none leading-none">
+            {{ getWeatherDescription(+h.summary).emoji }}
+          </div>
+          <!-- Hour + Day/Night label -->
+          <div class="relative z-[1] w-14 shrink-0 text-center">
+            <div class="text-sm font-bold" style="color:#3D3733;">{{ h.hour }}h</div>
+            <div *ngIf="h.isDay !== undefined" class="text-[10px] mt-0.5 rounded-full px-1 py-px"
+                 [style]="h.isDay ? 'background:#F5EDD8; color:#9A7A48;' : 'background:#E8F2FB; color:#1B5A96;'">
+              {{ h.isDay ? '☀️ Jour' : '🌙 Nuit' }}
+            </div>
+          </div>
+          <!-- Data -->
+          <div class="relative z-[1] flex-1 min-w-0">
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <span *ngIf="showTemp" class="text-base font-semibold" style="color:#1A1917;">{{ h.temperature }}°C</span>
+              <span *ngIf="showWind" class="text-xs" style="color:#72675C;">💨 {{ h.wind }} km/h</span>
+            </div>
+            <div *ngIf="showSummary && h.summary !== undefined" class="text-xs mt-0.5" style="color:#3D3733;">
+              {{ getWeatherDescription(+h.summary).emoji }} {{ getWeatherDescription(+h.summary).desc }}
+            </div>
+            <div *ngIf="h.precipitation !== undefined || h.precipitationProbability !== undefined" class="text-xs mt-0.5" style="color:#1B5A96;">
+              🌧️ {{ h.precipitationProbability ?? 0 }}%
+              <span *ngIf="(h.precipitation ?? 0) > 0"> · {{ h.precipitation }} mm</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

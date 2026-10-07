@@ -1,0 +1,112 @@
+<div class="px-3 sm:px-8 py-5 max-w-5xl mx-auto" style="color:#1A1917;">
+
+  <!-- Hero -->
+  <header class="mb-5">
+    <h1 class="text-2xl sm:text-3xl font-bold leading-tight" style="color:#1B5A96;">La météo qui pense à votre sortie.</h1>
+    <p class="text-sm sm:text-base mt-1" style="color:#72675C;">
+      Heure par heure, ville par ville ou tout au long de votre parcours : pour rouler, courir ou marcher sans mauvaise surprise.
+    </p>
+  </header>
+
+  <!-- En ce moment -->
+  <section class="card p-4 sm:p-5 mb-6" aria-labelledby="now-title">
+    <h2 id="now-title" class="text-sm font-semibold uppercase tracking-wide mb-3" style="color:#A09589;">En ce moment</h2>
+
+    <form (ngSubmit)="searchCity()" class="flex flex-col sm:flex-row gap-2 mb-3">
+      <label for="home-city" class="sr-only">Ville</label>
+      <input id="home-city" name="city" type="text" [(ngModel)]="city" placeholder="Ville (ex : Montpellier)"
+             autocomplete="off" enterkeyhint="search"
+             class="flex-1 rounded-xl border px-3 py-2.5 text-base focus:outline-none focus:ring-2"
+             style="border-color:#DDD4C0; background:#fff;" />
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary flex-1 sm:flex-none" [disabled]="loading || !city.trim()">Voir</button>
+        <button type="button" class="btn btn-secondary flex-1 sm:flex-none" (click)="useMyLocation()" [disabled]="geoLoading">
+          {{ geoLoading ? '…' : '📍 Ma position' }}
+        </button>
+      </div>
+    </form>
+
+    <!-- Lieux récents en un tap -->
+    <div *ngIf="recentChips.length" class="flex flex-wrap gap-1.5 mb-3">
+      <button *ngFor="let c of recentChips" type="button" (click)="searchCity(c)"
+              class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors hover:bg-blue-50"
+              style="border-color:#DDD4C0; color:#3D3733; background:#fff;">
+        📍 {{ c }}
+      </button>
+    </div>
+
+    <div *ngIf="error" role="alert" class="p-3 mb-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">{{ error }}</div>
+
+    <!-- État vide -->
+    <p *ngIf="!place && !loading && !error" class="text-sm py-4 text-center" style="color:#A09589;">
+      Entrez une ville ou utilisez votre position pour voir la météo actuelle et les prochaines heures.
+    </p>
+
+    <div *ngIf="loading && !now" class="flex justify-center py-6" role="status" aria-label="Chargement">
+      <svg class="animate-spin h-7 w-7" style="color:#1B5A96;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+    </div>
+
+    <div *ngIf="now && place" [class.opacity-50]="loading" class="transition-opacity">
+      <div class="flex items-center gap-4">
+        <div class="text-6xl leading-none" aria-hidden="true">{{ getWeatherDescription(now.weathercode).emoji }}</div>
+        <div class="min-w-0">
+          <div class="text-sm font-medium truncate" style="color:#72675C;">{{ place.name }}</div>
+          <div class="text-4xl font-bold leading-tight">{{ now.temperature | number:'1.0-0' }}°</div>
+          <div class="text-sm" style="color:#72675C;">{{ getWeatherDescription(now.weathercode).desc }} · ressenti {{ now.apparent | number:'1.0-0' }}°</div>
+        </div>
+        <div class="ml-auto text-right text-sm space-y-0.5 hidden sm:block" style="color:#3D3733;">
+          <div>💨 {{ now.wind | number:'1.0-0' }} km/h<span *ngIf="now.gust"> (raf. {{ now.gust | number:'1.0-0' }})</span></div>
+          <div *ngIf="now.humidity !== null">💧 {{ now.humidity }} %</div>
+        </div>
+      </div>
+      <div class="sm:hidden mt-2 text-sm flex gap-4" style="color:#3D3733;">
+        <span>💨 {{ now.wind | number:'1.0-0' }} km/h<span *ngIf="now.gust"> (raf. {{ now.gust | number:'1.0-0' }})</span></span>
+        <span *ngIf="now.humidity !== null">💧 {{ now.humidity }} %</span>
+      </div>
+
+      <p class="mt-3 text-sm font-semibold rounded-xl px-3 py-2" style="background:#E8F2FB; color:#144A7E;" aria-live="polite">{{ verdict }}</p>
+
+      <!-- 12 prochaines heures : emoji, température, barre de pluie -->
+      <div class="mt-3 overflow-x-auto -mx-1 px-1">
+        <ul class="flex gap-1 min-w-max">
+          <li *ngFor="let h of now.next" class="flex flex-col items-center w-14 py-1.5 rounded-lg text-center"
+              [style.background]="h.isDay ? 'rgba(255,255,255,0.9)' : 'rgba(27,90,150,0.07)'">
+            <span class="text-xs" style="color:#72675C;">{{ h.hour }}h</span>
+            <span class="text-xl leading-7" [attr.title]="getWeatherDescription(h.weathercode).desc">{{ getWeatherDescription(h.weathercode).emoji }}</span>
+            <span class="text-sm font-semibold">{{ h.temperature | number:'1.0-0' }}°</span>
+            <div class="w-4 h-8 flex items-end mt-1" [attr.title]="h.precipitation + ' mm'">
+              <div class="w-full rounded-sm" style="background:#3B8BD4;" [style.height.%]="barHeight(h.precipitation)"></div>
+            </div>
+            <span class="text-[10px]" style="color:#3B8BD4;">{{ h.probability }}%</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="mt-3 flex flex-wrap gap-3 text-sm font-medium">
+        <a *ngIf="hourlyEnabled" routerLink="/hourly" [queryParams]="place.name === 'Ma position' ? null : { city: place.name }" style="color:#1B5A96;">Voir les graphiques de la journée →</a>
+        <button type="button" (click)="refresh()" class="underline" style="color:#72675C;">Actualiser</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fonctionnalités -->
+  <h2 class="text-sm font-semibold uppercase tracking-wide mb-3" style="color:#A09589;">Que voulez-vous faire ?</h2>
+  <nav class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6" aria-label="Fonctionnalités">
+    <a *ngFor="let c of cards" [routerLink]="c.link"
+       class="card p-4 block no-underline transition hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-2"
+       style="color:inherit;">
+      <div class="text-3xl mb-1" aria-hidden="true">{{ c.icon }}</div>
+      <div class="font-semibold" style="color:#1B5A96;">{{ c.title }}</div>
+      <p class="text-sm mt-0.5" style="color:#72675C;">{{ c.text }}</p>
+    </a>
+  </nav>
+
+  <p class="text-xs text-center mb-6" style="color:#A09589;">
+    Données météo : Open-Meteo · Géocodage : OpenStreetMap ·
+    <a routerLink="/about" style="color:#1B5A96;">À propos</a> ·
+    <a routerLink="/legal" style="color:#1B5A96;">Mentions légales</a>
+  </p>
+</div>

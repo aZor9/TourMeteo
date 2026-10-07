@@ -1,0 +1,66 @@
+<!-- Ride Score & Clothing Card -->
+<div *ngIf="rideScore > 0 || rideScoreLabel" class="mb-4 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+  <!-- Header with score -->
+  <div class="px-4 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4 flex-wrap">
+    <div>
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Score de sortie vélo</div>
+      <div class="flex items-baseline gap-2">
+        <span class="text-3xl font-bold" [ngClass]="rideScoreColor">{{ rideScore }}/100</span>
+        <span class="text-lg font-semibold" [ngClass]="rideScoreColor">{{ rideScoreEmoji }} {{ rideScoreLabel }}</span>
+      </div>
+    </div>
+    <!-- Mini weather summary -->
+    <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+      <span>🌡️ {{ avgTemp }}° <span class="text-slate-400">(ressenti {{ avgApparentTemp }}°)</span></span>
+      <span>💨 {{ avgWind }} km/h moy.</span>
+      <span>💧 {{ avgHumidity }}%</span>
+      <span>🌂 {{ maxPrecipProb }}% max</span>
+      <span *ngIf="totalPrecip > 0">🌧️ {{ totalPrecip }} mm</span>
+    </div>
+  </div>
+
+  <!-- Score progress bar -->
+  <div class="px-4 sm:px-6 pt-3 pb-1">
+    <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+      <div class="h-full rounded-full transition-all duration-700"
+           [style.width.%]="rideScore"
+           [ngClass]="{
+             'bg-green-500': rideScore >= 85,
+             'bg-lime-500': rideScore >= 70 && rideScore < 85,
+             'bg-amber-400': rideScore >= 50 && rideScore < 70,
+             'bg-orange-500': rideScore >= 30 && rideScore < 50,
+             'bg-red-500': rideScore < 30
+           }"></div>
+    </div>
+  </div>
+
+  <!-- Warnings -->
+  <div *ngIf="rideWarnings.length > 0" class="px-4 sm:px-6 pt-3">
+    <div *ngFor="let w of rideWarnings" class="flex items-start gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-2">
+      <span class="flex-shrink-0">⚠️</span>
+      <span>{{ w }}</span>
+    </div>
+  </div>
+
+  <!-- Clothing & Gear -->
+  <div class="px-4 sm:px-6 py-4">
+    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">🚴 Tenue recommandée</div>
+    <div class="flex flex-wrap gap-2">
+      <div *ngFor="let item of clothingItems"
+           class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700">
+        <span class="text-lg">{{ item.emoji }}</span>
+        <span>{{ item.label }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tips -->
+  <div *ngIf="rideTips.length > 0" class="px-4 sm:px-6 pb-4">
+    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">💡 Bon à savoir</div>
+    <ul class="space-y-1.5">
+      <li *ngFor="let tip of rideTips" class="text-sm text-slate-600 bg-blue-50/50 rounded-lg px-3 py-2">
+        {{ tip }}
+      </li>
+    </ul>
+  </div>
+</div>

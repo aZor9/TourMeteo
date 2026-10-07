@@ -1,17 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
-import { RouterOutlet } from '@angular/router';
 import { WeatherService, WeatherCity } from '../../service/weather.service';
 import { SearchTabComponent } from '../SearchTab/search-tab.component';
 import { WeatherSheetComponent } from '../WeatherSheet/weather-sheet.component';
 
 @Component({
-  selector: 'app-root',
+  selector: 'app-daily',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, RouterOutlet, SearchTabComponent, WeatherSheetComponent],
-  templateUrl: './app.html',
-  providers: [WeatherService]
+  imports: [CommonModule, SearchTabComponent, WeatherSheetComponent],
+  templateUrl: './app.html'
 })
 export class App {
   meteo: WeatherCity[] = [];
@@ -20,28 +17,17 @@ export class App {
   showSummary = true;
   selectedDate = '';
   today = new Date().toISOString().slice(0, 10);
-
-  getWeatherDescription(code: number): { emoji: string, desc: string } {
-    if (code === 0) return { emoji: '☀️', desc: 'Ciel clair' };
-    if (code === 1 || code === 2) return { emoji: '🌤️', desc: 'Partiellement nuageux' };
-    if (code === 3) return { emoji: '☁️', desc: 'Couvert' };
-    if (code === 45 || code === 48) return { emoji: '🌫️', desc: 'Brouillard' };
-    if (code === 51 || code === 53 || code === 55) return { emoji: '🌦️', desc: 'Bruine' };
-    if (code === 56 || code === 57) return { emoji: '🌧️', desc: 'Bruine verglaçante' };
-    if (code === 61 || code === 63 || code === 65) return { emoji: '🌧️', desc: 'Pluie' };
-    if (code === 66 || code === 67) return { emoji: '🌧️❄️', desc: 'Pluie verglaçante' };
-    if (code === 71 || code === 73 || code === 75) return { emoji: '❄️', desc: 'Neige' };
-    if (code === 77) return { emoji: '❄️', desc: 'Grains de neige' };
-    if (code === 80 || code === 81 || code === 82) return { emoji: '🌦️', desc: 'Averses' };
-    if (code === 85 || code === 86) return { emoji: '🌨️', desc: 'Averses de neige' };
-    if (code === 95) return { emoji: '⛈️', desc: 'Orage' };
-    if (code === 96 || code === 99) return { emoji: '⛈️', desc: 'Orage avec grêle' };
-    return { emoji: '❓', desc: 'Inconnu (' + code + ')' };
-  }
-
   loading = false;
 
-  constructor(private weatherService: WeatherService) {}
+  constructor(private weatherService: WeatherService, private cd: ChangeDetectorRef) {}
+
+  // Mise à jour des filtres en temps réel (depuis SearchTab)
+  onFilterChange(filters: { showTemp: boolean; showWind: boolean; showSummary: boolean }) {
+    this.showTemp = filters.showTemp;
+    this.showWind = filters.showWind;
+    this.showSummary = filters.showSummary;
+    this.cd.detectChanges();
+  }
 
   // Recherche météo pour les villes (séquentiel, simple)
   async search(params: { cities: string; date: string; showTemp: boolean; showWind: boolean; showSummary: boolean }) {
@@ -52,29 +38,30 @@ export class App {
     this.selectedDate = date;
     this.loading = true;
     this.meteo = [];
+    this.cd.detectChanges();
 
     const cityList = cities.split(',').map(c => c.trim()).filter(c => !!c);
     if (cityList.length === 0) {
       this.loading = false;
+      this.cd.detectChanges();
       return;
     }
 
     for (const city of cityList) {
       try {
-        // weatherService.getWeather retourne maintenant une Promise (async)
         const data = await this.weatherService.getWeather(city, date);
-        // simplifier l'affichage de l'heure (garder HH)
         data.hourly = data.hourly.map(h => ({
           ...h,
           hour: h.hour.split('T')[1]?.slice(0,2) || h.hour
         }));
         this.meteo.push(data);
       } catch (err) {
-        // si une ville échoue, on l'ignore mais on continue avec les autres
         this.meteo.push({ city, hourly: [] });
       }
+      this.cd.detectChanges();
     }
 
     this.loading = false;
+    this.cd.detectChanges();
   }
 }

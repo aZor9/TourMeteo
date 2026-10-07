@@ -1,0 +1,113 @@
+<div class="px-3 sm:px-8 py-4 max-w-4xl mx-auto" style="color:#1A1917;">
+
+  <h1 class="text-xl sm:text-2xl font-bold mb-1" style="color:#1B5A96;">📈 Météo heure par heure</h1>
+  <p class="text-sm mb-4" style="color:#72675C;">Pluie, température, vent, UV, qualité de l'air… d'un lieu sur une journée.</p>
+
+  <!-- Formulaire -->
+  <form (ngSubmit)="load()" class="card p-3 sm:p-4 mb-4 space-y-3">
+    <div class="flex flex-col sm:flex-row gap-2">
+      <div class="flex-1 relative">
+        <label for="hourly-city" class="sr-only">Ville</label>
+        <input id="hourly-city" name="city" type="text" [(ngModel)]="city"
+               (input)="onCityInput()" (focus)="onCityFocus()" (blur)="onCityBlur()"
+               placeholder="Ville (ex : Lille)" autocomplete="off" enterkeyhint="search"
+               class="w-full rounded-xl border px-3 py-2.5 text-base focus:outline-none focus:ring-2"
+               style="border-color:#DDD4C0; background:#fff;" />
+
+        <!-- Lieux récents -->
+        <div *ngIf="showSuggestions && citySuggestions.length > 0"
+             class="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto divide-y divide-slate-100">
+          <div *ngFor="let s of citySuggestions"
+               (mousedown)="pickSuggestion(s)"
+               class="flex items-center justify-between px-3 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer group">
+            <span class="flex items-center gap-1.5 truncate">
+              <span class="text-xs">📍</span>
+              <span class="truncate">{{ s }}</span>
+            </span>
+            <button type="button" (mousedown)="removeSuggestion(s, $event)"
+                    title="Supprimer de l'historique"
+                    class="ml-2 text-xs text-slate-400 hover:text-red-500 hover:bg-red-50 rounded p-1 transition opacity-70 group-hover:opacity-100">
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+      <button type="button" (click)="useMyLocation()" [disabled]="geoLoading"
+              class="btn btn-secondary" aria-label="Utiliser ma position">
+        {{ geoLoading ? '…' : '📍 Ma position' }}
+      </button>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button type="button" (click)="shiftDay(-1)" class="btn btn-ghost btn-sm min-w-[44px] min-h-[44px]" aria-label="Jour précédent">‹</button>
+      <label for="hourly-date" class="sr-only">Date</label>
+      <input id="hourly-date" name="date" type="date" [(ngModel)]="date" (ngModelChange)="onDateChange()"
+             class="flex-1 rounded-xl border px-3 py-2 text-base text-center"
+             style="border-color:#DDD4C0; background:#fff;" />
+      <button type="button" (click)="shiftDay(1)" class="btn btn-ghost btn-sm min-w-[44px] min-h-[44px]" aria-label="Jour suivant">›</button>
+    </div>
+
+    <button type="submit" [disabled]="loading || !city.trim()" class="btn btn-primary w-full disabled:opacity-50">
+      {{ loading ? 'Chargement…' : 'Afficher les graphiques' }}
+    </button>
+  </form>
+
+  <!-- Erreur -->
+  <div *ngIf="error" role="alert" class="p-3 mb-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+    {{ error }}
+  </div>
+
+  <!-- Premier chargement -->
+  <div *ngIf="loading && !day" class="flex justify-center items-center my-8" role="status">
+    <svg class="animate-spin h-8 w-8" style="color:#1B5A96;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+    </svg>
+  </div>
+
+  <!-- Les graphiques restent dans le DOM pendant un rechargement (voile semi-transparent) -->
+  <div *ngIf="day" [class.opacity-40]="loading" [class.pointer-events-none]="loading" class="transition-opacity" [attr.aria-busy]="loading">
+
+    <h2 class="text-base font-semibold mb-2">
+      {{ place }} · {{ date + 'T12:00:00' | date:'EEEE d MMMM':'':'fr' }}
+    </h2>
+
+    <p class="text-sm font-medium mb-3 px-1" aria-live="polite">{{ rainText }}</p>
+
+    <!-- Tuiles résumé -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+      <div *ngFor="let t of tiles" class="card p-3">
+        <div class="text-xs" style="color:#72675C;">{{ t.icon }} {{ t.label }}</div>
+        <div class="text-base sm:text-lg font-bold leading-tight">{{ t.value }}</div>
+        <div *ngIf="t.sub" class="text-[11px]" style="color:#A09589;">{{ t.sub }}</div>
+      </div>
+    </div>
+
+    <!-- Bandeau heure par heure (24 h), défilable ; calé sur l'heure actuelle si aujourd'hui -->
+    <div #strip class="card p-2 mb-4 overflow-x-auto">
+      <ul class="flex gap-1 w-max min-w-full">
+        <li *ngFor="let h of hours" class="flex flex-col items-center flex-1 min-w-[3.5rem] py-1 text-center rounded-lg"
+            [style.background]="h.isDay ? 'rgba(255,255,255,0.8)' : 'rgba(27,90,150,0.07)'">
+          <span class="text-xs" style="color:#72675C;">{{ hourLabel(h) }}</span>
+          <span class="text-2xl leading-8" [attr.title]="getWeatherDescription(h.weathercode).desc">{{ getWeatherDescription(h.weathercode).emoji }}</span>
+          <span class="text-sm font-semibold">{{ h.temperature | number:'1.0-0' }}°</span>
+          <span class="text-[11px]" style="color:#3B8BD4;">{{ h.probability }}%</span>
+        </li>
+      </ul>
+    </div>
+
+    <p class="text-[11px] mb-2 px-1" style="color:#A09589;">Zones bleutées = nuit · ligne pointillée = heure actuelle</p>
+
+    <!-- Graphiques -->
+    <section *ngFor="let c of chartDefs; trackBy: trackById" class="card p-3 sm:p-4 mb-4">
+      <h3 class="text-sm font-semibold mb-2">{{ c.title }}</h3>
+      <div class="relative" [ngClass]="c.height">
+        <canvas #chartCanvas [attr.data-id]="c.id" role="img" [attr.aria-label]="c.title"></canvas>
+      </div>
+    </section>
+
+    <p class="text-xs text-center mb-6" style="color:#A09589;">
+      Données : Open-Meteo (CC BY 4.0) · Qualité de l'air : CAMS / Open-Meteo
+    </p>
+  </div>
+</div>

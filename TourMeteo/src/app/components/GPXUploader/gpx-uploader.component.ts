@@ -1,0 +1,568 @@
+import { Component, ChangeDetectorRef, HostListener, ViewChild, OnInit } from '@angular/core';
+import { CommonModule, formatDate } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { WeatherService } from '../../service/weather.service';
+import { GpxExportService } from '../../service/gpx-export.service';
+import { HistoryService, SavedRoute } from '../../service/history.service';
+import { FeatureFlagService } from '../../service/feature-flag.service';
+import { Passage, RideScoreData } from '../../models/passage.model';
+import { GpxMapComponent } from './gpx-map/gpx-map.component';
+import { RideScoreComponent } from './ride-score/ride-score.component';
+import { GpxSummaryBarComponent } from './gpx-summary-bar/gpx-summary-bar.component';
+import { GpxResultsTableComponent } from './gpx-results-table/gpx-results-table.component';
+import { HistoryPanelComponent } from './history-panel/history-panel.component';
+import { NutritionPlanComponent } from './nutrition-plan/nutrition-plan.component';
+import { StravaModalComponent } from './strava-modal/strava-modal.component';
+import { ActivatedRoute, Router } from '@angular/router';
+import { GpxStateService } from '../../service/gpx-state.service';
+import { StravaService } from '../../service/strava.service';
+
+import { APP_VERSION } from '../../version';
+
+@Component({
+  selector: 'app-gpx-uploader',
+  standalone: true,
+  imports: [
+    CommonModule, FormsModule,
+    GpxMapComponent, RideScoreComponent, GpxSummaryBarComponent, GpxResultsTableComponent,
+    HistoryPanelComponent, NutritionPlanComponent, StravaModalComponent
+  ],
+  templateUrl: './gpx-uploader.component.html'
+})
+export class GpxUploaderComponent implements OnInit {
+  totalDistanceKm = 0;
+  points: Array<{ lat: number; lon: number }> = [];
+  avgSpeed = 25;
+  departure = '';
+  loading = false;
+  fileName = '';
+  parseMessage = '';
+  passages: Passage[] = [];
+  progressText = '';
+  displayDate = '';
+  exportMessage = '';
+  durationText = '';
+  departureTime = '';
+  arrivalTime = '';
+  cityCount = 0;
+  rideScoreData: RideScoreData | null = null;
+  saveMessage = '';
+
+  /** Display filter: 'detail' (full table) | 'resume' (summary only) */
+  viewMode: 'detail' | 'resume' = 'resume';
+  /** Sections visibility for filter */
+  showMap = false;
+  showScore = true;
+  showTable = false;
+  showNutrition = false;
+  showStravaModal = false;
+  stravaStatusMessage = '';
+  /** Redirection OAuth en cours (désactive le bouton, affiche un spinner) */
+  stravaConnecting = false;
+  /** La photo de profil Strava n'a pas pu être chargée : on affiche les initiales */
+  avatarFailed = false;
+
+  /** Feature flag getters */
+  get historyEnabled(): boolean { return this.featureFlags.isEnabled('history'); }
+  get mapEnabled(): boolean { return this.featureFlags.isEnabled('map'); }
+  get experimentalEnabled(): boolean { return this.featureFlags.isEnabled('experimental'); }
+  get nutritionEnabled(): boolean { return this.featureFlags.isEnabled('nutrition'); }
+  get bestDepartureEnabled(): boolean { return this.featureFlags.isEnabled('bestDeparture'); }
+  get stravaEnabled(): boolean { return this.featureFlags.isEnabled('strava'); }
+
+  @ViewChild('historyPanel') historyPanel!: HistoryPanelComponent;
+
+  constructor(
+    private http: HttpClient,
+    private cd: ChangeDetectorRef,
+    private weatherService: WeatherService,
+    private exportService: GpxExportService,
+    private historyService: HistoryService,
+    private featureFlags: FeatureFlagService,
+    private gpxState: GpxStateService,
+    private router: Router,
+    private route: ActivatedRoute,
+    public strava: StravaService
+  ) {
+    const today = new Date();
+    today.setHours(9, 0, 0, 0);
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const hh = String(today.getHours()).padStart(2, '0');
+    const min = String(today.getMinutes()).padStart(2, '0');
+    this.departure = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+  }
+
+  async ngOnInit() {
+    // Détection du retour d'autorisation Strava OAuth (?code=XXXXX)
+    const qp = this.route.snapshot.queryParamMap;
+    const code = qp.get('code');
+    if (qp.get('error')) {
+      // L'utilisateur a refusé l'autorisation sur Strava (?error=access_denied)
+      this.router.navigate([], { queryParams: {}, replaceUrl: true });
+      this.stravaStatusMessage = '⚠️ Autorisation Strava refusée.';
+      setTimeout(() => this.stravaStatusMessage = '', 6000);
+    } else if (code) {
+      this.stravaStatusMessage = 'Connexion à Strava en cours…';
+      const result = await this.strava.handleCallback(code, qp.get('state'), qp.get('scope'));
+      // Nettoyer l'URL du navigateur
+      this.router.navigate([], { queryParams: {}, replaceUrl: true });
+      if (result.success) {
+        this.stravaStatusMessage = result.message ? `⚠️ ${result.message}` : '✅ Compte Strava connecté avec succès !';
+        this.showStravaModal = true;
+      } else {
+        this.stravaStatusMessage = `⚠️ ${result.message || 'Erreur lors de la connexion Strava.'}`;
+      }
+      setTimeout(() => this.stravaStatusMessage = '', result.message ? 12000 : 6000);
+    }
+
+    if (this.gpxState.has() && !this.fileName) {
+      const s = this.gpxState.get()!;
+      this.points = s.points;
+      this.fileName = s.fileName;
+      this.totalDistanceKm = s.distanceKm;
+      this.parseMessage = `${s.points.length} points (depuis meilleur horaire)`;
+    }
+  }
+
+  openStravaModal() {
+    this.showStravaModal = true;
+  }
+
+  closeStravaModal() {
+    this.showStravaModal = false;
+  }
+
+  /** Retour arrière depuis la page Strava (cache du navigateur) : on remet le bouton à l'état initial */
+  @HostListener('window:pageshow', ['$event'])
+  onPageShow(e: PageTransitionEvent) {
+    if (e.persisted) {
+      this.stravaConnecting = false;
+      this.cd.detectChanges();
+    }
+  }
+
+  async connectStrava() {
+    if (this.stravaConnecting) return;
+    this.stravaConnecting = true;
+    this.cd.detectChanges();
+    const result = await this.strava.connect();
+    if (!result.success) {
+      this.stravaConnecting = false;
+      this.stravaStatusMessage = `⚠️ ${result.message}`;
+      setTimeout(() => this.stravaStatusMessage = '', 8000);
+      this.cd.detectChanges();
+    }
+  }
+
+  enableStravaDemo() {
+    this.strava.enableDemo();
+    this.showStravaModal = true;
+  }
+
+  onStravaRouteSelected(data: {
+    name: string;
+    points: { lat: number; lon: number }[];
+    distanceKm: number;
+    departureTime?: string;
+  }) {
+    this.fileName = data.name;
+    this.points = data.points;
+    this.totalDistanceKm = data.distanceKm;
+    this.parseMessage = `${this.points.length} points GPS (importé depuis Strava)`;
+    if (data.departureTime) {
+      this.departure = data.departureTime;
+    }
+    this.gpxState.set({ points: this.points, fileName: this.fileName, distanceKm: this.totalDistanceKm });
+    this.cd.detectChanges();
+  }
+
+  goToBestDeparture() {
+    this.router.navigate(['/best-departure']);
+  }
+
+  // ─── File handling ───
+
+  onFileChange(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    // Un GPX réaliste fait quelques Mo : au-delà, on refuse (évite de figer l'onglet)
+    if (input.files[0].size > 15 * 1024 * 1024) {
+      this.parseMessage = 'Fichier trop volumineux (15 Mo maximum).';
+      input.value = '';
+      return;
+    }
+    this.fileName = input.files[0].name;
+    const reader = new FileReader();
+    reader.onload = () => this.parseGpx(reader.result as string);
+    reader.readAsText(input.files[0]);
+  }
+
+  // ─── GPX parsing ───
+
+  parseGpx(xmlText: string) {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xmlText, 'application/xml');
+      const all = Array.from(doc.getElementsByTagName('*')) as Element[];
+      const trkpts = all.filter(e => (e.localName || '').toLowerCase() === 'trkpt');
+      if (doc.getElementsByTagName('parsererror').length > 0) {
+        this.parseMessage = 'Fichier GPX invalide ou corrompu.';
+        return;
+      }
+      // On écarte les points aux coordonnées absentes ou hors limites
+      this.points = trkpts.map(p => ({
+        lat: parseFloat(p.getAttribute('lat') ?? ''),
+        lon: parseFloat(p.getAttribute('lon') ?? '')
+      })).filter(p => isFinite(p.lat) && isFinite(p.lon) && Math.abs(p.lat) <= 90 && Math.abs(p.lon) <= 180);
+      this.parseMessage = trkpts.length > 0
+        ? `Points trouvés: ${this.points.length}`
+        : 'Aucun point trkpt trouvé dans le GPX.';
+
+      let totalMeters = 0;
+      for (let i = 1; i < this.points.length; i++) {
+        totalMeters += this.haversineMeters(
+          this.points[i - 1].lat, this.points[i - 1].lon,
+          this.points[i].lat, this.points[i].lon
+        );
+      }
+      this.totalDistanceKm = +(totalMeters / 1000).toFixed(3);
+      this.gpxState.set({ points: this.points, fileName: this.fileName, distanceKm: this.totalDistanceKm });
+      this.cd.detectChanges();
+    } catch {
+      this.points = [];
+      this.totalDistanceKm = 0;
+      this.parseMessage = 'Erreur lors du parsing GPX';
+    }
+  }
+
+  // ─── Schedule computation ───
+
+  async computeSchedule() {
+    if (this.points.length < 2 || !this.departure) return;
+    const departureDate = new Date(this.departure);
+    if (isNaN(departureDate.getTime())) return;
+
+    this.displayDate = formatDate(departureDate, 'dd/MM/yyyy', 'en-US');
+
+    // cumulative distances
+    const cumMeters: number[] = [0];
+    for (let i = 1; i < this.points.length; i++) {
+      cumMeters[i] = (cumMeters[i - 1] || 0) + this.haversineMeters(
+        this.points[i - 1].lat, this.points[i - 1].lon,
+        this.points[i].lat, this.points[i].lon
+      );
+    }
+
+    // sample points by distance
+    const distanceStep = 2000;
+    this.loading = true;
+    this.passages = [];
+    this.progressText = 'Recherche des villes (échantillonnage par distance)...';
+
+    let lastSampleMeters = -Infinity;
+    const sampleIndices: number[] = [];
+    for (let i = 0; i < this.points.length; i++) {
+      const meters = cumMeters[i] || 0;
+      if (i === 0 || meters - lastSampleMeters >= distanceStep || i === this.points.length - 1) {
+        sampleIndices.push(i);
+        lastSampleMeters = meters;
+      }
+    }
+
+    const roundCoord = (v: number, d = 2) => Number(v.toFixed(d));
+    const seenCoords = new Set<string>();
+    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+    const coordToCity = new Map<string, string>();
+
+    for (const i of sampleIndices) {
+      const { lat, lon } = this.points[i];
+      const key = `${roundCoord(lat, 2)}_${roundCoord(lon, 2)}`;
+      const meters = cumMeters[i] || 0;
+      const hours = (meters / 1000) / (this.avgSpeed || 1);
+      const time = new Date(departureDate.getTime() + Math.round(hours * 3600 * 1000));
+
+      if (seenCoords.has(key)) {
+        const city = coordToCity.get(key) || 'Inconnu';
+        this.passages.push({ city, lat, lon, time, distanceKm: +(meters / 1000).toFixed(1), status: 'pending' });
+      } else {
+        seenCoords.add(key);
+        try {
+          await delay(1100);
+          const city = await this.reverseGeocode(lat, lon);
+          coordToCity.set(key, city);
+          this.passages.push({ city, lat, lon, time, distanceKm: +(meters / 1000).toFixed(1), status: 'pending' });
+        } catch (err: any) {
+          coordToCity.set(key, 'Inconnu');
+          this.passages.push({ city: 'Inconnu', lat, lon, time, distanceKm: +(meters / 1000).toFixed(1), status: 'error', message: err?.message || 'Reverse geocode failed' });
+        }
+      }
+
+      // Important: trigger child components relying on OnChanges (e.g. RideScore)
+      // because we mutate the array in place with push().
+      this.passages = [...this.passages];
+      this.progressText = `Recherche des villes... (${this.passages.length} passages échantillonnés, ${coordToCity.size} géocodages)`;
+      this.cd.detectChanges();
+    }
+
+    // Filter unknown & consecutive duplicates
+    const filtered: Passage[] = [];
+    let lastCity: string | null = null;
+    for (const p of this.passages) {
+      const cityName = (p.city || '').trim();
+      if (!cityName || cityName.toLowerCase() === 'inconnu') continue;
+      if (lastCity && lastCity === cityName) continue;
+      filtered.push(p);
+      lastCity = cityName;
+    }
+    this.passages = filtered;
+
+    // Fetch weather for each passage
+    this.progressText = `Récupération météo pour ${this.passages.length} passages...`;
+    for (let idx = 0; idx < this.passages.length; idx++) {
+      const p = this.passages[idx];
+      if (p.status === 'pending') {
+        try {
+          const dateStr = formatDate(p.time, 'yyyy-MM-dd', 'en-US');
+          const weather = await this.weatherService.getWeatherByCoords(p.lat, p.lon, p.city, dateStr);
+          const targetHour = p.time.getHours();
+          const found = weather.hourly.find(h => new Date(h.hour).getHours() === targetHour)
+            || weather.hourly.reduce((a, b) =>
+              Math.abs(new Date(a.hour).getTime() - p.time.getTime()) < Math.abs(new Date(b.hour).getTime() - p.time.getTime()) ? a : b
+            );
+          if (found) {
+            p.weather = {
+              temperature: found.temperature, code: found.summary, wind: found.wind,
+              windDir: found.windDir, isDay: found.isDay, precipitation: found.precipitation,
+              precipitationProbability: found.precipitationProbability,
+              humidity: found.humidity, apparentTemperature: found.apparentTemperature
+            };
+            p.status = 'ok';
+          } else {
+            p.status = 'error';
+            p.message = 'Aucune donnée horaire';
+          }
+        } catch (err: any) {
+          p.status = 'error';
+          p.message = (err && err.message) ? err.message : 'Erreur météo';
+        }
+      }
+
+      // Trigger OnChanges in child components after in-place updates (status/weather)
+      this.passages = [...this.passages];
+      this.progressText = `Récupération météo... ${idx + 1}/${this.passages.length}`;
+      this.cd.detectChanges();
+      await new Promise(res => setTimeout(res, 300));
+    }
+
+    this.loading = false;
+    this.progressText = 'Terminé';
+
+    // Compute summary stats
+    this.cityCount = this.passages.length;
+    if (this.passages.length > 0) {
+      const dep = this.passages[0].time;
+      const arr = this.passages[this.passages.length - 1].time;
+      this.departureTime = `${String(dep.getHours()).padStart(2, '0')}:${String(dep.getMinutes()).padStart(2, '0')}`;
+      this.arrivalTime = `${String(arr.getHours()).padStart(2, '0')}:${String(arr.getMinutes()).padStart(2, '0')}`;
+      const diffMs = arr.getTime() - dep.getTime();
+      const diffH = Math.floor(diffMs / 3600000);
+      const diffM = Math.round((diffMs % 3600000) / 60000);
+      this.durationText = `${diffH}h${String(diffM).padStart(2, '0')}`;
+    }
+
+    this.cd.detectChanges();
+
+    // Auto-save to history
+    if (this.historyEnabled) this.saveToHistory();
+  }
+
+  // ─── History: save ───
+
+  private saveToHistory() {
+    const route: SavedRoute = {
+      id: HistoryService.makeId(this.fileName || 'unnamed', this.departure),
+      fileName: this.fileName || 'Sans nom',
+      displayDate: this.displayDate,
+      savedAt: new Date().toISOString(),
+      totalDistanceKm: this.totalDistanceKm,
+      durationText: this.durationText,
+      departureTime: this.departureTime,
+      arrivalTime: this.arrivalTime,
+      avgSpeed: this.avgSpeed,
+      departure: this.departure,
+      cityCount: this.cityCount,
+      points: this.points,
+      passages: HistoryService.serialisePassages(this.passages)
+    };
+    const result = this.historyService.save(route);
+    if (!result.ok) {
+      this.saveMessage = result.error || 'Erreur sauvegarde';
+    } else {
+      this.saveMessage = '✅ Sauvegardé';
+      setTimeout(() => { this.saveMessage = ''; this.cd.detectChanges(); }, 3000);
+    }
+    this.historyPanel?.refresh();
+    this.cd.detectChanges();
+  }
+
+  // ─── History: load ───
+
+  loadFromHistory(saved: SavedRoute) {
+    this.fileName = saved.fileName;
+    this.totalDistanceKm = saved.totalDistanceKm;
+    this.displayDate = saved.displayDate;
+    this.durationText = saved.durationText;
+    this.departureTime = saved.departureTime;
+    this.arrivalTime = saved.arrivalTime;
+    this.avgSpeed = saved.avgSpeed;
+    this.departure = saved.departure;
+    this.cityCount = saved.cityCount;
+    this.points = saved.points;
+    this.passages = HistoryService.deserialisePassages(saved.passages);
+    this.loading = false;
+    this.progressText = 'Chargé depuis l\'historique';
+    this.parseMessage = `Points: ${this.points.length}`;
+    this.cd.detectChanges();
+  }
+
+  // ─── Refresh weather only (change date, keep cities) ───
+
+  async refreshWeatherOnly() {
+    if (this.passages.length === 0 || !this.departure) return;
+    const departureDate = new Date(this.departure);
+    if (isNaN(departureDate.getTime())) return;
+
+    this.displayDate = formatDate(departureDate, 'dd/MM/yyyy', 'en-US');
+    this.loading = true;
+    this.progressText = 'Mise à jour de la météo (villes conservées)...';
+
+    // Recompute times based on new departure
+    for (const p of this.passages) {
+      const hours = (p.distanceKm) / (this.avgSpeed || 1);
+      p.time = new Date(departureDate.getTime() + Math.round(hours * 3600 * 1000));
+      p.status = 'pending';
+      p.weather = undefined;
+    }
+    this.passages = [...this.passages];
+    this.cd.detectChanges();
+
+    // Fetch weather for each passage
+    for (let idx = 0; idx < this.passages.length; idx++) {
+      const p = this.passages[idx];
+      try {
+        const dateStr = formatDate(p.time, 'yyyy-MM-dd', 'en-US');
+        const weather = await this.weatherService.getWeatherByCoords(p.lat, p.lon, p.city, dateStr);
+        const targetHour = p.time.getHours();
+        const found = weather.hourly.find(h => new Date(h.hour).getHours() === targetHour)
+          || weather.hourly.reduce((a, b) =>
+            Math.abs(new Date(a.hour).getTime() - p.time.getTime()) < Math.abs(new Date(b.hour).getTime() - p.time.getTime()) ? a : b
+          );
+        if (found) {
+          p.weather = {
+            temperature: found.temperature, code: found.summary, wind: found.wind,
+            windDir: found.windDir, isDay: found.isDay, precipitation: found.precipitation,
+            precipitationProbability: found.precipitationProbability,
+            humidity: found.humidity, apparentTemperature: found.apparentTemperature
+          };
+          p.status = 'ok';
+        } else {
+          p.status = 'error';
+          p.message = 'Aucune donnée horaire';
+        }
+      } catch (err: any) {
+        p.status = 'error';
+        p.message = (err && err.message) ? err.message : 'Erreur météo';
+      }
+      this.passages = [...this.passages];
+      this.progressText = `Mise à jour météo... ${idx + 1}/${this.passages.length}`;
+      this.cd.detectChanges();
+      await new Promise(res => setTimeout(res, 300));
+    }
+
+    // Recompute summary
+    this.cityCount = this.passages.length;
+    if (this.passages.length > 0) {
+      const dep = this.passages[0].time;
+      const arr = this.passages[this.passages.length - 1].time;
+      this.departureTime = `${String(dep.getHours()).padStart(2, '0')}:${String(dep.getMinutes()).padStart(2, '0')}`;
+      this.arrivalTime = `${String(arr.getHours()).padStart(2, '0')}:${String(arr.getMinutes()).padStart(2, '0')}`;
+      const diffMs = arr.getTime() - dep.getTime();
+      const diffH = Math.floor(diffMs / 3600000);
+      const diffM = Math.round((diffMs % 3600000) / 60000);
+      this.durationText = `${diffH}h${String(diffM).padStart(2, '0')}`;
+    }
+
+    this.loading = false;
+    this.progressText = 'Météo mise à jour ✅';
+    this.cd.detectChanges();
+
+    // Re-save
+    if (this.historyEnabled) this.saveToHistory();
+  }
+
+  // ─── View mode toggle ───
+
+  setViewMode(mode: 'detail' | 'resume') {
+    this.viewMode = mode;
+    if (mode === 'resume') {
+      this.showMap = false;
+      this.showScore = true;
+      this.showTable = false;
+    } else {
+      this.showMap = this.mapEnabled;
+      this.showScore = true;
+      this.showTable = true;
+      this.showNutrition = this.nutritionEnabled;
+    }
+  }
+
+  // ─── Score callback ───
+
+  onScoreComputed(data: RideScoreData) {
+    this.rideScoreData = data;
+  }
+
+  // ─── Export actions ───
+
+  async exportAsImage() {
+    this.exportMessage = 'Génération en cours...';
+    this.exportMessage = await this.exportService.exportAsImage(
+      this.passages, this.displayDate, this.totalDistanceKm,
+      this.durationText, this.departureTime, this.arrivalTime, this.cityCount,
+      this.rideScoreData
+    );
+  }
+
+  async shareImage() {
+    this.exportMessage = 'Génération en cours...';
+    this.exportMessage = await this.exportService.shareImage(
+      this.passages, this.displayDate, this.totalDistanceKm,
+      this.durationText, this.departureTime, this.arrivalTime, this.cityCount,
+      this.rideScoreData
+    );
+  }
+
+  // ─── Helpers ───
+
+  private haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const toRad = (v: number) => (v * Math.PI) / 180;
+    const R = 6371000;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  private async reverseGeocode(lat: number, lon: number): Promise<string> {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&email=hugo.lembrez@gmail.com`;
+    const res = await firstValueFrom(
+      this.http.get<any>(url, { headers: { 'User-Agent': `MeteoRide/${APP_VERSION} (https://meteo.hugo-lembrez.fr)` } })
+    );
+    const addr = res?.address;
+    return addr?.city || addr?.town || addr?.village || addr?.municipality || addr?.county || 'Inconnu';
+  }
+}

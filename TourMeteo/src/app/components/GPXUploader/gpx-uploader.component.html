@@ -1,0 +1,299 @@
+<div class="px-3 sm:px-6 py-6 max-w-4xl mx-auto">
+
+  <!-- Header -->
+  <div class="flex items-center gap-3 mb-6">
+    <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md">
+      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+      </svg>
+    </div>
+    <div>
+      <h2 class="text-xl font-bold text-slate-800 leading-tight">Ride</h2>
+      <p class="text-xs text-slate-400">Importez un GPX et analysez la météo sur votre parcours</p>
+    </div>
+  </div>
+
+  <!-- Strava Status Notification -->
+  <div *ngIf="stravaEnabled && stravaStatusMessage"
+       class="mb-4 p-3.5 rounded-xl bg-orange-50 border border-orange-200 text-orange-900 text-xs flex items-center justify-between shadow-sm">
+    <span>{{ stravaStatusMessage }}</span>
+    <button (click)="stravaStatusMessage = ''" class="text-orange-400 hover:text-orange-700 text-sm">✕</button>
+  </div>
+
+  <!-- Upload & Strava Section -->
+  <div class="mb-6" [ngClass]="stravaEnabled ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : ''">
+
+    <!-- 1. File upload -->
+    <div>
+    <label class="group flex flex-col items-center justify-center gap-3 w-full border-2 border-dashed border-slate-300 rounded-2xl p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200">
+      <div class="flex items-center justify-center w-11 h-11 rounded-full bg-slate-100 group-hover:bg-blue-100 transition-colors">
+        <svg class="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+      </div>
+      <div class="text-center">
+        <span *ngIf="!fileName" class="text-sm font-semibold text-slate-700 group-hover:text-blue-600 transition-colors">Fichier .gpx</span>
+        <span *ngIf="!fileName" class="block text-xs text-slate-400 mt-0.5">Glisser-déposer ou parcourir</span>
+        <span *ngIf="fileName" class="text-sm font-semibold text-blue-600 truncate max-w-[200px] block">📄 {{ fileName }}</span>
+        <span *ngIf="fileName" class="block text-xs text-slate-400 mt-0.5">Cliquer pour changer de fichier</span>
+      </div>
+      <input type="file" accept=".gpx" (change)="onFileChange($event)" class="hidden" />
+    </label>
+
+    <!-- Astuce : récupérer un GPX depuis Strava, sans abonnement ni connexion -->
+    <details class="mt-2 rounded-xl border px-4 py-3 text-xs" style="border-color:#DDD4C0; background:#FAF9F6; color:#3D3733;">
+      <summary class="cursor-pointer font-medium" style="color:#1B5A96;">🚴 Comment récupérer un GPX depuis Strava ?</summary>
+      <ol class="list-decimal pl-5 mt-2 space-y-1">
+        <li>Sur <strong>strava.com</strong> (navigateur, pas l'appli mobile), ouvrez votre <strong>activité</strong> ou votre <strong>itinéraire</strong>.</li>
+        <li>Menu <strong>« … »</strong> → <strong>Exporter le GPX</strong> (pour un itinéraire : bouton <strong>Exporter le GPX</strong>).</li>
+        <li>Déposez le fichier téléchargé ci-dessus.</li>
+      </ol>
+      <p class="mt-2" style="color:#72675C;">Gratuit, sans abonnement. Fonctionne de la même façon avec Komoot, Garmin Connect, RideWithGPS ou Google Maps (export GPX).</p>
+    </details>
+    </div>
+
+    <!-- 2. Strava Integration Card (dev feature flag) -->
+    <div *ngIf="stravaEnabled"
+         class="rounded-2xl p-6 border transition-all flex flex-col justify-between"
+         [class]="strava.isConnected ? 'bg-gradient-to-br from-orange-50/80 to-amber-50/50 border-orange-200 shadow-sm' : 'bg-white border-slate-200 hover:border-orange-200 shadow-sm'">
+
+      <!-- Top info -->
+      <div>
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <div class="flex items-center gap-2">
+            <!-- Strava icon -->
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white" style="background: #FC4C02;">
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7.01 13.828h4.172"/>
+              </svg>
+            </div>
+            <span class="text-sm font-bold tracking-tight text-slate-800">Strava</span>
+          </div>
+
+          <!-- Connected or Demo badge -->
+          <span *ngIf="strava.isConnected" class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            {{ strava.isDemoMode ? 'Mode Démo' : 'Connecté' }}
+          </span>
+        </div>
+
+        <!-- Description or Athlete info -->
+        <div *ngIf="!strava.isConnected" class="text-xs text-slate-500 mb-4 leading-relaxed">
+          Importez directement vos <strong>itinéraires</strong> et vos <strong>sorties récentes</strong> sans manipuler de fichier.
+        </div>
+
+        <div *ngIf="strava.isConnected && strava.currentAthlete" class="flex items-center gap-2.5 mb-4 mt-1">
+          <img *ngIf="strava.currentAthlete.profile && !avatarFailed" [src]="strava.currentAthlete.profile" alt="Avatar"
+               referrerpolicy="no-referrer" (error)="avatarFailed = true"
+               class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm" />
+          <!-- Repli quand la photo ne charge pas : initiales -->
+          <div *ngIf="!strava.currentAthlete.profile || avatarFailed" aria-hidden="true"
+               class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white border-2 border-white shadow-sm"
+               style="background:#FC4C02;">
+            {{ (strava.currentAthlete.firstname || '?').charAt(0) }}{{ (strava.currentAthlete.lastname || '').charAt(0) }}
+          </div>
+          <div class="text-xs">
+            <p class="font-semibold text-slate-800 leading-tight">{{ strava.currentAthlete.firstname }} {{ strava.currentAthlete.lastname }}</p>
+            <p class="text-slate-400 text-[11px]">{{ strava.currentAthlete.city || 'Athlète Strava' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div>
+        <div *ngIf="!strava.isConnected" class="space-y-2">
+          <button (click)="connectStrava()" type="button" [disabled]="stravaConnecting" [attr.aria-busy]="stravaConnecting"
+                  class="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold text-white shadow-sm hover:opacity-95 active:scale-[0.99] transition cursor-pointer disabled:opacity-70 disabled:cursor-wait"
+                  style="background: #FC4C02;">
+            <svg *ngIf="stravaConnecting" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            <svg *ngIf="!stravaConnecting" class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+              <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7.01 13.828h4.172"/>
+            </svg>
+            <span>{{ stravaConnecting ? 'Redirection vers Strava…' : 'Connect with Strava' }}</span>
+          </button>
+          <div class="text-center">
+            <button (click)="enableStravaDemo()" type="button"
+                    class="text-[11px] text-slate-400 hover:text-orange-600 underline transition cursor-pointer py-2.5 px-2">
+              Ou essayer avec le mode démo Strava
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="strava.isConnected" class="flex items-center gap-2">
+          <button (click)="openStravaModal()" type="button"
+                  class="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs font-bold text-white shadow-sm hover:opacity-95 active:scale-[0.99] transition cursor-pointer"
+                  style="background: #FC4C02;">
+            <span>🗺️ Choisir un parcours</span>
+          </button>
+          <button (click)="strava.disconnect()" type="button" title="Se déconnecter de Strava"
+                  class="p-2.5 rounded-xl border border-slate-200 text-slate-400 hover:text-red-500 hover:bg-red-50 transition cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Strava Routes Modal -->
+  <app-strava-modal *ngIf="stravaEnabled" [isOpen]="showStravaModal" (close)="closeStravaModal()" (routeSelected)="onStravaRouteSelected($event)"></app-strava-modal>
+
+  <!-- History panel -->
+  <app-history-panel *ngIf="historyEnabled" #historyPanel (load)="loadFromHistory($event)"></app-history-panel>
+
+  <!-- Main card -->
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+    <!-- Info + controls -->
+    <div class="p-5 sm:p-6">
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
+        <!-- Left: distance info -->
+        <div>
+          <div *ngIf="fileName" class="flex items-center gap-1.5 mb-2">
+            <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-medium px-2.5 py-1 rounded-lg border border-blue-200">📄 {{ fileName }}</span>
+          </div>
+          <div *ngIf="parseMessage" class="text-sm text-slate-500 mb-2">{{ parseMessage }}</div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-slate-800">{{ totalDistanceKm }}</span>
+            <span class="text-lg font-semibold text-slate-400">km</span>
+          </div>
+          <div class="text-xs text-slate-400 mt-0.5">Distance totale du parcours</div>
+        </div>
+
+        <!-- Right: controls -->
+        <div *ngIf="points.length > 1" class="space-y-3 w-full sm:w-auto">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Vitesse (km/h)</label>
+              <input type="number" [(ngModel)]="avgSpeed" min="1"
+                     (keydown.enter)="computeSchedule()"
+                     class="w-full sm:w-28 border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Heure de départ</label>
+              <input type="datetime-local" [(ngModel)]="departure"
+                     (keydown.enter)="computeSchedule()"
+                     class="w-full sm:w-auto border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+            </div>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button (click)="computeSchedule()"
+            class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:from-blue-800 active:to-indigo-800 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm hover:shadow-md">
+            🚴 Voir la météo sur l'itinéraire
+          </button>
+          <button *ngIf="bestDepartureEnabled" (click)="goToBestDeparture()"
+            class="w-full sm:w-auto btn btn-ghost px-5 py-2.5 text-sm font-semibold"
+            title="Analyser le meilleur horaire de départ pour ce parcours GPX">
+            ⏰ Meilleur horaire de départ
+          </button>
+          <button *ngIf="passages.length > 0 && experimentalEnabled" (click)="refreshWeatherOnly()"
+            class="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm hover:shadow-md"
+            title="Changer la date/heure et recharger uniquement la météo (pas de re-géocodage)">
+            🔄 Rafraîchir météo
+          </button>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div *ngIf="progressText" class="mx-5 sm:mx-6 mb-4 text-sm text-slate-600 bg-blue-50 rounded-xl px-4 py-2.5 border border-blue-100">
+      {{ progressText }}
+    </div>
+
+    <!-- Loading spinner -->
+    <div *ngIf="loading" class="flex items-center gap-3 mx-5 sm:mx-6 mb-4 px-4 py-3 bg-slate-50 rounded-xl">
+      <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      <span class="text-sm text-slate-600 font-medium">Traitement en cours...</span>
+    </div>
+
+    <!-- Results -->
+    <div id="gpx-results" *ngIf="passages.length > 0" class="px-5 sm:px-6 pb-6">
+
+      <!-- Date header + Export buttons -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5 pb-4 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📅</span>
+          <span class="text-lg font-bold text-slate-800">{{ displayDate }}</span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button (click)="exportAsImage()"
+                  class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors shadow-sm hover:shadow-md">
+            📷 Exporter PNG
+          </button>
+          <button (click)="shareImage()"
+                  class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                  title="Partager si supporté">
+            🔗 Partager
+          </button>
+        </div>
+      </div>
+      <div *ngIf="exportMessage || saveMessage" class="flex flex-wrap gap-3 -mt-3 mb-4">
+        <span *ngIf="exportMessage" class="text-xs text-slate-500">{{ exportMessage }}</span>
+        <span *ngIf="saveMessage && historyEnabled" class="text-xs text-emerald-600">{{ saveMessage }}</span>
+      </div>
+
+      <!-- View mode filter -->
+      <div class="flex flex-wrap items-center gap-2 mb-4">
+        <span class="text-xs font-medium text-slate-500">Affichage :</span>
+        <button (click)="setViewMode('resume')"
+                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                [ngClass]="viewMode === 'resume' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+          📊 Résumé
+        </button>
+        <button (click)="setViewMode('detail')"
+                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                [ngClass]="viewMode === 'detail' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+          📋 Détail complet
+        </button>
+        <span class="hidden sm:inline text-slate-300">|</span>
+        <label *ngIf="mapEnabled" class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+          <input type="checkbox" [(ngModel)]="showMap" class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300"> Carte
+        </label>
+        <label class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+          <input type="checkbox" [(ngModel)]="showScore" class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300"> Score
+        </label>
+        <label class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+          <input type="checkbox" [(ngModel)]="showTable" class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300"> Tableau
+        </label>
+        <label *ngIf="nutritionEnabled" class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+          <input type="checkbox" [(ngModel)]="showNutrition" class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300"> Nutrition
+        </label>
+      </div>
+
+      <!-- Summary stats -->
+      <app-gpx-summary-bar
+        [totalDistanceKm]="totalDistanceKm"
+        [durationText]="durationText"
+        [departureTime]="departureTime"
+        [arrivalTime]="arrivalTime"
+        [cityCount]="cityCount">
+      </app-gpx-summary-bar>
+
+      <!-- Map -->
+      <app-gpx-map *ngIf="showMap && mapEnabled" [passages]="passages" [points]="points"></app-gpx-map>
+
+      <!-- Ride Score -->
+      <app-ride-score *ngIf="showScore" [passages]="passages" [totalDistanceKm]="totalDistanceKm" (scoreComputed)="onScoreComputed($event)"></app-ride-score>
+
+      <!-- Nutrition Plan -->
+      <app-nutrition-plan *ngIf="nutritionEnabled && showNutrition && passages.length >= 2"
+        [passages]="passages"
+        [totalDistanceKm]="totalDistanceKm"
+        [durationText]="durationText">
+      </app-nutrition-plan>
+
+      <!-- Weather table -->
+      <app-gpx-results-table *ngIf="showTable" [passages]="passages"></app-gpx-results-table>
+    </div>
+  </div>
+</div>
