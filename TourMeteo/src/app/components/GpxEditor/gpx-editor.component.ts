@@ -69,11 +69,13 @@ export class GpxEditorComponent implements OnDestroy {
   private boxRect: any = null;
   private boxStart: { x: number; y: number } | null = null;
   private renderQueued = false;
+  private resizeObs: ResizeObserver | null = null;
 
   constructor(private cd: ChangeDetectorRef) {}
 
   ngOnDestroy(): void {
     this.disableBox();
+    this.resizeObs?.disconnect();
     this.map?.remove();
     this.map = null;
   }
@@ -130,14 +132,22 @@ export class GpxEditorComponent implements OnDestroy {
     this.L = mod.default || mod;
     const L = this.L;
     this.map = L.map(this.mapEl!.nativeElement, { zoomControl: true, doubleClickZoom: false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // CARTO (données OpenStreetMap) : plus fiable sur mobile que le serveur de tuiles public d'OSM
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      subdomains: 'abcd',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
     }).addTo(this.map);
     this.line = L.polyline([], { color: '#1B5A96', weight: 4, opacity: 0.85, smoothFactor: 1.5 }).addTo(this.map);
     this.handles = L.layerGroup().addTo(this.map);
     this.cutLayer = L.layerGroup().addTo(this.map);
     this.map.on('moveend', () => this.queueRender());
+    // Sur téléphone la taille du conteneur change (barre d'adresse, rotation) : sans ça la carte reste grise ou vide
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObs = new ResizeObserver(() => this.map?.invalidateSize());
+      this.resizeObs.observe(this.mapEl!.nativeElement);
+    }
+    setTimeout(() => this.map?.invalidateSize(), 300);
     this.map.on('click', (e: any) => {
       if (this.placing) { this.placeAnchor = { lat: e.latlng.lat, lon: e.latlng.lng }; this.previewPlacement(); }
       else if (this.mode === 'add') void this.addPointAt(e.latlng.lat, e.latlng.lng);
