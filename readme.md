@@ -1,8 +1,18 @@
 # TourMeteo
 
-Application Angular permettant de comparer la météo heure par heure entre plusieurs villes — outil pensé pour les cyclistes et randonneurs.
+> ## ⚠️ Information importante sur les branches
+>
+> **La branche `dev` est la version la plus récente et la plus complète du projet.**
+> Elle est actuellement déployée et accessible en ligne : **https://tour-meteo.vercel.app/**
+>
+> La branche `main` correspond à une version soumise dans le cadre d'un projet en attente de validation externe.
+> Son contenu ne sera pas modifié tant que cette validation n'aura pas eu lieu.
+>
+> **Pour consulter les dernières fonctionnalités (import GPX, export PNG, partage, etc.), basculez sur la branche `dev`.**
 
-**Démo en ligne :** déployé sur [Vercel](https://meteo.hugo-lembrez.fr/) (branche `dev` du repo Github)
+---
+
+Application Angular permettant de comparer la météo heure par heure entre plusieurs villes — outil pensé pour les cyclistes.
 
 ---
 
@@ -133,7 +143,17 @@ readme.md               ← ce fichier
 - npm (inclus avec Node.js)
 - Angular CLI (optionnel) : `npm install -g @angular/cli`
 
-### Développement local
+### Docker (recommandé)
+
+```bash
+docker compose build
+docker compose up
+# ou
+docker-compose up --build
+# → http://localhost:4200
+```
+
+### Développement local (sans Docker)
 
 ```bash
 cd TourMeteo
