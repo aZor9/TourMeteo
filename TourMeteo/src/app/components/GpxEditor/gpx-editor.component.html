@@ -38,6 +38,7 @@
         <div #mapEl class="w-full h-[38vh] sm:h-[55vh]" style="min-height: 220px; z-index: 0;"></div>
       </div>
     </div>
+    <p *ngIf="tileProblem" role="alert" class="text-xs -mt-2 mb-3 px-2 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-700">{{ tileProblem }}</p>
     <p *ngIf="tooManyHandles" class="text-[11px] -mt-2 mb-3 px-2 py-1 rounded-lg" style="color:#B45309; background:rgba(255,251,235,0.95);">
       Beaucoup de points à l'écran : zoomez pour les voir et les déplacer. « Zone » et « Couper » fonctionnent quand même.
     </p>

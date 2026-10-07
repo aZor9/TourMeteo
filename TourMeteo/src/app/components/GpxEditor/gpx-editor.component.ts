@@ -10,6 +10,13 @@ import { Placement, autoFitToRoads, isUngeoreferenced, placeTrack } from '../../
 
 type Mode = 'select' | 'box' | 'add';
 
+const OSM_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+const TILE_PROVIDERS: Array<{ url: string; attribution: string; subdomains?: string }> = [
+  { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: OSM_ATTR },
+  { url: 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', attribution: OSM_ATTR + ' France' },
+  { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', attribution: 'Tiles &copy; Esri', subdomains: '' }
+];
+
 /** Au-delà de ce nombre de points visibles à l'écran, on masque les poignées (illisible et lent) : il faut zoomer */
 const MAX_HANDLES = 500;
 const MAX_HISTORY = 50;
@@ -70,6 +77,11 @@ export class GpxEditorComponent implements OnDestroy {
   private boxStart: { x: number; y: number } | null = null;
   private renderQueued = false;
   private resizeObs: ResizeObserver | null = null;
+  private tiles: any = null;
+  private tileIdx = 0;
+  private tilesLoaded = 0;
+  private tileErrors = 0;
+  tileProblem = '';
 
   constructor(private cd: ChangeDetectorRef) {}
 
@@ -132,10 +144,7 @@ export class GpxEditorComponent implements OnDestroy {
     this.L = mod.default || mod;
     const L = this.L;
     this.map = L.map(this.mapEl!.nativeElement, { zoomControl: true, doubleClickZoom: false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(this.map);
+    this.addTileLayer();
     this.line = L.polyline([], { color: '#1B5A96', weight: 4, opacity: 0.85, smoothFactor: 1.5 }).addTo(this.map);
     this.handles = L.layerGroup().addTo(this.map);
     this.cutLayer = L.layerGroup().addTo(this.map);
@@ -149,6 +158,26 @@ export class GpxEditorComponent implements OnDestroy {
     this.map.on('click', (e: any) => {
       if (this.placing) { this.placeAnchor = { lat: e.latlng.lat, lon: e.latlng.lng }; this.previewPlacement(); }
       else if (this.mode === 'add') void this.addPointAt(e.latlng.lat, e.latlng.lng);
+    });
+  }
+
+  /** Fond de carte : si les tuiles n'arrivent pas (serveur bloqué, réseau), on essaie le fournisseur suivant */
+  private addTileLayer(): void {
+    const t = TILE_PROVIDERS[this.tileIdx];
+    this.tiles = this.L.tileLayer(t.url, { maxZoom: 19, subdomains: t.subdomains ?? 'abc', attribution: t.attribution }).addTo(this.map);
+    this.tiles.on('tileload', () => { this.tilesLoaded++; if (this.tileProblem) { this.tileProblem = ''; this.cd.detectChanges(); } });
+    this.tiles.on('tileerror', () => {
+      this.tileErrors++;
+      if (this.tilesLoaded > 0 || this.tileErrors < 4) return;
+      if (this.tileIdx < TILE_PROVIDERS.length - 1) {
+        this.tiles.remove();
+        this.tileIdx++;
+        this.tileErrors = 0;
+        this.addTileLayer();
+      } else {
+        this.tileProblem = 'Le fond de carte ne se charge pas (réseau, bloqueur de contenu ou DNS privé ?). Le tracé reste modifiable sans fond.';
+        this.cd.detectChanges();
+      }
     });
   }
 
