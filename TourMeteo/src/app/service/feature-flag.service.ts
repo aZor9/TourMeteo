@@ -23,6 +23,8 @@ export interface FeatureFlags {
   strava: boolean;
   /** Show hourly charts page (/hourly) */
   hourly: boolean;
+  /** Choose and compare forecast models on the hourly charts page */
+  hourlyModels: boolean;
   /** Show GPX editor page (/editor) */
   gpxEditor: boolean;
 }
@@ -38,6 +40,7 @@ const DEFAULTS: FeatureFlags = {
   recentCities: true,
   strava: false,
   hourly: true,
+  hourlyModels: true,
   gpxEditor: false
 };
 

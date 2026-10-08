@@ -57,6 +57,9 @@
             <li><strong>Partage :</strong> via l'API Web Share ou téléchargement automatique</li>
             <li><strong>Villes récentes :</strong> suggestion et mémorisation locale des dernières villes recherchées</li>
             <li><strong>Plan nutritionnel d'effort :</strong> estimation des besoins en glucides et hydratation au fil du tracé GPX</li>
+            <li><strong>Graphiques heure par heure :</strong> pluie, température, vent, UV, qualité de l'air et pollens ; chaque graphique peut être masqué</li>
+            <li><strong>Comparaison de modèles :</strong> Météo-France, ICON, ECMWF et GFS superposés, avec un vote « accord pluie » (part des modèles qui prévoient de la pluie)</li>
+            <li><strong>Radar de pluie :</strong> animation des ~2 dernières heures de précipitations observées autour du lieu</li>
           </ul>
           <div class="mt-3 pt-3 border-t" style="border-color:#EDE8DB;">
             <h4 class="text-xs font-semibold uppercase tracking-wide mb-3" style="color:#A09589;">✨ Fonctionnalités supplémentaires</h4>
@@ -116,6 +119,16 @@
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" [checked]="flags.hourly" (change)="toggleFlag('hourly')" class="sr-only peer">
                   <div class="w-11 h-6 rounded-full transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner" [style.background]="flags.hourly ? '#1B5A96' : '#DDD4C0'"></div>
+                </label>
+              </div>
+              <div class="flex items-center justify-between rounded-xl px-4 py-3 border" style="background:#FAF9F6; border-color:#DDD4C0;">
+                <div class="flex flex-col">
+                  <span class="font-medium" style="color:#1A1917;">🔀 Comparer les modèles météo</span>
+                  <span class="text-xs" style="color:#72675C;">Graphiques : choisir un ou plusieurs modèles (Météo-France, ICON, ECMWF, GFS) et les superposer</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" [checked]="flags.hourlyModels" (change)="toggleFlag('hourlyModels')" class="sr-only peer">
+                  <div class="w-11 h-6 rounded-full transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner" [style.background]="flags.hourlyModels ? '#1B5A96' : '#DDD4C0'"></div>
                 </label>
               </div>
               <div class="flex items-center justify-between rounded-xl px-4 py-3 border" style="background:#FAF9F6; border-color:#DDD4C0;">
@@ -228,6 +241,7 @@
             <ul class="list-disc pl-5 space-y-1">
               <li><strong>Nominatim / OpenStreetMap</strong> — géocodage (ODbL)</li>
               <li><strong>Open-Meteo</strong> — données météorologiques (CC BY 4.0)</li>
+              <li><strong>RainViewer</strong> — images radar de précipitations (page Graphiques)</li>
               <li><strong>BRouter / OSRM</strong> — calcul d'itinéraire (expérimental)</li>
               <li><strong>OpenStreetMap</strong> — tuiles cartographiques</li>
             </ul>
@@ -252,7 +266,9 @@
         <div *ngIf="sec.open" class="px-4 py-3 text-sm border-t" style="color:#3D3733; border-color:#EDE8DB;">
           <ul class="list-disc pl-5 space-y-2">
             <li><strong>Géocodage :</strong> <a href="https://nominatim.org/" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">Nominatim</a> (OpenStreetMap, ODbL) — recherche et reverse-géocodage. <span class="text-xs" style="color:#A09589;">Politique : 1 req/s max.</span></li>
-            <li><strong>Météo :</strong> <a href="https://open-meteo.com/" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0) — données horaires (température, ressenti, vent, précipitations, humidité, weathercode).</li>
+            <li><strong>Météo :</strong> <a href="https://open-meteo.com/" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0) — données horaires (température, ressenti, vent, précipitations, humidité, weathercode). Paramètre <code>models</code> pour choisir/comparer <code>meteofrance_seamless</code>, <code>icon_seamless</code>, <code>ecmwf_ifs025</code>, <code>gfs_seamless</code>.</li>
+            <li><strong>Qualité de l'air :</strong> <a href="https://open-meteo.com/en/docs/air-quality-api" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">Open-Meteo Air Quality</a> (CAMS) — indice européen, PM2.5/PM10, pollens.</li>
+            <li><strong>Radar :</strong> <a href="https://www.rainviewer.com/api.html" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">RainViewer</a> — images radar passées (~2 h, zoom natif max 7).</li>
           </ul>
           <p class="mt-4">Services complémentaires (expérimental) :</p>
           <ul class="list-disc pl-5 space-y-2 mt-2">
@@ -261,7 +277,7 @@
             <li><strong>Élévation :</strong> <a href="https://open-elevation.com/" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">Open Elevation</a> / fallback Open-Meteo</li>
             <li><strong>Tuiles :</strong> <a href="https://www.openstreetmap.org/copyright" class="underline hover:opacity-75" style="color:#1B5A96;" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL)</li>
           </ul>
-          <p class="mt-2 text-xs" style="color:#A09589;">Aucune clé API n'est requise. Tous les services sont gratuits et open-source.</p>
+          <p class="mt-2 text-xs" style="color:#A09589;">Aucune clé API n'est requise. Tous les services sont gratuits ; la plupart sont open-source (RainViewer est un service gratuit mais propriétaire).</p>
         </div>
       </div>
 
@@ -284,6 +300,8 @@
             <li><strong>FeatureFlagService :</strong> feature flags persistées en localStorage</li>
             <li><strong>WeatherSheetComponent :</strong> grille météo horaire par ville (desktop table + mobile cards)</li>
             <li><strong>SearchTabComponent :</strong> formulaire de recherche et filtres</li>
+            <li><strong>HourlyComponent :</strong> page Graphiques (Chart.js chargé à la demande), choix des modèles et des graphiques mémorisé en localStorage</li>
+            <li><strong>RainRadarComponent :</strong> carte Leaflet + couches radar RainViewer animées</li>
             <li><strong>WeatherUtils :</strong> weathercode → emoji, degrés → direction cardinale</li>
           </ul>
         </div>

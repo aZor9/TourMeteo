@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { Chart as ChartJS, ChartConfiguration, Plugin } from 'chart.js';
-import { WeatherService, DayDetails, DayHour, AirQuality } from '../../service/weather.service';
+import { WeatherService, DayDetails, DayHour, AirQuality, WEATHER_MODELS, DEFAULT_MODELS } from '../../service/weather.service';
+import { FeatureFlagService } from '../../service/feature-flag.service';
 import { CityService } from '../../service/city.service';
+import { RainRadarComponent } from '../RainRadar/rain-radar.component';
 import { RecentCitiesService } from '../../service/recent-cities.service';
 import { getWeatherDescription, degreesToCardinal } from '../../utils/weather-utils';
 
@@ -28,6 +30,29 @@ const COLORS = {
   grid: 'rgba(28, 25, 23, 0.08)',
   text: '#72675C'
 };
+
+/** Une couleur par modèle pour les superposer sans ambiguïté */
+const MODEL_COLORS: Record<string, string> = {
+  best_match: COLORS.blue,
+  meteofrance_seamless: COLORS.temp,
+  icon_seamless: COLORS.green,
+  ecmwf_ifs025: COLORS.violet,
+  gfs_seamless: COLORS.beige
+};
+
+const PREFS_KEY = 'tourmeteo_hourly_prefs';
+interface HourlyPrefs { models: string[]; hidden: string[]; }
+
+function loadPrefs(): HourlyPrefs {
+  try {
+    const p = JSON.parse(localStorage.getItem(PREFS_KEY) ?? '{}');
+    const models = Array.isArray(p.models) ? p.models.filter((m: unknown) => WEATHER_MODELS.some(w => w.id === m)) : [];
+    const hidden = Array.isArray(p.hidden) ? p.hidden.filter((h: unknown) => typeof h === 'string') : [];
+    return { models: models.length ? models : [...DEFAULT_MODELS], hidden };
+  } catch {
+    return { models: [...DEFAULT_MODELS], hidden: [] };
+  }
+}
 
 const AQI_LEVELS = [
   { max: 20, label: 'Bon', color: '#4C9A6A' },
@@ -54,7 +79,7 @@ function uvLabel(uv: number): string {
 @Component({
   selector: 'app-hourly',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RainRadarComponent],
   templateUrl: './hourly.component.html'
 })
 export class HourlyComponent implements OnInit, OnDestroy {
@@ -70,6 +95,14 @@ export class HourlyComponent implements OnInit, OnDestroy {
   tiles: Tile[] = [];
   rainText = '';
   chartDefs: ChartDef[] = [];
+
+  /** Préférences d'affichage (mémorisées sur l'appareil) */
+  readonly models = WEATHER_MODELS;
+  readonly modelColors = MODEL_COLORS;
+  /** Position du lieu affiché (centre du radar) */
+  coords: { lat: number; lon: number } | null = null;
+  selectedModels: string[];
+  hiddenCharts: Set<string>;
 
   citySuggestions: string[] = [];
   showSuggestions = false;
@@ -93,8 +126,49 @@ export class HourlyComponent implements OnInit, OnDestroy {
     private recent: RecentCitiesService,
     private route: ActivatedRoute,
     private router: Router,
-    private cd: ChangeDetectorRef
-  ) {}
+    private cd: ChangeDetectorRef,
+    private flags: FeatureFlagService
+  ) {
+    const prefs = loadPrefs();
+    this.selectedModels = prefs.models;
+    this.hiddenCharts = new Set(prefs.hidden);
+  }
+
+  get modelsEnabled(): boolean { return this.flags.isEnabled('hourlyModels'); }
+
+  /** Modèles réellement demandés : le choix automatique si la fonction est désactivée */
+  private get activeModels(): string[] { return this.modelsEnabled ? this.selectedModels : DEFAULT_MODELS; }
+
+  /** Graphiques affichés (disponibles et non masqués par l'utilisateur) */
+  get shownDefs(): ChartDef[] { return this.chartDefs.filter(c => !this.hiddenCharts.has(c.id)); }
+
+  isModelSelected(id: string): boolean { return this.selectedModels.includes(id); }
+
+  /** Ajoute/retire un modèle (au moins un reste toujours sélectionné) puis recharge */
+  toggleModel(id: string): void {
+    const on = this.isModelSelected(id);
+    if (on && this.selectedModels.length === 1) return;
+    // Ordre du catalogue : le premier modèle coché sert de référence aux tuiles et au bandeau
+    this.selectedModels = WEATHER_MODELS.map(m => m.id).filter(m => m === id ? !on : this.isModelSelected(m));
+    this.savePrefs();
+    if (this.city.trim()) void this.load();
+  }
+
+  isChartShown(id: string): boolean { return !this.hiddenCharts.has(id); }
+
+  async toggleChart(id: string): Promise<void> {
+    if (this.hiddenCharts.has(id)) this.hiddenCharts.delete(id); else this.hiddenCharts.add(id);
+    this.savePrefs();
+    if (!this.day) return;
+    this.cd.detectChanges(); // crée/retire les <canvas> avant de redessiner
+    await this.drawCharts(this.reqId);
+  }
+
+  private savePrefs(): void {
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ models: this.selectedModels, hidden: [...this.hiddenCharts] }));
+    } catch { /* stockage indisponible : préférences non mémorisées */ }
+  }
 
   ngOnInit(): void {
     // Lien partageable : /hourly?city=Lille&date=2026-10-06
@@ -187,13 +261,14 @@ export class HourlyComponent implements OnInit, OnDestroy {
         lat = +g.lat; lon = +g.lon;
       }
       const [day, air] = await Promise.all([
-        this.weather.getDayDetails(lat, lon, this.date),
+        this.weather.getDayDetails(lat, lon, this.date, this.activeModels),
         this.weather.getAirQuality(lat, lon, this.date)
       ]);
       if (id !== this.reqId) return; // réponse périmée
 
       if (!this.geo) this.recent.add(name);
       this.place = name;
+      this.coords = { lat, lon };
       this.day = day;
       this.air = air && air.aqi.some(v => v !== null) ? air : null;
       this.buildTiles();
@@ -272,7 +347,8 @@ export class HourlyComponent implements OnInit, OnDestroy {
     tiles.push({ icon: '🌡️', label: 'Température', value: `${Math.round(min(h.map(x => x.temperature)))}° / ${Math.round(max(h.map(x => x.temperature)))}°`, sub: `ressenti ${Math.round(min(h.map(x => x.apparent)))}° / ${Math.round(max(h.map(x => x.apparent)))}°` });
 
     const rainTotal = +h.reduce((s, x) => s + x.precipitation, 0).toFixed(1);
-    tiles.push({ icon: '🌧️', label: 'Cumul de pluie', value: `${rainTotal} mm`, sub: `proba max ${max(h.map(x => x.probability))} %` });
+    const probMax = max(h.map(x => x.probability));
+    tiles.push({ icon: '🌧️', label: 'Cumul de pluie', value: `${rainTotal} mm`, sub: isFinite(probMax) ? `proba max ${probMax} %` : undefined });
 
     const gust = max(h.map(x => x.gust));
     tiles.push({ icon: '💨', label: 'Vent max', value: `${Math.round(max(h.map(x => x.wind)))} km/h`, sub: isFinite(gust) ? `rafales ${Math.round(gust)} km/h` : undefined });
@@ -412,20 +488,40 @@ export class HourlyComponent implements OnInit, OnDestroy {
       tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label} : ${ctx.parsed.y} ${units[ctx.dataset.yAxisID ?? 'y'] ?? ''}` } }
     });
 
+    // Mode comparaison : plusieurs modèles superposés, une couleur par modèle
+    const byModel = this.day.byModel ?? {};
+    const compared = Object.keys(byModel);
+    const compare = compared.length > 1;
+    const modelLabel = (m: string) => WEATHER_MODELS.find(w => w.id === m)?.label ?? m;
+    const perModel = (pick: (x: DayHour) => number | null, extra: object = {}) =>
+      compared.map(m => line(modelLabel(m), byModel[m].map(pick), MODEL_COLORS[m] ?? COLORS.blue, extra));
+
     const build = (def: ChartDef): ChartConfiguration | null => {
       switch (def.id) {
         case 'rain': {
           const o = base('mm');
+          if (compare) {
+            // Tous les modèles ne fournissent pas de probabilité : on la déduit du vote
+            // (part des modèles qui prévoient au moins 0,1 mm sur l'heure)
+            o.scales = { x: o.scales!['x'], y: axis('mm', { beginAtZero: true, suggestedMax: 2 }), y1: rightAxis('% des modèles', { min: 0, max: 100 }) };
+            o.plugins = perAxis({ y: 'mm', y1: '%' });
+            const vote = labels.map((_, i) => Math.round(100 * compared.filter(m => (byModel[m][i]?.precipitation ?? 0) >= 0.1).length / compared.length));
+            return { type: 'line', options: o, plugins: [decor], data: { labels, datasets: [
+              ...perModel(x => x.precipitation, { tension: 0, stepped: 'middle', yAxisID: 'y' }),
+              { type: 'bar', label: 'Accord pluie (vote)', data: vote, backgroundColor: 'rgba(59, 139, 212, 0.18)', borderRadius: 3, yAxisID: 'y1', order: 9 }
+            ] as any } };
+          }
+          const hasProb = h.some(x => x.probability !== null);
           o.scales = { x: o.scales!['x'], y: axis('mm', { beginAtZero: true, suggestedMax: 2 }), y1: rightAxis('%', { min: 0, max: 100 }) };
           o.plugins = perAxis({ y: 'mm', y1: '%' });
-          return { type: 'bar', options: o, plugins: [decor], data: { labels, datasets: [
-            { type: 'bar', label: 'Pluie', data: h.map(x => x.precipitation), backgroundColor: COLORS.rainSoft, borderRadius: 4, yAxisID: 'y', order: 2 },
-            line('Probabilité', h.map(x => x.probability), COLORS.beige, { ...dashed, yAxisID: 'y1', order: 1 })
-          ] as any } };
+          const ds: any[] = [{ type: 'bar', label: 'Pluie', data: h.map(x => x.precipitation), backgroundColor: COLORS.rainSoft, borderRadius: 4, yAxisID: 'y', order: 2 }];
+          if (hasProb) ds.push(line('Probabilité', h.map(x => x.probability), COLORS.beige, { ...dashed, yAxisID: 'y1', order: 1 }));
+          return { type: 'bar', options: o, plugins: [decor], data: { labels, datasets: ds } };
         }
         case 'temp': {
           const o = base('°C');
           o.scales!['y'] = axis('°C', { beginAtZero: false });
+          if (compare) return { type: 'line', options: o, plugins: [decor], data: { labels, datasets: perModel(x => x.temperature) as any } };
           const ds: any[] = [
             line('Température', h.map(x => x.temperature), COLORS.temp, { fill: true, backgroundColor: 'rgba(217, 115, 26, 0.12)' }),
             line('Ressenti', h.map(x => x.apparent), COLORS.beige, dashed)
@@ -436,6 +532,7 @@ export class HourlyComponent implements OnInit, OnDestroy {
         case 'wind': {
           const o = base('km/h');
           o.scales!['y'] = axis('km/h', { beginAtZero: true });
+          if (compare) return { type: 'line', options: o, plugins: [decor], data: { labels, datasets: perModel(x => x.wind) as any } };
           // Direction dans l'infobulle : "Vent : 18 km/h (SW)"
           o.plugins!.tooltip = { callbacks: {
             label: ctx => ctx.datasetIndex === 0

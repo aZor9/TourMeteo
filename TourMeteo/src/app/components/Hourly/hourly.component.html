@@ -47,6 +47,19 @@
       <button type="button" (click)="shiftDay(1)" class="btn btn-ghost btn-sm min-w-[44px] min-h-[44px]" aria-label="Jour suivant">›</button>
     </div>
 
+    <!-- Modèles de prévision (feature flag « Comparer les modèles météo ») -->
+    <div *ngIf="modelsEnabled" class="flex flex-wrap items-center gap-2">
+      <span class="text-xs font-medium text-slate-500">Modèles :</span>
+      <button *ngFor="let m of models" type="button" (click)="toggleModel(m.id)"
+              [attr.aria-pressed]="isModelSelected(m.id)"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors inline-flex items-center gap-1.5"
+              [ngClass]="isModelSelected(m.id) ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+        <span class="w-2 h-2 rounded-full" [style.background]="modelColors[m.id]" style="box-shadow:0 0 0 1.5px #fff;"></span>
+        {{ m.label }}
+      </button>
+      <span class="w-full text-[11px]" style="color:#A09589;">Plusieurs modèles cochés : pluie, température et vent sont superposés pour comparer.</span>
+    </div>
+
     <button type="submit" [disabled]="loading || !city.trim()" class="btn btn-primary w-full disabled:opacity-50">
       {{ loading ? 'Chargement…' : 'Afficher les graphiques' }}
     </button>
@@ -91,15 +104,39 @@
           <span class="text-xs" style="color:#72675C;">{{ hourLabel(h) }}</span>
           <span class="text-2xl leading-8" [attr.title]="getWeatherDescription(h.weathercode).desc">{{ getWeatherDescription(h.weathercode).emoji }}</span>
           <span class="text-sm font-semibold">{{ h.temperature | number:'1.0-0' }}°</span>
-          <span class="text-[11px]" style="color:#3B8BD4;">{{ h.probability }}%</span>
+          <span *ngIf="h.probability !== null" class="text-[11px]" style="color:#3B8BD4;">{{ h.probability }}%</span>
         </li>
       </ul>
     </div>
 
     <p class="text-[11px] mb-2 px-1" style="color:#A09589;">Zones bleutées = nuit · ligne pointillée = heure actuelle</p>
 
+    <!-- Choix des graphiques affichés -->
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <span class="text-xs font-medium text-slate-500">Graphiques :</span>
+      <button *ngFor="let c of chartDefs; trackBy: trackById" type="button" (click)="toggleChart(c.id)"
+              [attr.aria-pressed]="isChartShown(c.id)"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+              [ngClass]="isChartShown(c.id) ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+        {{ c.title }}
+      </button>
+      <button type="button" (click)="toggleChart('radar')" [attr.aria-pressed]="isChartShown('radar')"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+              [ngClass]="isChartShown('radar') ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+        🛰️ Radar de pluie
+      </button>
+    </div>
+
+    <section *ngIf="isChartShown('radar') && coords" class="card p-3 sm:p-4 mb-4">
+      <h3 class="text-sm font-semibold mb-2">🛰️ Radar de pluie (observé, ~2 dernières heures)</h3>
+      <app-rain-radar [lat]="coords.lat" [lon]="coords.lon"></app-rain-radar>
+      <p class="text-[11px] mt-2" style="color:#A09589;">Données radar : RainViewer. Montre la pluie déjà tombée, pas la prévision.</p>
+    </section>
+
+    <p *ngIf="chartDefs.length && !shownDefs.length" class="text-sm text-center my-6" style="color:#72675C;">Tous les graphiques sont masqués.</p>
+
     <!-- Graphiques -->
-    <section *ngFor="let c of chartDefs; trackBy: trackById" class="card p-3 sm:p-4 mb-4">
+    <section *ngFor="let c of shownDefs; trackBy: trackById" class="card p-3 sm:p-4 mb-4">
       <h3 class="text-sm font-semibold mb-2">{{ c.title }}</h3>
       <div class="relative" [ngClass]="c.height">
         <canvas #chartCanvas [attr.data-id]="c.id" role="img" [attr.aria-label]="c.title"></canvas>
